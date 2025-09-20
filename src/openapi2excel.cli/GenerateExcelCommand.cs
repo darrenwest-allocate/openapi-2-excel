@@ -1,4 +1,5 @@
 using openapi2excel.core;
+using openapi2excel.core.Common;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
@@ -115,9 +116,18 @@ public class GenerateExcelCommand : Command<GenerateExcelCommand.GenerateExcelSe
                return ValidationResult.Error($"Invalid output directory path: {outputFilePath}. {ex.Message}");
             }
             
-            // For now, we'll defer filename generation to Phase 2
-            // Create a temporary FileInfo object for the directory
-            OutputFileParsed = new FileInfo(Path.Combine(outputFilePath, "temp.xlsx"));
+            // Generate filename from OpenAPI document
+            try
+            {
+               var (title, version) = OpenApiInfoExtractor.ExtractInfoAsync(InputFileParsed.FullName).GetAwaiter().GetResult();
+               var generatedFilename = OpenApiInfoExtractor.GenerateFilename(title, version);
+               OutputFileParsed = new FileInfo(Path.Combine(outputFilePath, generatedFilename));
+            }
+            catch (Exception)
+            {
+               // Fallback to default filename if OpenAPI parsing fails
+               OutputFileParsed = new FileInfo(Path.Combine(outputFilePath, "api_documentation.xlsx"));
+            }
          }
          else
          {
