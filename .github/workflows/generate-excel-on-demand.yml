@@ -1,0 +1,82 @@
+name: Generate OpenAPI Excel Documentation
+
+on:
+  workflow_dispatch:
+    inputs:
+      openapi_url:
+        description: 'OpenAPI specification URL or file path'
+        required: true
+        default: 'https://poc-marketplace.interoperability.allocate-dev.co.uk/ui/docs/openapi/general-api-v1.json'
+        type: string
+      output_filename:
+        description: 'Output Excel filename (optional - will auto-generate if not provided)'
+        required: false
+        default: ''
+        type: string
+      max_depth:
+        description: 'Maximum depth level for documenting object hierarchies'
+        required: false
+        default: '10'
+        type: string
+
+jobs:
+  generate-excel:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build project
+      run: dotnet build --no-restore --configuration Release
+      
+    - name: Create output directory
+      run: mkdir -p ./output
+      
+    - name: Generate Excel documentation
+      run: |
+        if [ -n "${{ github.event.inputs.output_filename }}" ]; then
+          OUTPUT_PATH="./output/${{ github.event.inputs.output_filename }}"
+          if [[ ! "$OUTPUT_PATH" == *.xlsx ]]; then
+            OUTPUT_PATH="${OUTPUT_PATH}.xlsx"
+          fi
+        else
+          OUTPUT_PATH="./output/"
+        fi
+        
+        dotnet run --project src/openapi2excel.cli/openapi2excel.cli.csproj \
+          --configuration Release \
+          -- \
+          "${{ github.event.inputs.openapi_url }}" \
+          "$OUTPUT_PATH" \
+          --depth "${{ github.event.inputs.max_depth }}" \
+          --no-logo
+      
+    - name: List generated files
+      run: ls -la ./output/
+      
+    - name: Upload Excel file as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: openapi-excel-documentation
+        path: ./output/*.xlsx
+        retention-days: 30
+        
+    - name: Display completion message
+      run: |
+        echo "✅ Excel documentation generated successfully!"
+        echo "📁 Check the 'Artifacts' section to download the generated Excel file."
+        echo "🔗 OpenAPI URL: ${{ github.event.inputs.openapi_url }}"
+        if [ -n "${{ github.event.inputs.output_filename }}" ]; then
+          echo "📋 Output filename: ${{ github.event.inputs.output_filename }}"
+        else
+          echo "📋 Output filename: Auto-generated from OpenAPI info"
+        fi

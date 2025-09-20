@@ -16,8 +16,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: | 
-            7.0.x
-            8.0.x
+            9.0.x
 
       - name: Tests
         run: dotnet test --configuration Release
@@ -46,4 +45,5 @@ jobs:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
           dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" ${{ steps.package_release.outputs.core_package_filename }}
+
           dotnet nuget push --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" ${{ steps.package_release.outputs.tool_package_filename }}
