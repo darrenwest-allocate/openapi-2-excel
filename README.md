@@ -7,7 +7,7 @@
 <div align="center">
 
 [![🚧 - Under Development](https://img.shields.io/badge/🚧-Under_Development-orange)](https://)
-[![NuGet Package](https://img.shields.io/badge/.NET%20-8.0-blue.svg)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+[![NuGet Package](https://img.shields.io/badge/.NET%20-9.0-blue.svg)](https://dotnet.microsoft.com/en-us/download/dotnet/9.0)
 [![NuGet Package](https://img.shields.io/badge/Nugets-2ea44f?logo=nuget)](https://www.nuget.org/packages/openapi2excel.cli/)
 [![GitHub license](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/pszybiak/openapi-2-excel/blob/main/LICENSE.md)
 
