@@ -94,7 +94,7 @@ internal class OperationWorksheetBuilder(IXLWorkbook workbook, OpenApiDocumentat
 
    private void AdjustDescriptionColumnToContents()
    {
-      _worksheet.LastColumnUsed().AdjustToContents();
+      _worksheet.LastColumnUsed()?.AdjustToContents();
    }
 
    private void AddOperationInfos(string path, OpenApiPathItem pathItem, OperationType operationType,

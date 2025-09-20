@@ -32,7 +32,7 @@ internal static class OpenApiSchemaExtension
    public static string GetPropertyDescription(this OpenApiSchema schema)
    {
       if (string.IsNullOrEmpty(schema.Description))
-         return schema.Description;
+         return string.Empty;
 
       return schema.Description.StartsWith('\'') ? "'" + schema.Description : schema.Description;
    }
@@ -100,17 +100,17 @@ internal static class OpenApiSchemaExtension
 
          return value switch
          {
-            OpenApiString val => val.Value,
-            OpenApiInteger val => val.Value.ToString(),
-            OpenApiBoolean val => val.Value.ToString(),
-            OpenApiByte val => val.Value.ToString(),
-            OpenApiDate val => val.Value.ToShortDateString(),
-            OpenApiDateTime val => val.Value.ToString(CultureInfo.CurrentCulture),
-            OpenApiDouble val => val.Value.ToString(CultureInfo.CurrentCulture),
-            OpenApiFloat val => val.Value.ToString(CultureInfo.CurrentCulture),
-            OpenApiLong val => val.Value.ToString(CultureInfo.CurrentCulture),
-            OpenApiPassword val => val.Value,
-            _ => ""
+            OpenApiString val => val.Value ?? string.Empty,
+            OpenApiInteger val => val.Value.ToString() ?? string.Empty,
+            OpenApiBoolean val => val.Value.ToString() ?? string.Empty,
+            OpenApiByte val => val.Value.ToString() ?? string.Empty,
+            OpenApiDate val => val.Value.ToShortDateString() ?? string.Empty,
+            OpenApiDateTime val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+            OpenApiDouble val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+            OpenApiFloat val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+            OpenApiLong val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+            OpenApiPassword val => val.Value ?? string.Empty,
+            _ => string.Empty
          };
       }
    }
@@ -129,17 +129,17 @@ internal static class OpenApiSchemaExtension
       }
       return schema.Example switch
       {
-         OpenApiString val => val.Value,
-         OpenApiInteger val => val.Value.ToString(),
-         OpenApiBoolean val => val.Value.ToString(),
-         OpenApiByte val => val.Value.ToString(),
-         OpenApiDate val => val.Value.ToShortDateString(),
-         OpenApiDateTime val => val.Value.ToString(CultureInfo.CurrentCulture),
-         OpenApiDouble val => val.Value.ToString(CultureInfo.CurrentCulture),
-         OpenApiFloat val => val.Value.ToString(CultureInfo.CurrentCulture),
-         OpenApiLong val => val.Value.ToString(CultureInfo.CurrentCulture),
-         OpenApiPassword val => val.Value,
-         _ => ""
+         OpenApiString val => val.Value ?? string.Empty,
+         OpenApiInteger val => val.Value.ToString() ?? string.Empty,
+         OpenApiBoolean val => val.Value.ToString() ?? string.Empty,
+         OpenApiByte val => val.Value.ToString() ?? string.Empty,
+         OpenApiDate val => val.Value.ToShortDateString() ?? string.Empty,
+         OpenApiDateTime val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+         OpenApiDouble val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+         OpenApiFloat val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+         OpenApiLong val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+         OpenApiPassword val => val.Value ?? string.Empty,
+         _ => string.Empty
       };
    }
 
@@ -157,17 +157,17 @@ internal static class OpenApiSchemaExtension
       }
       return schema.Default switch
       {
-         OpenApiString val => val.Value,
-         OpenApiInteger val => val.Value.ToString(),
-         OpenApiBoolean val => val.Value.ToString(),
-         OpenApiByte val => val.Value.ToString(),
-         OpenApiDate val => val.Value.ToShortDateString(),
-         OpenApiDateTime val => val.Value.ToString(CultureInfo.CurrentCulture),
-         OpenApiDouble val => val.Value.ToString(CultureInfo.CurrentCulture),
-         OpenApiFloat val => val.Value.ToString(CultureInfo.CurrentCulture),
-         OpenApiLong val => val.Value.ToString(CultureInfo.CurrentCulture),
-         OpenApiPassword val => val.Value,
-         _ => ""
+         OpenApiString val => val.Value ?? string.Empty,
+         OpenApiInteger val => val.Value.ToString() ?? string.Empty,
+         OpenApiBoolean val => val.Value.ToString() ?? string.Empty,
+         OpenApiByte val => val.Value.ToString() ?? string.Empty,
+         OpenApiDate val => val.Value.ToShortDateString() ?? string.Empty,
+         OpenApiDateTime val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+         OpenApiDouble val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+         OpenApiFloat val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+         OpenApiLong val => val.Value.ToString(CultureInfo.CurrentCulture) ?? string.Empty,
+         OpenApiPassword val => val.Value ?? string.Empty,
+         _ => string.Empty
       };
    }
 }
