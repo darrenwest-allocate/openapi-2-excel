@@ -33,6 +33,41 @@ public class GenerateExcelCommand : Command<GenerateExcelCommand.GenerateExcelSe
 
       internal FileInfo InputFileParsed { get; set; } = null!;
       internal FileInfo OutputFileParsed { get; set; } = null!;
+      internal bool IsOutputDirectory { get; set; }
+
+      /// <summary>
+      /// Determines if the given path represents a directory rather than a file.
+      /// </summary>
+      private static bool IsDirectoryPath(string path)
+      {
+         // Check if path ends with directory separator
+         if (path.EndsWith(Path.DirectorySeparatorChar.ToString()) || 
+             path.EndsWith(Path.AltDirectorySeparatorChar.ToString()))
+         {
+            return true;
+         }
+
+         // Check if path exists and is a directory
+         if (Directory.Exists(path))
+         {
+            return true;
+         }
+
+         // Check if path doesn't have an extension and doesn't contain a file-like name
+         var fileName = Path.GetFileName(path);
+         if (string.IsNullOrEmpty(fileName) || !Path.HasExtension(path))
+         {
+            // If the parent directory exists, this is likely a directory path
+            var parentDir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(parentDir) && Directory.Exists(parentDir))
+            {
+               return true;
+            }
+         }
+
+         return false;
+      }
+
       public override ValidationResult Validate()
       {
          var inputFilePath = InputFile.Trim();
@@ -58,12 +93,42 @@ public class GenerateExcelCommand : Command<GenerateExcelCommand.GenerateExcelSe
          }
 
          var outputFilePath = OutputFile.Trim();
-         if (!outputFilePath.EndsWith(".xlsx", StringComparison.CurrentCultureIgnoreCase))
-         {
-            outputFilePath += ".xlsx";
-         }
 
-         OutputFileParsed = new FileInfo(outputFilePath);
+         // Check if the output path is a directory
+         if (IsDirectoryPath(outputFilePath))
+         {
+            IsOutputDirectory = true;
+            
+            // Validate that the directory exists or can be created
+            try
+            {
+               if (!Directory.Exists(outputFilePath))
+               {
+                  // Try to create the directory to validate the path
+                  var testPath = Path.GetFullPath(outputFilePath);
+                  Directory.CreateDirectory(testPath);
+               }
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException || ex is DirectoryNotFoundException || 
+                                      ex is ArgumentException || ex is NotSupportedException || ex is IOException)
+            {
+               return ValidationResult.Error($"Invalid output directory path: {outputFilePath}. {ex.Message}");
+            }
+            
+            // For now, we'll defer filename generation to Phase 2
+            // Create a temporary FileInfo object for the directory
+            OutputFileParsed = new FileInfo(Path.Combine(outputFilePath, "temp.xlsx"));
+         }
+         else
+         {
+            IsOutputDirectory = false;
+            // Existing file path logic
+            if (!outputFilePath.EndsWith(".xlsx", StringComparison.CurrentCultureIgnoreCase))
+            {
+               outputFilePath += ".xlsx";
+            }
+            OutputFileParsed = new FileInfo(outputFilePath);
+         }
 
          return ValidationResult.Success();
       }
