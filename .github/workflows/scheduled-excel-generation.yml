@@ -1,0 +1,92 @@
+name: Scheduled OpenAPI Excel Generation
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC (adjust as needed)
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: 'Force run even if no changes detected'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  # Configure your OpenAPI URLs here
+  OPENAPI_URLS: |
+    https://poc-marketplace.interoperability.allocate-dev.co.uk/ui/docs/openapi/general-api-v1.json
+
+jobs:
+  scheduled-generation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build project
+      run: dotnet build --no-restore --configuration Release
+      
+    - name: Create output directory
+      run: mkdir -p ./scheduled-output
+      
+    - name: Generate documentation
+      run: |
+        echo "🕐 Starting scheduled generation at $(date)"
+        TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+        
+        echo "$OPENAPI_URLS" | while IFS= read -r url; do
+          if [ -z "$url" ]; then
+            continue
+          fi
+          
+          echo "📡 Processing: $url"
+          
+          if dotnet run --project src/openapi2excel.cli/openapi2excel.cli.csproj \
+            --configuration Release \
+            -- \
+            "$url" \
+            "./scheduled-output/" \
+            --depth 10 \
+            --no-logo; then
+            
+            echo "✅ Generated documentation for: $url"
+          else
+            echo "❌ Failed to generate documentation for: $url"
+          fi
+        done
+        
+        echo "✨ Scheduled generation completed at $(date)"
+      
+    - name: List generated files
+      run: |
+        echo "📁 Generated files:"
+        ls -la ./scheduled-output/
+      
+    - name: Upload scheduled documentation
+      uses: actions/upload-artifact@v4
+      with:
+        name: scheduled-openapi-documentation-$(date +%Y%m%d)
+        path: ./scheduled-output/*.xlsx
+        retention-days: 90
+        
+    - name: Create release (optional - uncomment if you want releases)
+      # Uncomment the following lines if you want to automatically create releases
+      # env:
+      #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # run: |
+      #   TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+      #   gh release create "scheduled-$TIMESTAMP" \
+      #     ./scheduled-output/*.xlsx \
+      #     --title "Scheduled OpenAPI Documentation - $(date +%Y-%m-%d)" \
+      #     --notes "Automatically generated OpenAPI Excel documentation for $(date +%Y-%m-%d)"
+      run: echo "Skipping release creation (uncomment in workflow to enable)"
