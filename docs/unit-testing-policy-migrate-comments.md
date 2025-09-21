@@ -61,10 +61,22 @@
 
 ---
 
+
+## Test OpenAPI Specification
+
+For unit and integration tests related to the migration of unresolved Excel comments, by default use the minimal OpenAPI specification at:
+
+```
+src/openapi2excel.tests/Sample/sample-api-gw.json
+```
+
+This file contains a reduced set of paths and operations (GET, PUT, POST) for both `/{tenant}/duties/` and `/{tenant}/duty-assignments` endpoints, and should be referenced in all new test cases for this feature.
+
+
 ## Example Test Artefacts
 
-- `Sample/OldWorkbook1.xlsx`: Contains a variety of threaded comments, some unmigratable
-- `Sample/NewWorkbook1.xlsx`: The expected output after migration
+- `Sample/sample-api-gw.json`: Minimal OpenAPI spec for focused testing
+- `Sample/sample-api-gw.xlsx`: Vanilla Excel workbook generated from the minimal spec (use as the basis for comment and custom XML migration tests; make copies as needed)
 - `Sample/Sample1.yaml`: The OpenAPI spec used to generate the workbooks
 
 ---
