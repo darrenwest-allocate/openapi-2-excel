@@ -1,4 +1,3 @@
-#
 # See also: [docs/unit-testing-policy-migrate-comments.md](unit-testing-policy-migrate-comments.md) for the unit testing policy and behavioral test outline for this feature.
 
 # Implementation Plan: Migrating Unresolved Excel Comments
