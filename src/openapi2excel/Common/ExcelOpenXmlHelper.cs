@@ -141,45 +141,60 @@ namespace OpenApi2Excel.Common
         }
 
         /// <summary>
-		/// Extract custom XML mappings from workbook using the existing ExcelCustomXmlHelper infrastructure
+		/// Extracts custom XML mappings from workbook using the existing ExcelCustomXmlHelper infrastructure
 		/// </summary>
 		/// <param name="filePath">Path to the Excel workbook</param>
 		/// <returns>List of worksheet mappings with OpenAPI anchors</returns>
-		private static List<WorksheetOpenApiMapping> ExtractCustomXmlMappingsFromWorkbook(string filePath)
-		{
-			var worksheetMappings = new List<WorksheetOpenApiMapping>();
+        private static List<WorksheetOpenApiMapping> ExtractCustomXmlMappingsFromWorkbook(string filePath)
+        {
+            var worksheetMappings = new List<WorksheetOpenApiMapping>();
 
-			// Get all worksheet names from the workbook
-			var worksheetNames = GetAllWorksheetNames(filePath);
+            using (var document = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Open(filePath, false))
+            {
+                var workbookPart = document.WorkbookPart;
+                if (workbookPart == null) return worksheetMappings;
 
-			foreach (var worksheetName in worksheetNames)
-			{
-				try
-				{
-					// Use the existing ExcelCustomXmlHelper to read mappings for each worksheet
-					var xmlContent = ExcelCustomXmlHelper.ReadCustomXmlMapping(filePath, worksheetName);
+                var worksheetNames = GetAllWorksheetNames(workbookPart);
 
-					// Parse the XML content using the proper Core models
-					var cellMappings = ParseCustomXmlContent(xmlContent);
+                foreach (var worksheetName in worksheetNames)
+                {
+                    try
+                    {
+                        // Use the existing ExcelCustomXmlHelper to read mappings for each worksheet
+                        var xmlContent = ExcelCustomXmlHelper.ReadCustomXmlMapping(filePath, worksheetName);
 
-					if (cellMappings.Any())
-					{
-						worksheetMappings.Add(new WorksheetOpenApiMapping
-						{
-							Worksheet = worksheetName,
-							Mappings = cellMappings
-						});
-					}
-				}
-				catch
-				{
-					// Skip worksheets that don't have custom XML mappings
-					continue;
-				}
-			}
+                        // Parse the XML content using the proper Core models
+                        var cellMappings = ParseCustomXmlContent(xmlContent);
 
-			return worksheetMappings;
-		}
+                        if (cellMappings.Any())
+                        {
+                            worksheetMappings.Add(new WorksheetOpenApiMapping
+                            {
+                                Worksheet = worksheetName,
+                                Mappings = cellMappings
+                            });
+                        }
+                    }
+                    catch (System.IO.FileNotFoundException)
+                    {
+                        // Skip worksheets that don't have custom XML mappings
+                        continue;
+                    }
+                    catch (System.InvalidOperationException)
+                    {
+                        // Skip worksheets that can't be processed due to invalid operation
+                        continue;
+                    }
+                    catch (System.Xml.XmlException)
+                    {
+                        // Skip worksheets with malformed custom XML
+                        continue;
+                    }
+                }
+            }
+
+            return worksheetMappings;
+        }
 
         /// <summary>
         /// Parse custom XML content to extract mappings
@@ -213,7 +228,11 @@ namespace OpenApi2Excel.Common
                     }
                 }
             }
-            catch
+            catch (System.Xml.XmlException)
+            {
+                // Return empty list if XML parsing fails
+            }
+            catch (ArgumentException)
             {
                 // Return empty list if XML parsing fails
             }

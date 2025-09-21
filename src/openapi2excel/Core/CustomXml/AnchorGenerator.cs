@@ -114,10 +114,18 @@ public static class AnchorGenerator
         return path;
     }
 
-	public static string AppendDetailToAnchor(string mappingAnchor, string detail)
-	{
-		return $"{mappingAnchor}/@{detail.ToLowerInvariant().Replace(" ", "_")}";
-	}
+    /// <summary>
+    /// Appends a detail to an existing mapping anchor, formatting the detail as lowercase and replacing spaces with underscores.
+    /// Format: {mappingAnchor}/@{detail}
+    /// Example: paths./pets.get/@summary
+    /// </summary>
+    /// <param name="mappingAnchor">The base anchor to which the detail will be appended.</param>
+    /// <param name="detail">The detail to append, which will be lowercased and have spaces replaced with underscores.</param>
+    /// <returns>The combined anchor string with the appended detail.</returns>
+    public static string AppendDetailToAnchor(string mappingAnchor, string detail)
+    {
+        return $"{mappingAnchor}/@{detail.ToLowerInvariant().Replace(" ", "_")}";
+    }
 }
 
 

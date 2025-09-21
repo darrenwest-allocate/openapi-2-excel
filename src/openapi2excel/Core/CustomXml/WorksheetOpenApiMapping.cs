@@ -38,7 +38,7 @@ namespace OpenApi2Excel.Core.CustomXml
 						new[] { new XElement("Worksheet", mapping.Worksheet) }
 						.Union(
 							mapping.Mappings.Select(m =>
-							{;
+							{
 								return new XElement("Mapping", 
 									m.Row > 0
 										? new XElement("Row", m.Row)
