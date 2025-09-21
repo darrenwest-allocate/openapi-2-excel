@@ -1,4 +1,5 @@
 using ClosedXML.Excel;
+using OpenApi2Excel.Core.CustomXml;
 
 namespace openapi2excel.core.Common;
 
@@ -63,5 +64,16 @@ internal static class XLExtensions
          tmpCell = tmpCell.SetBottomBorder().CellRight();
 
       return cell;
+   }
+
+   public static IXLCell MapRow(this IXLCell cell, string mappingAnchor, List<CellOpenApiMapping> mappings)
+   {
+      mappings.Add(new CellOpenApiMapping() { Row = cell.WorksheetRow().RowNumber(), Cell = cell.Address.ToString() ?? string.Empty, OpenApiRef = mappingAnchor });
+      return cell;
+   }
+
+   public static IXLCell MapRowWithDetail(this IXLCell cell, string mappingAnchor, List<CellOpenApiMapping> mappings)
+   {
+      return MapRow(cell, AnchorGenerator.AppendDetailToAnchor(mappingAnchor, cell.GetText()), mappings);
    }
 }

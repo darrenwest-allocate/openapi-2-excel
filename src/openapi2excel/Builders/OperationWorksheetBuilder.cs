@@ -3,26 +3,44 @@ using Microsoft.OpenApi.Models;
 using openapi2excel.core.Builders.WorksheetPartsBuilders;
 using openapi2excel.core.Builders.WorksheetPartsBuilders.Common;
 using openapi2excel.core.Common;
+using OpenApi2Excel.Core.CustomXml;
 
 namespace openapi2excel.core.Builders;
 
-internal class OperationWorksheetBuilder(IXLWorkbook workbook, OpenApiDocumentationOptions options)
-   : WorksheetBuilder(options)
+
+
+public class OperationWorksheetBuilder : WorksheetBuilder
 {
    private readonly RowPointer _actualRowPointer = new(1);
+   private readonly IXLWorkbook _workbook;
    private IXLWorksheet _worksheet = null!;
    private int _attributesColumnsStartIndex;
+   private WorksheetOpenApiMapping? _worksheetMapping;
+
+   public OperationWorksheetBuilder(IXLWorkbook workbook, OpenApiDocumentationOptions options)
+      : base(options)
+   {
+      _workbook = workbook;
+   }
+
+   public WorksheetOpenApiMapping WorksheetMapping => _worksheetMapping!;
 
    public IXLWorksheet Build(string path, OpenApiPathItem pathItem, OperationType operationType,
       OpenApiOperation operation)
    {
-      var worksheet = GetWorksheetName(path, operation, operationType);
-
-      CreateNewWorksheet(worksheet);
+      var worksheetName = GetWorksheetName(path, operation, operationType);
+      CreateNewWorksheet(worksheetName);
       _actualRowPointer.GoTo(1);
 
       _attributesColumnsStartIndex = MaxPropertiesTreeLevel.Calculate(operation, Options.MaxDepth);
       AdjustColumnsWidthToRequestTreeLevel();
+
+      // Initialize mapping for this worksheet
+      _worksheetMapping = new WorksheetOpenApiMapping
+      {
+         Worksheet = worksheetName,
+         Mappings = []
+      };
 
       AddHomePageLink();
       AddOperationInfos(path, pathItem, operationType, operation);
@@ -60,7 +78,7 @@ internal class OperationWorksheetBuilder(IXLWorkbook workbook, OpenApiDocumentat
       // check if the name is unique
       var nr = 2;
       var tmpName = name;
-      while (workbook.Worksheets.Any(s => s.Name.Equals(tmpName, StringComparison.CurrentCultureIgnoreCase)))
+      while (_workbook.Worksheets.Any(s => s.Name.Equals(tmpName, StringComparison.CurrentCultureIgnoreCase)))
       {
          tmpName = name[..maxLength] + "_" + nr++;
       }
@@ -69,7 +87,7 @@ internal class OperationWorksheetBuilder(IXLWorkbook workbook, OpenApiDocumentat
 
    private void CreateNewWorksheet(string operation)
    {
-      _worksheet = workbook.Worksheets.Add(operation);
+      _worksheet = _workbook.Worksheets.Add(operation);
       _worksheet.Style.Font.FontSize = 10;
       _worksheet.Style.Font.FontName = "Arial";
       _worksheet.Outline.SummaryHLocation = XLOutlineSummaryHLocation.Left;
@@ -97,18 +115,22 @@ internal class OperationWorksheetBuilder(IXLWorkbook workbook, OpenApiDocumentat
       _worksheet.LastColumnUsed()?.AdjustToContents();
    }
 
+
    private void AddOperationInfos(string path, OpenApiPathItem pathItem, OperationType operationType,
       OpenApiOperation operation) =>
-      new OperationInfoBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
-         .AddOperationInfoSection(path, pathItem, operationType, operation);
+   new OperationInfoBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
+      .AddOperationInfoSection(path, pathItem, operationType, operation, _worksheetMapping!.Mappings);
+
 
    private void AddRequestParameters(OpenApiOperation operation) =>
       new RequestParametersBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
          .AddRequestParametersPart(operation);
 
+
    private void AddRequestBody(OpenApiOperation operation) =>
       new RequestBodyBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
          .AddRequestBodyPart(operation);
+
 
    private void AddResponseBody(OpenApiOperation operation) =>
       new ResponseBodyBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
