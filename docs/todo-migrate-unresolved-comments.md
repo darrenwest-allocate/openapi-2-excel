@@ -18,13 +18,13 @@ Update this file as new requirements or edge cases are discovered.
 ---
 
 ## 1. Setup & Preparation
-- [ ] Review and finalize the implementation plan and test policy docs
-- [ ] Prepare sample OpenAPI specs and Excel workbooks in `openapi2excel.tests/Sample/`
+- [x] Review and finalize the implementation plan and test policy docs
+- [x] Prepare sample OpenAPI specs and Excel workbooks in `openapi2excel.tests/Sample/`
 
 ## 2. Custom XML Metadata Mapping
-- [ ] Create a failing unit test for writing and reading custom XML mapping parts per worksheet
-- [ ] Implement code to write/read custom XML mapping parts and meta part
-- [ ] Refactor as needed to ensure test passes and code is maintainable
+- [x] Create a failing unit test for writing and reading custom XML mapping parts per worksheet
+- [x] Implement code to write/read custom XML mapping parts and meta part
+- [x] Refactor as needed to ensure test passes and code is maintainable
 
 ## 3. Extracting Unresolved Comments
 - [ ] Create a failing unit test for extracting unresolved threaded comments from an old workbook
