@@ -30,28 +30,27 @@ namespace OpenApi2Excel.Core.CustomXml
 		public string Worksheet { get; set; } = string.Empty;
 		public List<CellOpenApiMapping> Mappings { get; set; } = new();
 
-		   public static string Serialize(IEnumerable<WorksheetOpenApiMapping> mappings)
-		   {
-			   var doc = new XDocument(
-				   new XElement("OpenApiMappings",
-					   mappings.SelectMany(mapping =>
-						   mapping.Mappings.Select(m =>
-						   {
-							   var elements = new List<object>
-							   {
-								   new XElement("Worksheet", mapping.Worksheet),
-								   new XElement("Cell", m.Cell),
-								   new XElement("OpenApiRef", m.OpenApiRef)
-							   };
-							   if (m.Row > 0)
-								   elements.Insert(2, new XElement("Row", m.Row));
-							   return new XElement("Mapping", elements);
-						   })
-					   )
-				   )
-			   );
-			   return doc.ToString();
-		   }
+		public static string Serialize(IEnumerable<WorksheetOpenApiMapping> mappings)
+		{
+			var doc = new XDocument(
+				new XElement("OpenApiMappings",
+					mappings.SelectMany(mapping =>
+						new[] { new XElement("Worksheet", mapping.Worksheet) }
+						.Union(
+							mapping.Mappings.Select(m =>
+							{;
+								return new XElement("Mapping", 
+									m.Row > 0
+										? new XElement("Row", m.Row)
+										: new XElement("Cell", m.Cell),
+									new XElement("OpenApiRef", m.OpenApiRef)
+								);
+							}))
+						)
+				)
+			);
+			return doc.ToString();
+		}
 
 		public static IEnumerable<WorksheetOpenApiMapping> CreateMappings(string worksheet, IEnumerable<(string cell, string openApiRef)> items)
 		{

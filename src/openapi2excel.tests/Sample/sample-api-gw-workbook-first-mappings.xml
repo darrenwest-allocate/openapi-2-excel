@@ -1,31 +1,22 @@
 <OpenApiMappings>
+    <Worksheet>GET_{tenant}-duties-vacant</Worksheet>
     <Mapping>
-        <Worksheet>GET_{tenant}-duties-vacant</Worksheet>
-        <Cell>D4</Cell>
         <Row>4</Row>
         <OpenApiRef>paths./{tenant}/duties/vacant.get</OpenApiRef>
     </Mapping>
     <Mapping>
-        <Worksheet>GET_{tenant}-duties-vacant</Worksheet>
-        <Cell>A5</Cell>
         <Row>5</Row>
         <OpenApiRef>paths./{tenant}/duties/vacant.get/@path</OpenApiRef>
     </Mapping>
     <Mapping>
-        <Worksheet>GET_{tenant}-duties-vacant</Worksheet>
-        <Cell>A6</Cell>
         <Row>6</Row>
         <OpenApiRef>paths./{tenant}/duties/vacant.get/@operation_description</OpenApiRef>
     </Mapping>
     <Mapping>
-        <Worksheet>GET_{tenant}-duties-vacant</Worksheet>
-        <Cell>A7</Cell>
         <Row>7</Row>
         <OpenApiRef>paths./{tenant}/duties/vacant.get/@operation_summary</OpenApiRef>
     </Mapping>
     <Mapping>
-        <Worksheet>GET_{tenant}-duties-vacant</Worksheet>
-        <Cell>A8</Cell>
         <Row>8</Row>
         <OpenApiRef>paths./{tenant}/duties/vacant.get/@deprecated</OpenApiRef>
     </Mapping>

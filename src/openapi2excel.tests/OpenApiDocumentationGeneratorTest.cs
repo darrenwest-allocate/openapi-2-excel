@@ -77,7 +77,21 @@ namespace OpenApi2Excel.Tests
          const string sampleWorkbookFirstSheetMappings = "Sample/sample-api-gw-workbook-first-mappings.xml";
          var expectedDoc = XDocument.Load(sampleWorkbookFirstSheetMappings);
          var actualDoc = XDocument.Parse(customXmlContent);
-         Assert.True(XNode.DeepEquals(expectedDoc, actualDoc), "XML content does not match expected mappings.");
+
+         // iterate the nodes of both expected and actual until a mismatch is found
+
+         var lastMismatch = expectedDoc.DescendantNodes().Zip(actualDoc.DescendantNodes(), (e, a) => (Expected: e, Actual: a))
+            .Reverse()
+            .Where(path => path.Expected is XElement el && el.Elements().Any())
+            .FirstOrDefault(pair => !XNode.DeepEquals(pair.Expected, pair.Actual));
+
+         if (lastMismatch != default)
+         {
+            Console.WriteLine($"Expected: {lastMismatch.Expected}");
+            Console.WriteLine($"Actual: {lastMismatch.Actual}");
+            Console.WriteLine($"Actual XML:\n{actualDoc.ToString()}");
+            Assert.Fail();
+         }
       }
 
       [Fact]
