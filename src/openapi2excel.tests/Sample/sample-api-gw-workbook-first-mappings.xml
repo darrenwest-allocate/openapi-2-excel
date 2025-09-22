@@ -1,655 +1,166 @@
 <OpenApiMappings>
     <Worksheet>GET_{tenant}-duties-vacant</Worksheet>
-    <Mapping>
-        <Row>4</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>5</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get/@path</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>6</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get/@operation_description</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>7</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get/@operation_summary</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>8</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get/@deprecated</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>10</Row>
-        <OpenApiRef>components.parameters./Title</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>11</Row>
-        <OpenApiRef>components.parameters./ParameterHeadings</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>12</Row>
-        <OpenApiRef>components.parameters.tenant</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>A12</Cell>
-        <OpenApiRef>components.parameters.tenant/@name</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>C12</Cell>
-        <OpenApiRef>components.parameters.tenant/@location</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>D12</Cell>
-        <OpenApiRef>components.parameters.tenant/@serialization</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>E12</Cell>
-        <OpenApiRef>components.parameters.tenant/@type</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>F12</Cell>
-        <OpenApiRef>components.parameters.tenant/@objecttype</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>G12</Cell>
-        <OpenApiRef>components.parameters.tenant/@format</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>H12</Cell>
-        <OpenApiRef>components.parameters.tenant/@length</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>I12</Cell>
-        <OpenApiRef>components.parameters.tenant/@required</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>J12</Cell>
-        <OpenApiRef>components.parameters.tenant/@nullable</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>K12</Cell>
-        <OpenApiRef>components.parameters.tenant/@range</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>L12</Cell>
-        <OpenApiRef>components.parameters.tenant/@pattern</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>M12</Cell>
-        <OpenApiRef>components.parameters.tenant/@enum</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>N12</Cell>
-        <OpenApiRef>components.parameters.tenant/@deprecated</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>O12</Cell>
-        <OpenApiRef>components.parameters.tenant/@default</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>P12</Cell>
-        <OpenApiRef>components.parameters.tenant/@example</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>Q12</Cell>
-        <OpenApiRef>components.parameters.tenant/@description</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>13</Row>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>A13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@name</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>C13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@location</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>D13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@serialization</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>E13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@type</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>F13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@objecttype</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>G13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@format</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>H13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@length</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>I13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@required</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>J13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@nullable</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>K13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@range</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>L13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@pattern</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>M13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@enum</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>N13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@deprecated</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>O13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@default</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>P13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@example</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>Q13</Cell>
-        <OpenApiRef>components.parameters.resourcingOrgUnitId/@description</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>14</Row>
-        <OpenApiRef>components.parameters.fromDate</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>A14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@name</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>C14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@location</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>D14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@serialization</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>E14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@type</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>F14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@objecttype</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>G14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@format</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>H14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@length</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>I14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@required</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>J14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@nullable</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>K14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@range</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>L14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@pattern</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>M14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@enum</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>N14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@deprecated</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>O14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@default</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>P14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@example</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>Q14</Cell>
-        <OpenApiRef>components.parameters.fromDate/@description</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>15</Row>
-        <OpenApiRef>components.parameters.toDate</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>A15</Cell>
-        <OpenApiRef>components.parameters.toDate/@name</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>C15</Cell>
-        <OpenApiRef>components.parameters.toDate/@location</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>D15</Cell>
-        <OpenApiRef>components.parameters.toDate/@serialization</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>E15</Cell>
-        <OpenApiRef>components.parameters.toDate/@type</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>F15</Cell>
-        <OpenApiRef>components.parameters.toDate/@objecttype</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>G15</Cell>
-        <OpenApiRef>components.parameters.toDate/@format</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>H15</Cell>
-        <OpenApiRef>components.parameters.toDate/@length</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>I15</Cell>
-        <OpenApiRef>components.parameters.toDate/@required</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>J15</Cell>
-        <OpenApiRef>components.parameters.toDate/@nullable</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>K15</Cell>
-        <OpenApiRef>components.parameters.toDate/@range</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>L15</Cell>
-        <OpenApiRef>components.parameters.toDate/@pattern</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>M15</Cell>
-        <OpenApiRef>components.parameters.toDate/@enum</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>N15</Cell>
-        <OpenApiRef>components.parameters.toDate/@deprecated</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>O15</Cell>
-        <OpenApiRef>components.parameters.toDate/@default</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>P15</Cell>
-        <OpenApiRef>components.parameters.toDate/@example</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>Q15</Cell>
-        <OpenApiRef>components.parameters.toDate/@description</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>16</Row>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>A16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@name</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>C16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@location</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>D16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@serialization</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>E16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@type</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>F16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@objecttype</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>G16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@format</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>H16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@length</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>I16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@required</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>J16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@nullable</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>K16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@range</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>L16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@pattern</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>M16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@enum</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>N16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@deprecated</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>O16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@default</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>P16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@example</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>Q16</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeCategoryId/@description</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>17</Row>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>A17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@name</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>C17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@location</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>D17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@serialization</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>E17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@type</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>F17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@objecttype</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>G17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@format</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>H17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@length</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>I17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@required</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>J17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@nullable</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>K17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@range</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>L17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@pattern</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>M17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@enum</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>N17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@deprecated</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>O17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@default</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>P17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@example</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>Q17</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeTypeId/@description</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>18</Row>
-        <OpenApiRef>components.parameters.vacantDutyGradeId</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>A18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@name</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>C18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@location</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>D18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@serialization</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>E18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@type</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>F18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@objecttype</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>G18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@format</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>H18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@length</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>I18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@required</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>J18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@nullable</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>K18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@range</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>L18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@pattern</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>M18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@enum</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>N18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@deprecated</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>O18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@default</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>P18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@example</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>Q18</Cell>
-        <OpenApiRef>components.parameters.vacantDutyGradeId/@description</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>20</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responseBody</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>21</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responseBody.200</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>22</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200/@bodyformat</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>23</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200/SchemaDescriptionHeader</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>A24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@name</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>24</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>E24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@type</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>F24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@objecttype</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>G24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@format</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>H24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@length</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>I24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@required</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>J24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@nullable</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>K24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@range</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>L24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@pattern</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>M24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@enum</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>N24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@deprecated</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>O24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@default</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>P24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@example</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>Q24</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties/@description</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>B25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@name</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>25</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>E25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@type</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>F25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@objecttype</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>G25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@format</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>H25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@length</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>I25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@required</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>J25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@nullable</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>K25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@range</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>L25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@pattern</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>M25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@enum</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>N25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@deprecated</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>O25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@default</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>P25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@example</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Cell>Q25</Cell>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responses.200.duties.value/@description</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>27</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responseBody.400</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>28</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responseBody.404</OpenApiRef>
-    </Mapping>
-    <Mapping>
-        <Row>29</Row>
-        <OpenApiRef>paths./{tenant}/duties/vacant.get.responseBody.500</OpenApiRef>
-    </Mapping>
+    <MapOpenApiRef Row="4">paths./{tenant}/duties/vacant.get</MapOpenApiRef>
+    <MapOpenApiRef Row="5">paths./{tenant}/duties/vacant.get/@path</MapOpenApiRef>
+    <MapOpenApiRef Row="6">paths./{tenant}/duties/vacant.get/@operation_description</MapOpenApiRef>
+    <MapOpenApiRef Row="7">paths./{tenant}/duties/vacant.get/@operation_summary</MapOpenApiRef>
+    <MapOpenApiRef Row="8">paths./{tenant}/duties/vacant.get/@deprecated</MapOpenApiRef>
+    <MapOpenApiRef Row="10">components.parameters./Title</MapOpenApiRef>
+    <MapOpenApiRef Row="11">components.parameters./ParameterHeadings</MapOpenApiRef>
+    <MapOpenApiRef Row="12">components.parameters.tenant</MapOpenApiRef>
+    <MapOpenApiRef Cell="A12">components.parameters.tenant/@name</MapOpenApiRef>
+    <MapOpenApiRef Cell="C12">components.parameters.tenant/@location</MapOpenApiRef>
+    <MapOpenApiRef Cell="D12">components.parameters.tenant/@serialization</MapOpenApiRef>
+    <MapOpenApiRef Cell="E12">components.parameters.tenant/@type</MapOpenApiRef>
+    <MapOpenApiRef Cell="F12">components.parameters.tenant/@objecttype</MapOpenApiRef>
+    <MapOpenApiRef Cell="G12">components.parameters.tenant/@format</MapOpenApiRef>
+    <MapOpenApiRef Cell="H12">components.parameters.tenant/@length</MapOpenApiRef>
+    <MapOpenApiRef Cell="I12">components.parameters.tenant/@required</MapOpenApiRef>
+    <MapOpenApiRef Cell="J12">components.parameters.tenant/@nullable</MapOpenApiRef>
+    <MapOpenApiRef Cell="K12">components.parameters.tenant/@range</MapOpenApiRef>
+    <MapOpenApiRef Cell="L12">components.parameters.tenant/@pattern</MapOpenApiRef>
+    <MapOpenApiRef Cell="M12">components.parameters.tenant/@enum</MapOpenApiRef>
+    <MapOpenApiRef Cell="N12">components.parameters.tenant/@deprecated</MapOpenApiRef>
+    <MapOpenApiRef Cell="O12">components.parameters.tenant/@default</MapOpenApiRef>
+    <MapOpenApiRef Cell="P12">components.parameters.tenant/@example</MapOpenApiRef>
+    <MapOpenApiRef Cell="Q12">components.parameters.tenant/@description</MapOpenApiRef>
+    <MapOpenApiRef Row="13">components.parameters.resourcingOrgUnitId</MapOpenApiRef>
+    <MapOpenApiRef Cell="A13">components.parameters.resourcingOrgUnitId/@name</MapOpenApiRef>
+    <MapOpenApiRef Cell="C13">components.parameters.resourcingOrgUnitId/@location</MapOpenApiRef>
+    <MapOpenApiRef Cell="D13">components.parameters.resourcingOrgUnitId/@serialization</MapOpenApiRef>
+    <MapOpenApiRef Cell="E13">components.parameters.resourcingOrgUnitId/@type</MapOpenApiRef>
+    <MapOpenApiRef Cell="F13">components.parameters.resourcingOrgUnitId/@objecttype</MapOpenApiRef>
+    <MapOpenApiRef Cell="G13">components.parameters.resourcingOrgUnitId/@format</MapOpenApiRef>
+    <MapOpenApiRef Cell="H13">components.parameters.resourcingOrgUnitId/@length</MapOpenApiRef>
+    <MapOpenApiRef Cell="I13">components.parameters.resourcingOrgUnitId/@required</MapOpenApiRef>
+    <MapOpenApiRef Cell="J13">components.parameters.resourcingOrgUnitId/@nullable</MapOpenApiRef>
+    <MapOpenApiRef Cell="K13">components.parameters.resourcingOrgUnitId/@range</MapOpenApiRef>
+    <MapOpenApiRef Cell="L13">components.parameters.resourcingOrgUnitId/@pattern</MapOpenApiRef>
+    <MapOpenApiRef Cell="M13">components.parameters.resourcingOrgUnitId/@enum</MapOpenApiRef>
+    <MapOpenApiRef Cell="N13">components.parameters.resourcingOrgUnitId/@deprecated</MapOpenApiRef>
+    <MapOpenApiRef Cell="O13">components.parameters.resourcingOrgUnitId/@default</MapOpenApiRef>
+    <MapOpenApiRef Cell="P13">components.parameters.resourcingOrgUnitId/@example</MapOpenApiRef>
+    <MapOpenApiRef Cell="Q13">components.parameters.resourcingOrgUnitId/@description</MapOpenApiRef>
+    <MapOpenApiRef Row="14">components.parameters.fromDate</MapOpenApiRef>
+    <MapOpenApiRef Cell="A14">components.parameters.fromDate/@name</MapOpenApiRef>
+    <MapOpenApiRef Cell="C14">components.parameters.fromDate/@location</MapOpenApiRef>
+    <MapOpenApiRef Cell="D14">components.parameters.fromDate/@serialization</MapOpenApiRef>
+    <MapOpenApiRef Cell="E14">components.parameters.fromDate/@type</MapOpenApiRef>
+    <MapOpenApiRef Cell="F14">components.parameters.fromDate/@objecttype</MapOpenApiRef>
+    <MapOpenApiRef Cell="G14">components.parameters.fromDate/@format</MapOpenApiRef>
+    <MapOpenApiRef Cell="H14">components.parameters.fromDate/@length</MapOpenApiRef>
+    <MapOpenApiRef Cell="I14">components.parameters.fromDate/@required</MapOpenApiRef>
+    <MapOpenApiRef Cell="J14">components.parameters.fromDate/@nullable</MapOpenApiRef>
+    <MapOpenApiRef Cell="K14">components.parameters.fromDate/@range</MapOpenApiRef>
+    <MapOpenApiRef Cell="L14">components.parameters.fromDate/@pattern</MapOpenApiRef>
+    <MapOpenApiRef Cell="M14">components.parameters.fromDate/@enum</MapOpenApiRef>
+    <MapOpenApiRef Cell="N14">components.parameters.fromDate/@deprecated</MapOpenApiRef>
+    <MapOpenApiRef Cell="O14">components.parameters.fromDate/@default</MapOpenApiRef>
+    <MapOpenApiRef Cell="P14">components.parameters.fromDate/@example</MapOpenApiRef>
+    <MapOpenApiRef Cell="Q14">components.parameters.fromDate/@description</MapOpenApiRef>
+    <MapOpenApiRef Row="15">components.parameters.toDate</MapOpenApiRef>
+    <MapOpenApiRef Cell="A15">components.parameters.toDate/@name</MapOpenApiRef>
+    <MapOpenApiRef Cell="C15">components.parameters.toDate/@location</MapOpenApiRef>
+    <MapOpenApiRef Cell="D15">components.parameters.toDate/@serialization</MapOpenApiRef>
+    <MapOpenApiRef Cell="E15">components.parameters.toDate/@type</MapOpenApiRef>
+    <MapOpenApiRef Cell="F15">components.parameters.toDate/@objecttype</MapOpenApiRef>
+    <MapOpenApiRef Cell="G15">components.parameters.toDate/@format</MapOpenApiRef>
+    <MapOpenApiRef Cell="H15">components.parameters.toDate/@length</MapOpenApiRef>
+    <MapOpenApiRef Cell="I15">components.parameters.toDate/@required</MapOpenApiRef>
+    <MapOpenApiRef Cell="J15">components.parameters.toDate/@nullable</MapOpenApiRef>
+    <MapOpenApiRef Cell="K15">components.parameters.toDate/@range</MapOpenApiRef>
+    <MapOpenApiRef Cell="L15">components.parameters.toDate/@pattern</MapOpenApiRef>
+    <MapOpenApiRef Cell="M15">components.parameters.toDate/@enum</MapOpenApiRef>
+    <MapOpenApiRef Cell="N15">components.parameters.toDate/@deprecated</MapOpenApiRef>
+    <MapOpenApiRef Cell="O15">components.parameters.toDate/@default</MapOpenApiRef>
+    <MapOpenApiRef Cell="P15">components.parameters.toDate/@example</MapOpenApiRef>
+    <MapOpenApiRef Cell="Q15">components.parameters.toDate/@description</MapOpenApiRef>
+    <MapOpenApiRef Row="16">components.parameters.vacantDutyGradeTypeCategoryId</MapOpenApiRef>
+    <MapOpenApiRef Cell="A16">components.parameters.vacantDutyGradeTypeCategoryId/@name</MapOpenApiRef>
+    <MapOpenApiRef Cell="C16">components.parameters.vacantDutyGradeTypeCategoryId/@location</MapOpenApiRef>
+    <MapOpenApiRef Cell="D16">components.parameters.vacantDutyGradeTypeCategoryId/@serialization</MapOpenApiRef>
+    <MapOpenApiRef Cell="E16">components.parameters.vacantDutyGradeTypeCategoryId/@type</MapOpenApiRef>
+    <MapOpenApiRef Cell="F16">components.parameters.vacantDutyGradeTypeCategoryId/@objecttype</MapOpenApiRef>
+    <MapOpenApiRef Cell="G16">components.parameters.vacantDutyGradeTypeCategoryId/@format</MapOpenApiRef>
+    <MapOpenApiRef Cell="H16">components.parameters.vacantDutyGradeTypeCategoryId/@length</MapOpenApiRef>
+    <MapOpenApiRef Cell="I16">components.parameters.vacantDutyGradeTypeCategoryId/@required</MapOpenApiRef>
+    <MapOpenApiRef Cell="J16">components.parameters.vacantDutyGradeTypeCategoryId/@nullable</MapOpenApiRef>
+    <MapOpenApiRef Cell="K16">components.parameters.vacantDutyGradeTypeCategoryId/@range</MapOpenApiRef>
+    <MapOpenApiRef Cell="L16">components.parameters.vacantDutyGradeTypeCategoryId/@pattern</MapOpenApiRef>
+    <MapOpenApiRef Cell="M16">components.parameters.vacantDutyGradeTypeCategoryId/@enum</MapOpenApiRef>
+    <MapOpenApiRef Cell="N16">components.parameters.vacantDutyGradeTypeCategoryId/@deprecated</MapOpenApiRef>
+    <MapOpenApiRef Cell="O16">components.parameters.vacantDutyGradeTypeCategoryId/@default</MapOpenApiRef>
+    <MapOpenApiRef Cell="P16">components.parameters.vacantDutyGradeTypeCategoryId/@example</MapOpenApiRef>
+    <MapOpenApiRef Cell="Q16">components.parameters.vacantDutyGradeTypeCategoryId/@description</MapOpenApiRef>
+    <MapOpenApiRef Row="17">components.parameters.vacantDutyGradeTypeId</MapOpenApiRef>
+    <MapOpenApiRef Cell="A17">components.parameters.vacantDutyGradeTypeId/@name</MapOpenApiRef>
+    <MapOpenApiRef Cell="C17">components.parameters.vacantDutyGradeTypeId/@location</MapOpenApiRef>
+    <MapOpenApiRef Cell="D17">components.parameters.vacantDutyGradeTypeId/@serialization</MapOpenApiRef>
+    <MapOpenApiRef Cell="E17">components.parameters.vacantDutyGradeTypeId/@type</MapOpenApiRef>
+    <MapOpenApiRef Cell="F17">components.parameters.vacantDutyGradeTypeId/@objecttype</MapOpenApiRef>
+    <MapOpenApiRef Cell="G17">components.parameters.vacantDutyGradeTypeId/@format</MapOpenApiRef>
+    <MapOpenApiRef Cell="H17">components.parameters.vacantDutyGradeTypeId/@length</MapOpenApiRef>
+    <MapOpenApiRef Cell="I17">components.parameters.vacantDutyGradeTypeId/@required</MapOpenApiRef>
+    <MapOpenApiRef Cell="J17">components.parameters.vacantDutyGradeTypeId/@nullable</MapOpenApiRef>
+    <MapOpenApiRef Cell="K17">components.parameters.vacantDutyGradeTypeId/@range</MapOpenApiRef>
+    <MapOpenApiRef Cell="L17">components.parameters.vacantDutyGradeTypeId/@pattern</MapOpenApiRef>
+    <MapOpenApiRef Cell="M17">components.parameters.vacantDutyGradeTypeId/@enum</MapOpenApiRef>
+    <MapOpenApiRef Cell="N17">components.parameters.vacantDutyGradeTypeId/@deprecated</MapOpenApiRef>
+    <MapOpenApiRef Cell="O17">components.parameters.vacantDutyGradeTypeId/@default</MapOpenApiRef>
+    <MapOpenApiRef Cell="P17">components.parameters.vacantDutyGradeTypeId/@example</MapOpenApiRef>
+    <MapOpenApiRef Cell="Q17">components.parameters.vacantDutyGradeTypeId/@description</MapOpenApiRef>
+    <MapOpenApiRef Row="18">components.parameters.vacantDutyGradeId</MapOpenApiRef>
+    <MapOpenApiRef Cell="A18">components.parameters.vacantDutyGradeId/@name</MapOpenApiRef>
+    <MapOpenApiRef Cell="C18">components.parameters.vacantDutyGradeId/@location</MapOpenApiRef>
+    <MapOpenApiRef Cell="D18">components.parameters.vacantDutyGradeId/@serialization</MapOpenApiRef>
+    <MapOpenApiRef Cell="E18">components.parameters.vacantDutyGradeId/@type</MapOpenApiRef>
+    <MapOpenApiRef Cell="F18">components.parameters.vacantDutyGradeId/@objecttype</MapOpenApiRef>
+    <MapOpenApiRef Cell="G18">components.parameters.vacantDutyGradeId/@format</MapOpenApiRef>
+    <MapOpenApiRef Cell="H18">components.parameters.vacantDutyGradeId/@length</MapOpenApiRef>
+    <MapOpenApiRef Cell="I18">components.parameters.vacantDutyGradeId/@required</MapOpenApiRef>
+    <MapOpenApiRef Cell="J18">components.parameters.vacantDutyGradeId/@nullable</MapOpenApiRef>
+    <MapOpenApiRef Cell="K18">components.parameters.vacantDutyGradeId/@range</MapOpenApiRef>
+    <MapOpenApiRef Cell="L18">components.parameters.vacantDutyGradeId/@pattern</MapOpenApiRef>
+    <MapOpenApiRef Cell="M18">components.parameters.vacantDutyGradeId/@enum</MapOpenApiRef>
+    <MapOpenApiRef Cell="N18">components.parameters.vacantDutyGradeId/@deprecated</MapOpenApiRef>
+    <MapOpenApiRef Cell="O18">components.parameters.vacantDutyGradeId/@default</MapOpenApiRef>
+    <MapOpenApiRef Cell="P18">components.parameters.vacantDutyGradeId/@example</MapOpenApiRef>
+    <MapOpenApiRef Cell="Q18">components.parameters.vacantDutyGradeId/@description</MapOpenApiRef>
+    <MapOpenApiRef Row="20">paths./{tenant}/duties/vacant.get.responseBody</MapOpenApiRef>
+    <MapOpenApiRef Row="21">paths./{tenant}/duties/vacant.get.responseBody.200</MapOpenApiRef>
+    <MapOpenApiRef Row="22">paths./{tenant}/duties/vacant.get.responses.200/@bodyformat</MapOpenApiRef>
+    <MapOpenApiRef Row="23">paths./{tenant}/duties/vacant.get.responses.200/SchemaDescriptionHeader</MapOpenApiRef>
+    <MapOpenApiRef Cell="A24">paths./{tenant}/duties/vacant.get.responses.200.duties/@name</MapOpenApiRef>
+    <MapOpenApiRef Row="24">paths./{tenant}/duties/vacant.get.responses.200.duties</MapOpenApiRef>
+    <MapOpenApiRef Cell="E24">paths./{tenant}/duties/vacant.get.responses.200.duties/@type</MapOpenApiRef>
+    <MapOpenApiRef Cell="F24">paths./{tenant}/duties/vacant.get.responses.200.duties/@objecttype</MapOpenApiRef>
+    <MapOpenApiRef Cell="G24">paths./{tenant}/duties/vacant.get.responses.200.duties/@format</MapOpenApiRef>
+    <MapOpenApiRef Cell="H24">paths./{tenant}/duties/vacant.get.responses.200.duties/@length</MapOpenApiRef>
+    <MapOpenApiRef Cell="I24">paths./{tenant}/duties/vacant.get.responses.200.duties/@required</MapOpenApiRef>
+    <MapOpenApiRef Cell="J24">paths./{tenant}/duties/vacant.get.responses.200.duties/@nullable</MapOpenApiRef>
+    <MapOpenApiRef Cell="K24">paths./{tenant}/duties/vacant.get.responses.200.duties/@range</MapOpenApiRef>
+    <MapOpenApiRef Cell="L24">paths./{tenant}/duties/vacant.get.responses.200.duties/@pattern</MapOpenApiRef>
+    <MapOpenApiRef Cell="M24">paths./{tenant}/duties/vacant.get.responses.200.duties/@enum</MapOpenApiRef>
+    <MapOpenApiRef Cell="N24">paths./{tenant}/duties/vacant.get.responses.200.duties/@deprecated</MapOpenApiRef>
+    <MapOpenApiRef Cell="O24">paths./{tenant}/duties/vacant.get.responses.200.duties/@default</MapOpenApiRef>
+    <MapOpenApiRef Cell="P24">paths./{tenant}/duties/vacant.get.responses.200.duties/@example</MapOpenApiRef>
+    <MapOpenApiRef Cell="Q24">paths./{tenant}/duties/vacant.get.responses.200.duties/@description</MapOpenApiRef>
+    <MapOpenApiRef Cell="B25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@name</MapOpenApiRef>
+    <MapOpenApiRef Row="25">paths./{tenant}/duties/vacant.get.responses.200.duties.value</MapOpenApiRef>
+    <MapOpenApiRef Cell="E25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@type</MapOpenApiRef>
+    <MapOpenApiRef Cell="F25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@objecttype</MapOpenApiRef>
+    <MapOpenApiRef Cell="G25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@format</MapOpenApiRef>
+    <MapOpenApiRef Cell="H25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@length</MapOpenApiRef>
+    <MapOpenApiRef Cell="I25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@required</MapOpenApiRef>
+    <MapOpenApiRef Cell="J25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@nullable</MapOpenApiRef>
+    <MapOpenApiRef Cell="K25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@range</MapOpenApiRef>
+    <MapOpenApiRef Cell="L25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@pattern</MapOpenApiRef>
+    <MapOpenApiRef Cell="M25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@enum</MapOpenApiRef>
+    <MapOpenApiRef Cell="N25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@deprecated</MapOpenApiRef>
+    <MapOpenApiRef Cell="O25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@default</MapOpenApiRef>
+    <MapOpenApiRef Cell="P25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@example</MapOpenApiRef>
+    <MapOpenApiRef Cell="Q25">paths./{tenant}/duties/vacant.get.responses.200.duties.value/@description</MapOpenApiRef>
+    <MapOpenApiRef Row="27">paths./{tenant}/duties/vacant.get.responseBody.400</MapOpenApiRef>
+    <MapOpenApiRef Row="28">paths./{tenant}/duties/vacant.get.responseBody.404</MapOpenApiRef>
+    <MapOpenApiRef Row="29">paths./{tenant}/duties/vacant.get.responseBody.500</MapOpenApiRef>
 </OpenApiMappings>

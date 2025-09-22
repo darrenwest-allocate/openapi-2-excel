@@ -38,11 +38,11 @@ public class WorksheetOpenApiMapping
 					.Union(
 						mapping.Mappings.Select(m =>
 						{
-							return new XElement("Mapping", 
+							return new XElement("MapOpenApiRef", 
 								m.Row > 0
-									? new XElement("Row", m.Row)
-									: new XElement("Cell", m.Cell),
-								new XElement("OpenApiRef", m.OpenApiRef)
+									? new XAttribute("Row", m.Row)
+									: new XAttribute("Cell", m.Cell),
+								new XText(m.OpenApiRef)
 							);
 						}))
 					)
