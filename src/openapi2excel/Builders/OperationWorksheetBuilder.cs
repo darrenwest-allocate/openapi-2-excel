@@ -21,6 +21,10 @@ public class OperationWorksheetBuilder : WorksheetBuilder
       _workbook = workbook;
    }
 
+   public static List<OperationWorksheetBuilder> OperationWorksheets { get; } = [];
+
+   public string Name => _worksheet.Name;
+
    public WorksheetOpenApiMapping WorksheetMapping => _worksheetMapping!;
 
    public IXLWorksheet Build(string path, OpenApiPathItem pathItem, OperationType operationType,
@@ -28,6 +32,8 @@ public class OperationWorksheetBuilder : WorksheetBuilder
    {
       var worksheetName = GetWorksheetName(path, operation, operationType);
       CreateNewWorksheet(worksheetName);
+      OperationWorksheets.Add(this);
+
       _actualRowPointer.GoTo(1);
 
       _attributesColumnsStartIndex = MaxPropertiesTreeLevel.Calculate(operation, Options.MaxDepth);
@@ -113,22 +119,18 @@ public class OperationWorksheetBuilder : WorksheetBuilder
       _worksheet.LastColumnUsed()?.AdjustToContents();
    }
 
-
    private void AddOperationInfos(string path, OpenApiPathItem pathItem, OperationType operationType,
       OpenApiOperation operation) =>
    new OperationInfoBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
       .AddOperationInfoSection(path, pathItem, operationType, operation, _worksheetMapping!.Mappings);
 
-
    private void AddRequestParameters(OpenApiOperation operation) =>
       new RequestParametersBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
          .AddRequestParametersPart(operation);
 
-
    private void AddRequestBody(OpenApiOperation operation) =>
       new RequestBodyBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
          .AddRequestBodyPart(operation);
-
 
    private void AddResponseBody(OpenApiOperation operation) =>
       new ResponseBodyBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
