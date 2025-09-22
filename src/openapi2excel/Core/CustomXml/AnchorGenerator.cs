@@ -1,6 +1,6 @@
 using Microsoft.OpenApi.Models;
 
-namespace OpenApi2Excel.Core.CustomXml;
+namespace openapi2excel.core.CustomXML;
 
 /// <summary>
 /// Generates referenceable OpenAPI JSON anchors for mapping Excel cells to their OpenAPI source.
