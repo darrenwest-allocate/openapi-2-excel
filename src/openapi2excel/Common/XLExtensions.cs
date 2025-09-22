@@ -67,17 +67,26 @@ internal static class XLExtensions
       return cell;
    }
 
-   public static IXLCell MapRow(this IXLCell cell, string mappingAnchor)
+   public static IXLCell MapRow(this IXLCell cell, Anchor mappingAnchor)
    {
       var mappings = OperationWorksheetBuilder.OperationWorksheets
          .FirstOrDefault(w => w.Name == cell.Worksheet.Name)?.WorksheetMapping.Mappings;
 
-      mappings?.Add(new CellOpenApiMapping() { Row = cell.WorksheetRow().RowNumber(), Cell = cell.Address.ToString() ?? string.Empty, OpenApiRef = mappingAnchor });
+      mappings?.Add(new CellOpenApiMapping() { Row = cell.WorksheetRow().RowNumber(), Cell = cell.Address.ToString() ?? string.Empty, OpenApiRef = mappingAnchor.ToString() });
       return cell;
    }
 
-   public static IXLCell MapRowWithDetail(this IXLCell cell, string mappingAnchor)
+   public static IXLCell MapRowWithDetail(this IXLCell cell, Anchor mappingAnchor)
    {
-      return MapRow(cell, AnchorGenerator.AppendDetailToAnchor(mappingAnchor, cell.GetText()));
+      return MapRow(cell, AnchorGenerator.AppendDetailToAnchor(mappingAnchor, cell.GetText() ?? string.Empty));
+   }
+
+   public static IXLCell MapTableCell(this IXLCell cell, Anchor mappingAnchor, string columnName)
+   {
+      var mappings = OperationWorksheetBuilder.OperationWorksheets
+         .FirstOrDefault(w => w.Name == cell.Worksheet.Name)?.WorksheetMapping.Mappings;
+
+      mappings?.Add(new CellOpenApiMapping() { Cell = cell.Address.ToString() ?? string.Empty, OpenApiRef = $"{mappingAnchor}/@{columnName.Replace(" ", string.Empty).ToLowerInvariant()}" });
+      return cell;
    }
 }

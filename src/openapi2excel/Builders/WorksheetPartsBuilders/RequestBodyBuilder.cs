@@ -2,6 +2,7 @@ using ClosedXML.Excel;
 using Microsoft.OpenApi.Models;
 using openapi2excel.core.Builders.WorksheetPartsBuilders.Common;
 using openapi2excel.core.Common;
+using openapi2excel.core.CustomXML;
 
 namespace openapi2excel.core.Builders.WorksheetPartsBuilders;
 
@@ -11,18 +12,22 @@ internal class RequestBodyBuilder(
    IXLWorksheet worksheet,
    OpenApiDocumentationOptions options) : WorksheetPartBuilder(actualRow, worksheet, options)
 {
-   public void AddRequestBodyPart(OpenApiOperation operation)
+   public void AddRequestBodyPart(OpenApiOperation operation, Anchor anchor)
    {
       if (operation.RequestBody is null)
          return;
 
-      Cell(1).SetTextBold("REQUEST");
+      Cell(1).SetTextBold(WorksheetLanguage.Request.Title)
+         .MapRowWithDetail(AnchorGenerator.GenerateParameterAnchor("/Title"));
+
       ActualRow.MoveNext();
+
+      var mappingAnchor = AnchorGenerator.GenerateRequestBodyAnchor(anchor);
 
       using (var _ = new Section(Worksheet, ActualRow))
       {
          var builder = new PropertiesTreeBuilder(attributesColumnIndex, Worksheet, Options);
-         builder.AddPropertiesTreeForMediaTypes(ActualRow, operation.RequestBody.Content, Options);
+         builder.AddPropertiesTreeForMediaTypes(ActualRow, operation.RequestBody.Content, Options, mappingAnchor);
          ActualRow.MovePrev();
       }
 

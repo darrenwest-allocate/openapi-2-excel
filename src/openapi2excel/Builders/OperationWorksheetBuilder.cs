@@ -45,12 +45,12 @@ public class OperationWorksheetBuilder : WorksheetBuilder
          Worksheet = worksheetName,
          Mappings = []
       };
-
+      var anchor = AnchorGenerator.GenerateOperationAnchor(path, operationType);
       AddHomePageLink();
       AddOperationInfos(path, pathItem, operationType, operation);
-      AddRequestParameters(operation);
-      AddRequestBody(operation);
-      AddResponseBody(operation);
+      AddRequestParameters(operation, anchor);
+      AddRequestBody(operation, anchor);
+      AddResponseBody(operation, anchor);
       AdjustLastNamesColumnToContents();
       AdjustDescriptionColumnToContents();
 
@@ -124,17 +124,17 @@ public class OperationWorksheetBuilder : WorksheetBuilder
    new OperationInfoBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
       .AddOperationInfoSection(path, pathItem, operationType, operation, _worksheetMapping!.Mappings);
 
-   private void AddRequestParameters(OpenApiOperation operation) =>
+   private void AddRequestParameters(OpenApiOperation operation, Anchor anchor) =>
       new RequestParametersBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
-         .AddRequestParametersPart(operation);
+         .AddRequestParametersPart(operation, anchor);
 
-   private void AddRequestBody(OpenApiOperation operation) =>
+   private void AddRequestBody(OpenApiOperation operation, Anchor anchor) =>
       new RequestBodyBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
-         .AddRequestBodyPart(operation);
+         .AddRequestBodyPart(operation, anchor);
 
-   private void AddResponseBody(OpenApiOperation operation) =>
+   private void AddResponseBody(OpenApiOperation operation, Anchor anchor) =>
       new ResponseBodyBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
-         .AddResponseBodyPart(operation);
+         .AddResponseBodyPart(operation, anchor);
 
    private void AddHomePageLink() => new HomePageLinkBuilder(_actualRowPointer, _worksheet, Options)
       .AddHomePageLinkSection();

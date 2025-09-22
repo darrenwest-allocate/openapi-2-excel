@@ -16,21 +16,21 @@ internal class OperationInfoBuilder(
    public void AddOperationInfoSection(string path, OpenApiPathItem pathItem, OperationType operationType,
       OpenApiOperation operation, List<CellOpenApiMapping> mappings)
    {
-      Cell(1).SetTextBold("OPERATION INFORMATION");
+   Cell(1).SetTextBold(WorksheetLanguage.Operations.Heading);
       ActualRow.MoveNext();
 
-      string mappingAnchor = AnchorGenerator.GenerateOperationInfoAnchor(path, pathItem, operationType, operation); 
+      Anchor mappingAnchor = AnchorGenerator.GenerateOperationInfoAnchor(path, pathItem, operationType, operation); 
 
       using (var _ = new Section(Worksheet, ActualRow))
       {
-         var cell = Cell(1).SetTextBold("Operation type").CellRight(attributesColumnIndex).SetText(operationType.ToString().ToUpper()).MapRow(mappingAnchor)
-            .IfNotEmpty(operation.OperationId, c => c.NextRow().SetTextBold("Id").MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(operation.OperationId))
-            .NextRow().SetTextBold("Path").MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(path)
-            .IfNotEmpty(pathItem.Description, c => c.NextRow().SetTextBold("Path description").MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(pathItem.Description))
-            .IfNotEmpty(pathItem.Summary, c => c.NextRow().SetTextBold("Path summary").MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(pathItem.Summary))
-            .IfNotEmpty(operation.Description, c => c.NextRow().SetTextBold("Operation description").MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(operation.Description))
-            .IfNotEmpty(operation.Summary, c => c.NextRow().SetTextBold("Operation summary").MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(operation.Summary))
-            .NextRow().SetTextBold("Deprecated").MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(Options.Language.Get(operation.Deprecated));
+         var cell = Cell(1).SetTextBold(WorksheetLanguage.Operations.OperationType).CellRight(attributesColumnIndex).SetText(operationType.ToString().ToUpper()).MapRow(mappingAnchor)
+            .IfNotEmpty(operation.OperationId, c => c.NextRow().SetTextBold(WorksheetLanguage.Operations.Id).MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(operation.OperationId))
+            .NextRow().SetTextBold(WorksheetLanguage.Operations.Path).MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(path)
+            .IfNotEmpty(pathItem.Description, c => c.NextRow().SetTextBold(WorksheetLanguage.Operations.PathDescription).MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(pathItem.Description))
+            .IfNotEmpty(pathItem.Summary, c => c.NextRow().SetTextBold(WorksheetLanguage.Operations.PathSummary).MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(pathItem.Summary))
+            .IfNotEmpty(operation.Description, c => c.NextRow().SetTextBold(WorksheetLanguage.Operations.OperationDescription).MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(operation.Description))
+            .IfNotEmpty(operation.Summary, c => c.NextRow().SetTextBold(WorksheetLanguage.Operations.OperationSummary).MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(operation.Summary))
+            .NextRow().SetTextBold(WorksheetLanguage.Operations.Deprecated).MapRowWithDetail(mappingAnchor).CellRight(attributesColumnIndex).SetText(Options.Language.Get(operation.Deprecated));
 
          ActualRow.GoTo(cell.Address.RowNumber);
       }
