@@ -3,14 +3,35 @@ namespace openapi2excel.core;
 public class OpenApiDocumentationOptions
 {
    private OpenApiDocumentationLanguage? _language;
+	private bool includeMappings = true;
 
-   public OpenApiDocumentationLanguage Language
+	public OpenApiDocumentationLanguage Language
    {
       get => _language ?? OpenApiDocumentationLanguage.Default;
       set => _language = value;
    }
 
     public int MaxDepth { get; set; } = 10;
+
+	/// <summary>
+	/// File path to an existing Excel file from which to preserve threaded comments.
+	/// </summary>
+	public string FilepathToPreserveComments { get; set; } = string.Empty;
+
+	/// <summary>
+	/// Add to the workbook custom XML part the mapping information between Excel cells and OpenAPI references.
+	/// </summary>
+	public bool IncludeMappings
+	{
+		get
+		{
+			return includeMappings || (FilepathToPreserveComments == string.Empty);
+		}
+		set
+		{
+			includeMappings = value;
+		}
+	}
 }
 
 // TODO: Create language helper and refactor all text usage

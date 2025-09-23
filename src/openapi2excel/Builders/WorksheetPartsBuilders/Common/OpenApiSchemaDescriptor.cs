@@ -1,5 +1,6 @@
 using ClosedXML.Excel;
 using Microsoft.OpenApi.Models;
+using openapi2excel.core.Builders.CustomXml;
 using openapi2excel.core.Common;
 
 namespace openapi2excel.core.Builders.WorksheetPartsBuilders.Common;
@@ -9,13 +10,13 @@ internal class OpenApiSchemaDescriptor(IXLWorksheet worksheet, OpenApiDocumentat
    public int AddNameHeader(RowPointer actualRow, int startColumn)
       => worksheet.Cell(actualRow, startColumn).SetTextBold("Name").GetColumnNumber();
 
-   public int AddNameValue(string name, int actualRow, int startColumn, CustomXML.Anchor mappingAnchor)
+   public int AddNameValue(string name, int actualRow, int startColumn, Anchor mappingAnchor)
       => worksheet.Cell(actualRow, startColumn).SetText(name)
          .MapTableCell(mappingAnchor, WorksheetLanguage.Generic.Name)
          .MapRow(mappingAnchor)
          .GetColumnNumber();
 
-   public int AddSchemaDescriptionHeader(RowPointer actualRow, int startColumn, CustomXML.Anchor mappingAnchor)
+   public int AddSchemaDescriptionHeader(RowPointer actualRow, int startColumn, Anchor mappingAnchor)
    {
       var cell = worksheet.Cell(actualRow, startColumn).SetTextBold("Type")
          .CellRight().SetTextBold("Object type")
@@ -34,7 +35,7 @@ internal class OpenApiSchemaDescriptor(IXLWorksheet worksheet, OpenApiDocumentat
       return cell.GetColumnNumber();
    }
 
-   public int AddSchemaDescriptionValues(OpenApiSchema schema, bool required, RowPointer actualRow, int startColumn, CustomXML.Anchor mappingAnchor, string? description = null, bool includeArrayItemType = false)
+   public int AddSchemaDescriptionValues(OpenApiSchema schema, bool required, RowPointer actualRow, int startColumn, Anchor mappingAnchor, string? description = null, bool includeArrayItemType = false)
    {
       if (schema.Items != null && includeArrayItemType)
       {

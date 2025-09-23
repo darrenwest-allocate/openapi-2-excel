@@ -5,7 +5,7 @@ using System.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml;
 
-namespace openapi2excel.core.CustomXML;
+namespace openapi2excel.core.Builders.CustomXml;
 
 public static class ExcelCustomXmlHelper
 {

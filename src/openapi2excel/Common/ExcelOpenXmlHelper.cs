@@ -5,7 +5,7 @@ using System.Xml.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments;
-using openapi2excel.core.CustomXML;
+using openapi2excel.core.Builders.CustomXml;
 
 namespace openapi2excel.core.Common;
 

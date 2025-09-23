@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments;
 
-namespace openapi2excel.core.CustomXML;
+namespace openapi2excel.core.Builders.CustomXml;
 
 /// <summary>
 /// Data structure to capture threaded comment with its worksheet context and OpenAPI mapping information.

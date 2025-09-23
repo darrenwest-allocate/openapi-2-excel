@@ -1,6 +1,6 @@
 using ClosedXML.Excel;
 using openapi2excel.core.Builders;
-using openapi2excel.core.CustomXML;
+using openapi2excel.core.Builders.CustomXml;
 
 namespace openapi2excel.core.Common;
 

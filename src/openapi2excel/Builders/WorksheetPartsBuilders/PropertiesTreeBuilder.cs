@@ -1,8 +1,8 @@
 using ClosedXML.Excel;
 using Microsoft.OpenApi.Models;
+using openapi2excel.core.Builders.CustomXml;
 using openapi2excel.core.Builders.WorksheetPartsBuilders.Common;
 using openapi2excel.core.Common;
-using openapi2excel.core.CustomXML;
 
 namespace openapi2excel.core.Builders.WorksheetPartsBuilders;
 
@@ -17,7 +17,7 @@ internal class PropertiesTreeBuilder(
    private RowPointer ActualRow { get; set; } = null!;
    protected XLColor HeaderBackgroundColor => XLColor.LightGray;
 
-   public void AddPropertiesTreeForMediaTypes(RowPointer actualRow, IDictionary<string, OpenApiMediaType> mediaTypes, OpenApiDocumentationOptions options, CustomXML.Anchor mappingAnchor)
+   public void AddPropertiesTreeForMediaTypes(RowPointer actualRow, IDictionary<string, OpenApiMediaType> mediaTypes, OpenApiDocumentationOptions options, Anchor mappingAnchor)
    {
       ActualRow = actualRow;
       foreach (var mediaType in mediaTypes)
@@ -44,7 +44,7 @@ internal class PropertiesTreeBuilder(
       }
    }
 
-   public int AddPropertiesTree(RowPointer actualRow, OpenApiSchema schema, OpenApiDocumentationOptions options, CustomXML.Anchor mappingAnchor)
+   public int AddPropertiesTree(RowPointer actualRow, OpenApiSchema schema, OpenApiDocumentationOptions options, Anchor mappingAnchor)
    {
       ActualRow = actualRow;
       var columnCount = AddSchemaDescriptionHeader(mappingAnchor);
@@ -53,7 +53,7 @@ internal class PropertiesTreeBuilder(
       return columnCount;
    }
 
-   protected bool CorrectRootElementIfArray(OpenApiSchema schema, CustomXML.Anchor mappingAnchor)
+   protected bool CorrectRootElementIfArray(OpenApiSchema schema, Anchor mappingAnchor)
    {
       if (schema.Items == null)
          return false;
@@ -62,7 +62,7 @@ internal class PropertiesTreeBuilder(
       return true;
    }
 
-   protected void AddProperties(OpenApiSchema? schema, int level, OpenApiDocumentationOptions options, CustomXML.Anchor mappingAnchor)
+   protected void AddProperties(OpenApiSchema? schema, int level, OpenApiDocumentationOptions options, Anchor mappingAnchor)
    {
       if (schema == null)
          return;
@@ -116,7 +116,7 @@ internal class PropertiesTreeBuilder(
       }
    }
 
-   private void AddPropertiesForArray(OpenApiSchema schema, int level, OpenApiDocumentationOptions options, CustomXML.Anchor mappingAnchor)
+   private void AddPropertiesForArray(OpenApiSchema schema, int level, OpenApiDocumentationOptions options, Anchor mappingAnchor)
    {
       if (schema.Items.Properties.Any() || schema.Items.AllOf.Any() || schema.Items.AnyOf.Any() || schema.Items.OneOf.Any())
       {
@@ -130,7 +130,7 @@ internal class PropertiesTreeBuilder(
       }
    }
 
-   protected void AddProperty(string name, OpenApiSchema? schema, bool required, int level, OpenApiDocumentationOptions options, CustomXML.Anchor mappingAnchor)
+   protected void AddProperty(string name, OpenApiSchema? schema, bool required, int level, OpenApiDocumentationOptions options, Anchor mappingAnchor)
    {
       if (schema == null || level >= options.MaxDepth)
       {
@@ -141,7 +141,7 @@ internal class PropertiesTreeBuilder(
       AddProperties(schema, level, options, AnchorGenerator.GeneratePropertyAnchor(mappingAnchor, name));
    }
 
-   private void AddPropertyRow(string propertyName, OpenApiSchema propertySchema, bool required, int propertyLevel, CustomXML.Anchor mappingAnchor)
+   private void AddPropertyRow(string propertyName, OpenApiSchema propertySchema, bool required, int propertyLevel, Anchor mappingAnchor)
    {
       const int startColumn = 1;
       Worksheet.Cell(ActualRow, startColumn).SetBackground(propertyLevel - 1, HeaderBackgroundColor);

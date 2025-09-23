@@ -6,7 +6,7 @@ using System.Linq;
 using System.Xml.Linq;
 using openapi2excel.core;
 using openapi2excel.core.Builders;
-using openapi2excel.core.CustomXML;
+using openapi2excel.core.Builders.CustomXml;
 using Microsoft.OpenApi.Readers;
 using ClosedXML.Excel;
 
@@ -92,11 +92,15 @@ public class OpenApiDocumentationGeneratorTest
   }
 
   [Fact]
-  public void Generated_excel_file_records_mappings_in_custom_xml_for_openapi()
-  { 
+  public async Task Generated_excel_file_records_mappings_in_custom_xml_for_openapi()
+  {
+		const string openApiFile = "Sample/sample-api-gw.json";
+		const string outputFile = "output-with-mappings.xlsx";
+		await using var file = File.OpenRead(openApiFile);
 
-
-  }
+		await OpenApiDocumentationGenerator.GenerateDocumentation(file, outputFile, new OpenApiDocumentationOptions() { IncludeMappings = true });
+		Assert.True(File.Exists(outputFile));
+	}
 
 }
 
