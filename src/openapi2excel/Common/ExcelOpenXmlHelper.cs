@@ -18,9 +18,6 @@ public static class ExcelOpenXmlHelper
     /// <summary>
     /// Gets the name of a worksheet from its WorksheetPart.
     /// </summary>
-    /// <param name="workbookPart">The workbook part containing the worksheet</param>
-    /// <param name="worksheetPart">The worksheet part to get the name for</param>
-    /// <returns>The worksheet name or "Unknown" if not found</returns>
     public static string GetWorksheetName(WorkbookPart workbookPart, WorksheetPart worksheetPart)
     {
         var relationshipId = workbookPart.GetIdOfPart(worksheetPart);
@@ -32,8 +29,6 @@ public static class ExcelOpenXmlHelper
     /// <summary>
     /// Gets all worksheet names from a workbook.
     /// </summary>
-    /// <param name="workbookPart">The workbook part to get worksheet names from</param>
-    /// <returns>List of all worksheet names in the workbook</returns>
     public static List<string> GetAllWorksheetNames(WorkbookPart workbookPart)
     {
         var worksheetNames = new List<string>();
@@ -50,8 +45,6 @@ public static class ExcelOpenXmlHelper
     /// <summary>
     /// Gets all worksheet names from an Excel file.
     /// </summary>
-    /// <param name="filePath">Path to the Excel file</param>
-    /// <returns>List of all worksheet names in the workbook</returns>
     public static List<string> GetAllWorksheetNames(string filePath)
     {
         using var document = SpreadsheetDocument.Open(filePath, false);
@@ -115,7 +108,7 @@ public static class ExcelOpenXmlHelper
             foreach (var comment in unresolvedComments)
             {
                 var mapping = mappings.FirstOrDefault(m =>
-                    m.Worksheet.Equals(comment.WorksheetName, StringComparison.OrdinalIgnoreCase))
+                    m.WorksheetName.Equals(comment.WorksheetName, StringComparison.OrdinalIgnoreCase))
                     ?.Mappings.FirstOrDefault(cellMapping =>
                         cellMapping.Cell.Equals(comment.CellReference, StringComparison.OrdinalIgnoreCase));
 
@@ -127,7 +120,7 @@ public static class ExcelOpenXmlHelper
                 {
                     // try to map on the row
                     mapping = mappings.FirstOrDefault(m =>
-                        m.Worksheet.Equals(comment.WorksheetName, StringComparison.OrdinalIgnoreCase))
+                        m.WorksheetName.Equals(comment.WorksheetName, StringComparison.OrdinalIgnoreCase))
                         ?.Mappings.FirstOrDefault(cellMapping =>
                             cellMapping.Row.Equals(RowForCellReference(comment.CellReference)));
                     if (mapping != null)
@@ -135,8 +128,6 @@ public static class ExcelOpenXmlHelper
                         comment.OpenApiAnchor = mapping.OpenApiRef;
                     }
                 }
-
-
             }
         }
 
@@ -155,23 +146,19 @@ public static class ExcelOpenXmlHelper
     /// <summary>
     /// Extracts unresolved threaded comments and annotates them with OpenAPI anchors from custom XML mappings.
     /// </summary>
-    /// <param name="filePath">Path to the Excel workbook</param>
-    /// <returns>List of unresolved threaded comments annotated with OpenAPI anchors where available</returns>
     public static List<ThreadedCommentWithContext> ExtractAndAnnotateUnresolvedComments(string filePath)
     {
         return ExtractUnresolvedThreadedCommentsFromWorkbook(filePath, annotateWithOpenApiAnchors: true);
     }
 
     /// <summary>
-/// Extracts custom XML mappings from workbook using the existing ExcelCustomXmlHelper infrastructure
-/// </summary>
-/// <param name="filePath">Path to the Excel workbook</param>
-/// <returns>List of worksheet mappings with OpenAPI anchors</returns>
-    private static List<WorksheetOpenApiMapping> ExtractCustomXmlMappingsFromWorkbook(string filePath)
+    /// Extracts custom XML mappings from workbook using the existing ExcelCustomXmlHelper infrastructure
+    /// </summary>
+    public static List<WorksheetOpenApiMapping> ExtractCustomXmlMappingsFromWorkbook(string filePath)
     {
         var worksheetMappings = new List<WorksheetOpenApiMapping>();
 
-        using (var document = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Open(filePath, false))
+        using (var document = SpreadsheetDocument.Open(filePath, false))
         {
             var workbookPart = document.WorkbookPart;
             if (workbookPart == null) return worksheetMappings;
@@ -190,19 +177,15 @@ public static class ExcelOpenXmlHelper
 
                     if (cellMappings.Any())
                     {
-                        worksheetMappings.Add(new WorksheetOpenApiMapping
-                        {
-                            Worksheet = worksheetName,
-                            Mappings = cellMappings
-                        });
+                        worksheetMappings.Add(new WorksheetOpenApiMapping(worksheetName) { Mappings = cellMappings });
                     }
                 }
-                catch (System.IO.FileNotFoundException)
+                catch (FileNotFoundException)
                 {
                     // Skip worksheets that don't have custom XML mappings
                     continue;
                 }
-                catch (System.InvalidOperationException)
+                catch (InvalidOperationException)
                 {
                     // Skip worksheets that can't be processed due to invalid operation
                     continue;
@@ -226,27 +209,19 @@ public static class ExcelOpenXmlHelper
     private static List<CellOpenApiMapping> ParseCustomXmlContent(string xmlContent)
     {
         var mappings = new List<CellOpenApiMapping>();
-
         try
         {
-            var doc = XDocument.Parse(xmlContent);
-
-            // Look for mapping elements according to the existing structure
-            var mappingElements = doc.Descendants("Mapping");
-
-            foreach (var mapping in mappingElements)
+            var mappingElements = XDocument.Parse(xmlContent).Descendants("MapOpenApiRef");
+            foreach (var element in mappingElements)
             {
-                var worksheet = mapping.Element("Worksheet")?.Value;
-                var cell = mapping.Element("Cell")?.Value;
-                var openApiRef = mapping.Element("OpenApiRef")?.Value;
-
-                if (!string.IsNullOrEmpty(cell) && !string.IsNullOrEmpty(openApiRef))
+                var cell = element.Attribute("Cell")?.Value;
+                var row = element.Attribute("Row")?.Value;
+                if ((!string.IsNullOrEmpty(cell) || !string.IsNullOrEmpty(row)) && !string.IsNullOrEmpty(element.Value))
                 {
-                    mappings.Add(new CellOpenApiMapping
-                    {
-                        Cell = cell,
-                        OpenApiRef = openApiRef
-                    });
+                    var mapping = new CellOpenApiMapping { OpenApiRef = element.Value };
+                    if (!string.IsNullOrEmpty(cell)) mapping.Cell = cell;
+                    if (int.TryParse(row, out var rowNumber)) mapping.Row = rowNumber;
+                    mappings.Add(mapping);
                 }
             }
         }
@@ -258,7 +233,6 @@ public static class ExcelOpenXmlHelper
         {
             // Return empty list if XML parsing fails
         }
-
         return mappings;
     }
 }

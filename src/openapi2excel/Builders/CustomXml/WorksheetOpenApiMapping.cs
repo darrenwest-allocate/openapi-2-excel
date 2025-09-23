@@ -26,15 +26,26 @@ public class CellOpenApiMapping
 /// </summary>
 public class WorksheetOpenApiMapping
 {
-	public string Worksheet { get; set; } = string.Empty;
+	public static List<WorksheetOpenApiMapping> AllWorksheetMappings { get; } = new();
+
+	public string WorksheetName { get; set; }
 	public List<CellOpenApiMapping> Mappings { get; set; } = new();
 
+	public WorksheetOpenApiMapping(string worksheetName)
+	{
+		WorksheetName = worksheetName;
+	}
+
+	public static string Serialize(WorksheetOpenApiMapping mapping)
+	{ 
+		return Serialize([mapping]);
+	}
 	public static string Serialize(IEnumerable<WorksheetOpenApiMapping> mappings)
 	{
 		var doc = new XDocument(
 			new XElement("OpenApiMappings",
 				mappings.SelectMany(mapping =>
-					new[] { new XElement("Worksheet", mapping.Worksheet) }
+					new[] { new XElement("Worksheet", mapping.WorksheetName) }
 					.Union(
 						mapping.Mappings.Select(m =>
 						{
@@ -49,18 +60,5 @@ public class WorksheetOpenApiMapping
 			)
 		);
 		return doc.ToString();
-	}
-
-	public static IEnumerable<WorksheetOpenApiMapping> CreateMappings(string worksheet, IEnumerable<(string cell, string openApiRef)> items)
-	{
-		return [ new WorksheetOpenApiMapping
-		{
-			Worksheet = worksheet,
-			Mappings = [.. items.Select(i => new CellOpenApiMapping
-			{
-				Cell = i.cell,
-				OpenApiRef = i.openApiRef
-			})]
-		}];
 	}
 }

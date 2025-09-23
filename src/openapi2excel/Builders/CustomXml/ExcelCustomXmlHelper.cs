@@ -9,6 +9,9 @@ namespace openapi2excel.core.Builders.CustomXml;
 
 public static class ExcelCustomXmlHelper
 {
+	public static void WriteCustomXmlMapping(string filePath, WorksheetOpenApiMapping worksheetMapping)
+		=> WriteCustomXmlMapping(filePath, worksheetMapping.WorksheetName, WorksheetOpenApiMapping.Serialize(worksheetMapping));
+
 	public static void WriteCustomXmlMapping(string filePath, string worksheetName, string xmlContent)
 	{
 		// Ensure file exists (create empty workbook if needed)

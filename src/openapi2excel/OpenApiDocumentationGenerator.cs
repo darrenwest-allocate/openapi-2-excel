@@ -1,8 +1,9 @@
+using System.Text;
 using ClosedXML.Excel;
 using Microsoft.OpenApi.Readers;
 using openapi2excel.core.Builders;
+using openapi2excel.core.Builders.CustomXml;
 using openapi2excel.core.Common;
-using System.Text;
 
 namespace openapi2excel.core;
 
@@ -36,6 +37,8 @@ public static class OpenApiDocumentationGenerator
       var readResult = await new OpenApiStreamReader().ReadAsync(openApiFileStream);
       AssertReadResult(readResult);
 
+      WorksheetOpenApiMapping.AllWorksheetMappings.Clear();
+
       using var workbook = new XLWorkbook();
       var infoWorksheetsBuilder = new InfoWorksheetBuilder(workbook, options);
       infoWorksheetsBuilder.Build(readResult.OpenApiDocument);
@@ -47,10 +50,16 @@ public static class OpenApiDocumentationGenerator
                {
                   var worksheet = worksheetBuilder.Build(path.Key, path.Value, operation.Key, operation.Value);
                   infoWorksheetsBuilder.AddLink(operation.Key, path.Key, worksheet);
+
+                  var mappings = worksheetBuilder.CurrentWorksheetMapping;
                }
          ));
 
-      workbook.SaveAs(new FileInfo(outputFile).FullName);
+      var filePath = new FileInfo(outputFile).FullName;
+      workbook.SaveAs(filePath);
+
+      WorksheetOpenApiMapping.AllWorksheetMappings
+         .ForEach(worksheetMapping => ExcelCustomXmlHelper.WriteCustomXmlMapping(filePath, worksheetMapping));
    }
 
    private static void AssertReadResult(ReadResult readResult)

@@ -1,5 +1,5 @@
 <OpenApiMappings>
-    <Worksheet>GET_{tenant}-duties-vacant</Worksheet>
+    <Worksheet>GET_tenant-duties-vacant</Worksheet>
     <MapOpenApiRef Row="4">paths./{tenant}/duties/vacant.get</MapOpenApiRef>
     <MapOpenApiRef Row="5">paths./{tenant}/duties/vacant.get/@path</MapOpenApiRef>
     <MapOpenApiRef Row="6">paths./{tenant}/duties/vacant.get/@operation_description</MapOpenApiRef>

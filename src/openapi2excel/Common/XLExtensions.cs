@@ -69,8 +69,8 @@ internal static class XLExtensions
 
    public static IXLCell MapRow(this IXLCell cell, Anchor mappingAnchor)
    {
-      var mappings = OperationWorksheetBuilder.OperationWorksheets
-         .FirstOrDefault(w => w.Name == cell.Worksheet.Name)?.WorksheetMapping.Mappings;
+      var mappings = WorksheetOpenApiMapping.AllWorksheetMappings
+         .FirstOrDefault(w => w.WorksheetName == cell.Worksheet.Name)?.Mappings;
 
       mappings?.Add(new CellOpenApiMapping() { Row = cell.WorksheetRow().RowNumber(), Cell = cell.Address.ToString() ?? string.Empty, OpenApiRef = mappingAnchor.ToString() });
       return cell;
@@ -83,8 +83,8 @@ internal static class XLExtensions
 
    public static IXLCell MapTableCell(this IXLCell cell, Anchor mappingAnchor, string columnName)
    {
-      var mappings = OperationWorksheetBuilder.OperationWorksheets
-         .FirstOrDefault(w => w.Name == cell.Worksheet.Name)?.WorksheetMapping.Mappings;
+      var mappings = WorksheetOpenApiMapping.AllWorksheetMappings
+         .FirstOrDefault(w => w.WorksheetName == cell.Worksheet.Name)?.Mappings;
 
       mappings?.Add(new CellOpenApiMapping() { Cell = cell.Address.ToString() ?? string.Empty, OpenApiRef = $"{mappingAnchor}/@{columnName.Replace(" ", string.Empty).ToLowerInvariant()}" });
       return cell;

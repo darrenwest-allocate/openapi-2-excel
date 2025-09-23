@@ -4,6 +4,7 @@ using openapi2excel.core.Builders.CustomXml;
 using openapi2excel.core.Builders.WorksheetPartsBuilders;
 using openapi2excel.core.Builders.WorksheetPartsBuilders.Common;
 using openapi2excel.core.Common;
+using System.Text.RegularExpressions;
 
 namespace openapi2excel.core.Builders;
 
@@ -21,31 +22,26 @@ public class OperationWorksheetBuilder : WorksheetBuilder
       _workbook = workbook;
    }
 
-   public static List<OperationWorksheetBuilder> OperationWorksheets { get; } = [];
+   public static List<IXLWorksheet> OperationWorksheets { get; } = [];
 
-   public string Name => _worksheet.Name;
+   public string CurrentWorksheetName => _worksheet.Name;
 
-   public WorksheetOpenApiMapping WorksheetMapping => _worksheetMapping!;
+   public WorksheetOpenApiMapping CurrentWorksheetMapping => _worksheetMapping!;
 
    public IXLWorksheet Build(string path, OpenApiPathItem pathItem, OperationType operationType,
       OpenApiOperation operation)
    {
       var worksheetName = GetWorksheetName(path, operation, operationType);
-      CreateNewWorksheet(worksheetName);
-      OperationWorksheets.Add(this);
+      OperationWorksheets.Add(CreateNewWorksheet(worksheetName));
 
       _actualRowPointer.GoTo(1);
 
       _attributesColumnsStartIndex = MaxPropertiesTreeLevel.Calculate(operation, Options.MaxDepth);
       AdjustColumnsWidthToRequestTreeLevel();
-
-      // Initialize mapping for this worksheet
-      _worksheetMapping = new WorksheetOpenApiMapping
-      {
-         Worksheet = worksheetName,
-         Mappings = []
-      };
+      
+      WorksheetOpenApiMapping.AllWorksheetMappings.Add(CreateWorksheetMapping(worksheetName));
       var anchor = AnchorGenerator.GenerateOperationAnchor(path, operationType);
+
       AddHomePageLink();
       AddOperationInfos(path, pathItem, operationType, operation);
       AddRequestParameters(operation, anchor);
@@ -56,6 +52,13 @@ public class OperationWorksheetBuilder : WorksheetBuilder
 
       return _worksheet;
    }
+
+   private WorksheetOpenApiMapping CreateWorksheetMapping(string worksheetName)
+   {
+      _worksheetMapping = new WorksheetOpenApiMapping(worksheetName);
+      return _worksheetMapping;
+   }
+
 
    private string GetWorksheetName(string path, OpenApiOperation operation, OperationType operationType)
    {
@@ -73,6 +76,10 @@ public class OperationWorksheetBuilder : WorksheetBuilder
          name = operationType.ToString().ToUpper() + "_" + pathName[1..];
       }
 
+      name = Regex.Replace(name, "&", "and");
+      name = Regex.Replace(name, "\\+", "plus");
+      name = Regex.Replace(name, "[{}'\"<>]", string.Empty);
+
       // check if the name is not too long
       if (name.Length > maxLength)
       {
@@ -89,13 +96,14 @@ public class OperationWorksheetBuilder : WorksheetBuilder
       return tmpName;
    }
 
-   private void CreateNewWorksheet(string operation)
+   private IXLWorksheet CreateNewWorksheet(string operation)
    {
       _worksheet = _workbook.Worksheets.Add(operation);
       _worksheet.Style.Font.FontSize = 10;
       _worksheet.Style.Font.FontName = "Arial";
       _worksheet.Outline.SummaryHLocation = XLOutlineSummaryHLocation.Left;
       _worksheet.Outline.SummaryVLocation = XLOutlineSummaryVLocation.Top;
+      return _worksheet;
    }
 
    private void AdjustColumnsWidthToRequestTreeLevel()

@@ -9,6 +9,7 @@ using openapi2excel.core.Builders;
 using openapi2excel.core.Builders.CustomXml;
 using Microsoft.OpenApi.Readers;
 using ClosedXML.Excel;
+using openapi2excel.core.Common;
 
 namespace OpenApi2Excel.Tests;
 
@@ -33,17 +34,13 @@ public class OpenApiDocumentationGeneratorTest
      var worksheetName = "TestSheet";
 
      // Use a builder class to create the worksheet mapping
-     var mappings = WorksheetOpenApiMapping.CreateMappings(
-        worksheetName,
-        new[]
-        {
+     var mappings = new[] {
            ("A5", "paths./pets.get.responses.200"),
            ("B12", "components.parameters.PetId")
-        }
-     );
+        }.Select(i => new CellOpenApiMapping(){ Cell = i.Item1, OpenApiRef = i.Item2 }).ToList();
 
      // Use the serializer class
-     var customXmlContent = WorksheetOpenApiMapping.Serialize(mappings.ToList());
+     var customXmlContent = WorksheetOpenApiMapping.Serialize([new WorksheetOpenApiMapping(worksheetName) { Mappings = mappings }]);
 
      // Act: Write and read back
      ExcelCustomXmlHelper.WriteCustomXmlMapping(tempFile, worksheetName, customXmlContent);
@@ -62,13 +59,14 @@ public class OpenApiDocumentationGeneratorTest
      var worksheetBuilder = new OperationWorksheetBuilder(workbook, new OpenApiDocumentationOptions());
      var path = readResult.OpenApiDocument.Paths.First();
      var operation = path.Value.Operations.First();
+     WorksheetOpenApiMapping.AllWorksheetMappings.Clear();
      var worksheet = worksheetBuilder.Build(path.Key, path.Value, operation.Key, operation.Value);
-     var mappings = worksheetBuilder.WorksheetMapping;
-     var customXmlContent = WorksheetOpenApiMapping.Serialize(new List<WorksheetOpenApiMapping> { mappings });
+     var mappings = worksheetBuilder.CurrentWorksheetMapping;
+     var customXmlContent = WorksheetOpenApiMapping.Serialize(mappings);
 
      // Verify that the worksheet was created and mappings were added
      Assert.NotNull(worksheet);
-     Assert.Equal(worksheet.Name, mappings.Worksheet);
+     Assert.Equal(worksheet.Name, mappings.WorksheetName);
      Assert.NotEmpty(mappings.Mappings);
 
      const string sampleWorkbookFirstSheetMappings = "Sample/sample-api-gw-workbook-first-mappings.xml";
@@ -86,20 +84,30 @@ public class OpenApiDocumentationGeneratorTest
      {
         Console.WriteLine($"Expected: {lastMismatch.Expected}");
         Console.WriteLine($"Actual: {lastMismatch.Actual}");
-        Console.WriteLine($"Actual XML:\n{actualDoc.ToString()}");
+        Console.WriteLine($"Actual XML:\n{actualDoc}");
         Assert.Fail();
      }
   }
 
-  [Fact]
-  public async Task Generated_excel_file_records_mappings_in_custom_xml_for_openapi()
-  {
-		const string openApiFile = "Sample/sample-api-gw.json";
-		const string outputFile = "output-with-mappings.xlsx";
-		await using var file = File.OpenRead(openApiFile);
+   [Fact]
+   public async Task Generated_excel_file_records_mappings_in_custom_xml_for_openapi()
+   {
+      const string openApiFile = "Sample/sample-api-gw.json";
+      const string outputFile = "output-with-mappings.xlsx";
+      await using var file = File.OpenRead(openApiFile);
 
-		await OpenApiDocumentationGenerator.GenerateDocumentation(file, outputFile, new OpenApiDocumentationOptions() { IncludeMappings = true });
-		Assert.True(File.Exists(outputFile));
+      await OpenApiDocumentationGenerator.GenerateDocumentation(file, outputFile, new OpenApiDocumentationOptions() { IncludeMappings = true });
+      Assert.True(File.Exists(outputFile));
+
+      var mappings = ExcelOpenXmlHelper.ExtractCustomXmlMappingsFromWorkbook(outputFile);
+      var worksheetNames = ExcelOpenXmlHelper.GetAllWorksheetNames(outputFile);
+
+      Assert.Equal(worksheetNames.Count, mappings.Count);
+      foreach (var mapping in mappings)
+      {
+         Assert.Contains(mapping.WorksheetName, worksheetNames);
+         Assert.True(mapping.Mappings.Any(), $"Worksheet '{mapping.WorksheetName}' should contain OpenAPI mappings but none were found");
+      }
 	}
 
 }
