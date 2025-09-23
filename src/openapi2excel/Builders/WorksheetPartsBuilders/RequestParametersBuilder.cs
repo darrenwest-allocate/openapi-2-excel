@@ -48,13 +48,12 @@ internal class RequestParametersBuilder(
    private void AddPropertyRow(OpenApiParameter parameter, Anchor mappingAnchor)
    {
 		var nextCell = Cell(1).SetText(parameter.Name)
-            .MapRow(mappingAnchor)
-            .MapTableCell(mappingAnchor, WorksheetLanguage.Parameters.Name)
-
+         .MapRow(mappingAnchor)
+         .MapTableCell(mappingAnchor, WorksheetLanguage.Parameters.Name)
          .CellRight(attributesColumnIndex - 1).SetText(parameter.In.ToString()?.ToUpper())
-            .MapTableCell(mappingAnchor, WorksheetLanguage.Parameters.Location)
+         .MapTableCell(mappingAnchor, WorksheetLanguage.Parameters.Location)
          .CellRight().SetText(parameter.Style?.ToString())
-            .MapTableCell(mappingAnchor, WorksheetLanguage.Parameters.Serialization)
+         .MapTableCell(mappingAnchor, WorksheetLanguage.Parameters.Serialization)
          .CellRight();
 
       _schemaDescriptor.AddSchemaDescriptionValues(parameter.Schema, parameter.Required, ActualRow, nextCell.Address.ColumnNumber, mappingAnchor, parameter.Description, true );

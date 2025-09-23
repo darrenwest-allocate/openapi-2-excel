@@ -4,27 +4,20 @@ using openapi2excel.core.Builders.WorksheetPartsBuilders.Common;
 
 namespace openapi2excel.core.CustomXML;
 
-public class Anchor 
+/// <summary>
+/// A referenceable anchor used for mapping Excel cells to their OpenAPI source.
+/// The anchor syntax is deterministic and unambiguous, allowing programmatic lookup in the OpenAPI document.
+/// </summary>
+public class Anchor(string value)
 {
-	private string? _value;
-
-	public string Value { get
-		{
-			return _value  ?? string.Empty;
-		}
-	}
-
-	public Anchor(string value)
-	{
-		_value = value;
-	}
-
+	private string? _value = value;
+	public string Value { get { return _value ?? string.Empty; } }
 	public override string ToString() => Value;
 
-	internal Anchor With(string code)
-	{
-		return new Anchor($"{Value}.{code}");
-	}
+	/// <summary>
+	/// Creates a new anchor by appending a code segment to the existing anchor.
+	/// </summary>
+	internal Anchor With(string code) => new($"{Value}.{code}");
 }
 
 /// <summary>
@@ -116,14 +109,22 @@ public static partial class AnchorGenerator
 		detail = MatchWhitespace().Replace(detail.ToLowerInvariant(), "_");
 		detail = MatchHtmlEntities().Replace(detail, string.Empty);
 		detail = MatchNonAlphaNumericUnderScore().Replace(detail, string.Empty);
-		return new Anchor($"{mappingAnchor}/@{Regex.Replace(detail.ToLowerInvariant(), @"\s+", "_")}");
+		return new Anchor($"{mappingAnchor}/@{detail}");
 	}
 
+	/// <summary>
+	/// Generates an anchor for the body format of a request body.
+	/// example: paths./pets.post.requestBody/@bodyformat
+	/// </summary>
 	internal static Anchor GenerateBodyFormatAnchor(Anchor mappingAnchor)
 	{
 		return new Anchor($"{mappingAnchor}/@{WorksheetLanguage.Request.BodyFormat.ToLowerInvariant().Replace(" ", string.Empty)}");
 	}
 
+	/// <summary>
+	/// Generates an anchor for a property within a schema or parameter.
+	/// example: components.schemas.Pet.name
+	/// </summary>
 	internal static Anchor GeneratePropertyAnchor(Anchor mappingAnchor, string propertyName)
 	{
 		propertyName = MatchWhitespace().Replace(propertyName.ToLowerInvariant(), "_");
@@ -132,16 +133,28 @@ public static partial class AnchorGenerator
 		return new Anchor($"{mappingAnchor}.{propertyName}");
 	}
 
+	/// <summary>
+	/// Generates an anchor for the schema description header row.
+	/// example: components.schemas.Pet/SchemaDescriptionHeader
+	/// </summary>
 	internal static Anchor GenerateSchemaDescriptionHeaderAnchor(Anchor mappingAnchor)
 	{
 		return new Anchor($"{mappingAnchor}/SchemaDescriptionHeader");
 	}
 
+	/// <summary>
+	/// Generates an anchor for the headers of a response or request.
+	/// example: paths./pets.get.responses.200.headers
+	/// </summary>
 	internal static Anchor GenerateHeadersAnchor(Anchor anchor)
 	{
 		return new Anchor($"{anchor}.headers");
 	}
 
+	/// <summary>
+	/// Generates an anchor for the response body of a response.
+	/// example: paths./pets.get.responses.200.responseBody
+	/// </summary>
 	internal static Anchor GenerateResponseBodyAnchor(Anchor path_operationType)
 	{
 		return new Anchor($"{path_operationType}.responseBody");

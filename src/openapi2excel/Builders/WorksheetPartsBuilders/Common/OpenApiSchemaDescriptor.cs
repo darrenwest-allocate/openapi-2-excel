@@ -1,5 +1,4 @@
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Drawing;
 using Microsoft.OpenApi.Models;
 using openapi2excel.core.Common;
 
