@@ -58,8 +58,20 @@ public static class OpenApiDocumentationGenerator
       var filePath = new FileInfo(outputFile).FullName;
       workbook.SaveAs(filePath);
 
-      WorksheetOpenApiMapping.AllWorksheetMappings
-         .ForEach(worksheetMapping => ExcelCustomXmlHelper.WriteCustomXmlMapping(filePath, worksheetMapping));
+      if (options.IncludeMappings)
+      {
+         WorksheetOpenApiMapping.AllWorksheetMappings
+            .ForEach(worksheetMapping => ExcelCustomXmlHelper.WriteCustomXmlMapping(filePath, worksheetMapping));
+      }
+
+      // Migrate comments from existing workbook if specified
+      if (!string.IsNullOrEmpty(options.FilepathToPreserveComments))
+      {
+         CommentMigrationHelper.MigrateComments(
+            options.FilepathToPreserveComments, 
+            filePath, 
+            WorksheetOpenApiMapping.AllWorksheetMappings);
+      }
    }
 
    private static void AssertReadResult(ReadResult readResult)

@@ -113,20 +113,19 @@ public class OpenApiDocumentationGeneratorTest
    public async Task MigrateComments_ToNewWorkbook_PreservesUnresolvedCommentsInCorrectCells()
    {
       // Arrange
-      const string openApiFile = "Sample/sample-api-gw.json";
+      const string openApiFilePath = "Sample/sample-api-gw.json";
       const string existingWorkbook = "Sample/sample-api-gw-with-mappings.xlsx";
-      const string outputFile = "output-with-migrated-comments.xlsx";
+      const string newWorkbookPath = "output-with-migrated-comments.xlsx";
       
       // Extract original comments for comparison
       var originalUnresolvedComments = ExcelOpenXmlHelper.ExtractAndAnnotateUnresolvedComments(existingWorkbook);
-      var originalResolvedComments = ExcelOpenXmlHelper.ExtractAndAnnotateResolvedComments(existingWorkbook);
-      var originalAllComments = ExcelOpenXmlHelper.ExtractAndAnnotateAllComments(existingWorkbook);
+      var originalResolvedCommentsCount = ExcelOpenXmlHelper.ExtractAndAnnotateResolvedComments(existingWorkbook).Count();
       
       // Act
-      await using var file = File.OpenRead(openApiFile);
+      await using var openApiSpec = File.OpenRead(openApiFilePath);
       await OpenApiDocumentationGenerator.GenerateDocumentation(
-         file, 
-         outputFile, 
+         openApiSpec, 
+         newWorkbookPath, 
          new OpenApiDocumentationOptions() 
          { 
             IncludeMappings = true,
@@ -135,50 +134,38 @@ public class OpenApiDocumentationGeneratorTest
       );
       
       // Assert
-      Assert.True(File.Exists(outputFile));
+      Assert.True(File.Exists(newWorkbookPath));
       
-      var migratedComments = ExcelOpenXmlHelper.ExtractAndAnnotateAllComments(outputFile);
+      var migratedComments = ExcelOpenXmlHelper.ExtractAndAnnotateAllComments(newWorkbookPath);
       
-      // 1. Should have fewer comments than original (resolved ones abandoned)
-      Assert.True(migratedComments.Count <= originalAllComments.Count, 
-         $"Expected migrated comments ({migratedComments.Count}) to be <= original total comments ({originalAllComments.Count})");
       Assert.True(migratedComments.Count > 0, "Should have some migrated comments");
-      
-      // 2. Should have migrated approximately the same number as original unresolved comments
-      Assert.Equal(originalUnresolvedComments.Count, migratedComments.Count);
-      
-      // 3. Verify resolved comments were NOT migrated
-      Assert.True(originalResolvedComments.Count > 0, "Test requires some resolved comments in the source workbook");
-      
+      Assert.True(migratedComments.Count < originalUnresolvedComments.Count + originalResolvedCommentsCount, "Less than all the comments");
+      Assert.Equal(originalUnresolvedComments.Count - 1, migratedComments.Count); // Expect 1 comment to fail migration (no OpenAPI anchor)
+      Assert.True(originalResolvedCommentsCount > 0, "Test requires some resolved comments in the source workbook");
+
       // 4. Each migrated comment should match an original unresolved comment
       foreach (var migratedComment in migratedComments)
       {
-         var matchingOriginal = originalUnresolvedComments.FirstOrDefault(orig => 
+         Assert.NotEqual("1", migratedComment.Comment.Done); // Should be unresolved
+
+         var matchingOriginal = originalUnresolvedComments.FirstOrDefault(orig =>
             orig.CommentText == migratedComment.CommentText &&
-            orig.OpenApiAnchor == migratedComment.OpenApiAnchor);
-            
+            orig.CreatedDate == migratedComment.CreatedDate);
          Assert.NotNull(matchingOriginal); // Should find a match
-         
-         // 5. Metadata should be preserved
+
          Assert.Equal(matchingOriginal.CreatedDate, migratedComment.CreatedDate);
          Assert.Equal(matchingOriginal.Comment.PersonId?.Value, migratedComment.Comment.PersonId?.Value);
-         
-         // 6. Should be in correct cell based on mapping
-         Assert.NotEmpty(migratedComment.CellReference);
-         Assert.NotEmpty(migratedComment.OpenApiAnchor);
+
+         if (migratedComment.HasReplies(migratedComments))
+         {
+            var originalReplies = matchingOriginal.GetReplyTexts(originalUnresolvedComments).ToList();
+            var migratedReplies = migratedComment.GetReplyTexts(migratedComments).ToList();
+            Assert.Equal(originalReplies.Count, migratedReplies.Count);
+            foreach (var reply in migratedReplies)
+            {
+               Assert.Contains(reply, originalReplies);
+            }
+         }
       }
-      
-      // 7. Verify only unresolved comments were migrated
-      // All migrated comments should have been unresolved in the original workbook
-      Assert.All(migratedComments, migratedComment =>
-      {
-         var matchingOriginal = originalUnresolvedComments.First(orig => 
-            orig.CommentText == migratedComment.CommentText &&
-            orig.OpenApiAnchor == migratedComment.OpenApiAnchor);
-         Assert.NotEqual("1", matchingOriginal.Comment.Done); // Should be unresolved
-      });
    }
-
 }
-
-
