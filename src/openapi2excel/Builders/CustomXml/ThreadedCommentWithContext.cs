@@ -9,6 +9,15 @@ namespace openapi2excel.core.Builders.CustomXml;
 /// </summary>
 public class ThreadedCommentWithContext
 {
+
+    public ThreadedCommentWithContext() { }
+
+    public ThreadedCommentWithContext(ThreadedComment comment, string worksheetName)
+    {
+        Comment = comment;
+        WorksheetName = worksheetName;
+    }
+
     public ThreadedComment Comment { get; set; } = null!;
     public string WorksheetName { get; set; } = string.Empty;
     public string OpenApiAnchor { get; set; } = string.Empty; // Added for mapping

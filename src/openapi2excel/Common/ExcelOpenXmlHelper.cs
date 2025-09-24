@@ -46,57 +46,84 @@ public static class ExcelOpenXmlHelper
         return GetAllWorksheetNames(workbookPart);
     }
 
+
     /// <summary>
     /// Extracts unresolved threaded comments from all worksheets in an Excel workbook.
     /// </summary>
-    /// <param name="filePath">Path to the Excel workbook</param>
-    /// <param name="annotateWithOpenApiAnchors">If true, annotates comments with OpenAPI anchors from custom XML mappings</param>
-    /// <returns>List of unresolved threaded comments with their worksheet context, optionally annotated with OpenAPI anchors</returns>
     public static List<ThreadedCommentWithContext> ExtractUnresolvedThreadedCommentsFromWorkbook(string filePath, bool annotateWithOpenApiAnchors = false)
     {
-        var unresolvedComments = new List<ThreadedCommentWithContext>();
-
-        using (var document = SpreadsheetDocument.Open(filePath, false))
-        {
-            var workbookPart = document.WorkbookPart;
-            if (workbookPart == null) return unresolvedComments;
-
-            // Iterate through all worksheets
-            foreach (var worksheetPart in workbookPart.WorksheetParts)
-            {
-                var worksheetName = GetWorksheetName(workbookPart, worksheetPart);
-                var threadedCommentsPart = worksheetPart.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
-                if (threadedCommentsPart == null || threadedCommentsPart.ThreadedComments == null) continue;
-
-                foreach (var comment in threadedCommentsPart.ThreadedComments.Elements<ThreadedComment>())
-                {
-                    if (comment.Done != "1")
-                    {
-                        unresolvedComments.Add(new ThreadedCommentWithContext
-                        {
-                            Comment = comment,
-                            WorksheetName = worksheetName
-                        });
-                    }
-                }
-            }
-
-            if (annotateWithOpenApiAnchors)
-            {
-                var mappings = ExtractCustomXmlMappingsFromWorkbook(workbookPart);
-                foreach (var comment in unresolvedComments)
-                {
-                    var mapping = MapToCell(mappings, comment) ?? MapToRow(mappings, comment);
-                    if (mapping != null)
-                    {
-                        comment.OpenApiAnchor = mapping.OpenApiRef;
-                    }
-                }
-            }
-        }
-
-        return unresolvedComments;
+        return ExtractThreadedCommentsFromWorkbook(filePath, includeResolved: false, includeUnresolved: true, annotateWithOpenApiAnchors);
     }
+
+    /// <summary>
+    /// Extracts unresolved threaded comments and annotates them with OpenAPI anchors from custom XML mappings.
+    /// </summary>
+    public static List<ThreadedCommentWithContext> ExtractAndAnnotateUnresolvedComments(string filePath)
+    {
+        return ExtractUnresolvedThreadedCommentsFromWorkbook(filePath, annotateWithOpenApiAnchors: true);
+    }
+
+    /// <summary>
+    /// Extracts all threaded comments (both resolved and unresolved) and annotates them with OpenAPI anchors from custom XML mappings.
+    /// </summary>
+    public static List<ThreadedCommentWithContext> ExtractAndAnnotateAllComments(string filePath)
+    {
+        return ExtractThreadedCommentsFromWorkbook(filePath, includeResolved: true, includeUnresolved: true, annotateWithOpenApiAnchors: true);
+    }
+
+    /// <summary>
+    /// Extracts only resolved threaded comments and annotates them with OpenAPI anchors from custom XML mappings.
+    /// </summary>
+    public static List<ThreadedCommentWithContext> ExtractAndAnnotateResolvedComments(string filePath)
+    {
+        return ExtractThreadedCommentsFromWorkbook(filePath, includeResolved: true, includeUnresolved: false, annotateWithOpenApiAnchors: true);
+    }
+
+
+    /// <summary>
+    /// Extracts all threaded comments from all worksheets in an Excel workbook, with optional filtering by resolution status.
+    /// </summary>
+    /// <param name="filePath">Path to the Excel workbook</param>
+    /// <param name="includeResolved">If true, includes resolved comments; if false, only unresolved comments</param>
+    /// <param name="includeUnresolved">If true, includes unresolved comments; if false, only resolved comments</param>
+    /// <param name="annotateWithOpenApiAnchors">If true, annotates comments with OpenAPI anchors from custom XML mappings</param>
+    /// <returns>List of threaded comments with their worksheet context, optionally annotated with OpenAPI anchors</returns>
+    private static List<ThreadedCommentWithContext> ExtractThreadedCommentsFromWorkbook(string filePath, bool includeResolved = true, bool includeUnresolved = true, bool annotateWithOpenApiAnchors = false)
+    {
+        var comments = new List<ThreadedCommentWithContext>();
+		using var document = SpreadsheetDocument.Open(filePath, false);
+		var workbookPart = document.WorkbookPart;
+		if (workbookPart == null) return comments;
+
+		foreach (var worksheet in workbookPart.WorksheetParts)
+		{
+			var worksheetName = GetWorksheetName(workbookPart, worksheet);
+			var threadedCommentsPart = worksheet.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
+			if (threadedCommentsPart == null || threadedCommentsPart.ThreadedComments == null) continue;
+
+			foreach (var comment in threadedCommentsPart.ThreadedComments.Elements<ThreadedComment>())
+			{
+				var isResolved = comment.Done == "1";
+				if ((isResolved && includeResolved) || (!isResolved && includeUnresolved))
+				{
+					comments.Add(new ThreadedCommentWithContext(comment, worksheetName));
+				}
+			}
+		}
+		if (annotateWithOpenApiAnchors)
+		{
+			var mappings = ExtractCustomXmlMappingsFromWorkbook(workbookPart);
+			foreach (var comment in comments)
+			{
+				var mapping = MapToCell(mappings, comment) ?? MapToRow(mappings, comment);
+				if (mapping != null)
+				{
+					comment.OpenApiAnchor = mapping.OpenApiRef;
+				}
+			}
+		}
+		return comments;
+	}
 
     private static CellOpenApiMapping? MapToRow(List<WorksheetOpenApiMapping> mappings, ThreadedCommentWithContext comment)
     {
@@ -123,13 +150,6 @@ public static class ExcelOpenXmlHelper
             return -1;
     }
 
-    /// <summary>
-    /// Extracts unresolved threaded comments and annotates them with OpenAPI anchors from custom XML mappings.
-    /// </summary>
-    public static List<ThreadedCommentWithContext> ExtractAndAnnotateUnresolvedComments(string filePath)
-    {
-        return ExtractUnresolvedThreadedCommentsFromWorkbook(filePath, annotateWithOpenApiAnchors: true);
-    }
 
     /// <summary>
     /// Extracts custom XML mappings from workbook using the existing ExcelCustomXmlHelper infrastructure
