@@ -44,9 +44,8 @@ public class OpenApiDocumentationGeneratorTest
 
      // Act: Write and read back
      ExcelCustomXmlHelper.WriteCustomXmlMapping(tempFile, worksheetName, customXmlContent);
-     var readXml = ExcelCustomXmlHelper.ReadCustomXmlMapping(tempFile, worksheetName);
+     var actualDoc = ExcelCustomXmlHelper.ReadAllCustomXmlMappings(tempFile)[worksheetName];
      var expectedDoc = XDocument.Parse(customXmlContent);
-     var actualDoc = XDocument.Parse(readXml);
      Assert.True(XNode.DeepEquals(expectedDoc, actualDoc), "XML content does not match after round-trip.");
   }
 

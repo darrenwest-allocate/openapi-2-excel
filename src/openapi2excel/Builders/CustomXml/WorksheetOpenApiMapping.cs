@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using DocumentFormat.OpenXml.Bibliography;
 
 namespace openapi2excel.core.Builders.CustomXml;
 
@@ -9,6 +10,16 @@ namespace openapi2excel.core.Builders.CustomXml;
 /// </summary>
 public class CellOpenApiMapping
 {
+	public CellOpenApiMapping()	{ }
+
+	public CellOpenApiMapping(XElement element)
+	{
+		if (element == null) return;
+		Cell = element.Attribute("Cell")?.Value ?? string.Empty;
+		OpenApiRef = element.Value ?? string.Empty;
+		if (int.TryParse(element.Attribute("Row")?.Value, out var rowNumber)) Row = rowNumber;
+	}
+
 	public string Cell { get; set; } = string.Empty;
 	/// <summary>
 	/// The OpenAPI JSON reference this cell maps to, e.g. "paths./pets.get.responses.200"

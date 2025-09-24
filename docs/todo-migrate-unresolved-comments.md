@@ -24,13 +24,13 @@ Update this file as new requirements or edge cases are discovered.
 ## 2. Custom XML Metadata Mapping
 - [x] Create a failing unit test for writing and reading custom XML mapping parts per worksheet
 - [x] Implement code to write/read custom XML mapping parts and meta part
-- [ ] generate the mappings from the open api content to the worksheet cell
+- [x] generate the mappings from the open api content to the worksheet cell. cover every type of openapi output type
 - [x] Refactor as needed to ensure test passes and code is maintainable
 
 ## 3. Extracting Unresolved Comments
 - [x] Create a failing unit test for extracting unresolved threaded comments from an old workbook
 - [x] Implement extraction logic 
-- [ ] Look for existing mapping files, collect them if they exist. annotate the extracted comments with the original open api anchor
+- [x] Look for existing mapping files, collect them if they exist. annotate the extracted comments with the original open api anchor
 - [ ] Refactor as needed
 
 ## 4. Mapping Comments to New Workbook

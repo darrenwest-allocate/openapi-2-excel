@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml;
+using System.Xml.Linq;
 
 namespace openapi2excel.core.Builders.CustomXml;
 
@@ -34,7 +35,7 @@ public static class ExcelCustomXmlHelper
 				wbPart.Workbook = new DocumentFormat.OpenXml.Spreadsheet.Workbook();
 
 			// Use a valid NCName for the relationship ID
-			var relId = $"mapping_{worksheetName.Replace(" ", "_")}";
+			var relId = GetRelId(worksheetName);
 			// Remove any existing custom XML part for this worksheet by relId
 			var existing = wbPart.Parts.FirstOrDefault(p => p.RelationshipId == relId && p.OpenXmlPart is CustomXmlPart);
 			if (existing.OpenXmlPart != null)
@@ -47,15 +48,37 @@ public static class ExcelCustomXmlHelper
 		}
 	}
 
-	public static string ReadCustomXmlMapping(string filePath, string worksheetName)
+	private static string GetRelId(string worksheetName)
+	{
+		return $"mapping_{worksheetName.Replace(" ", "_")}";
+	}
+
+	/// <summary>
+	/// Reads the custom XML mapping for a specific worksheet from an Excel file.
+	/// </summary>
+	public static Dictionary<string, XDocument> ReadAllCustomXmlMappings(WorkbookPart workbookPart)
+	{ 
+		var dictionary = new Dictionary<string, XDocument>(StringComparer.OrdinalIgnoreCase);
+		foreach (var partInfo in workbookPart.Parts.Where(p => p.OpenXmlPart is CustomXmlPart))
+		{
+			using var stream = partInfo.OpenXmlPart.GetStream();
+			using var reader = new StreamReader(stream);
+			var document = XDocument.Load(reader);
+			var worksheetName = document.Root?.Element("Worksheet")?.Value;
+			if (string.IsNullOrWhiteSpace(worksheetName))
+				continue;
+			dictionary[worksheetName] = document;
+		}
+		return dictionary;
+	}
+
+	/// <summary>
+	/// Reads the custom XML mapping for a specific worksheet from an Excel file.
+	/// </summary>
+	public static Dictionary<string, XDocument> ReadAllCustomXmlMappings(string filePath)
 	{
 		using var doc = SpreadsheetDocument.Open(filePath, false);
 		var wbPart = doc.WorkbookPart ?? throw new InvalidOperationException("WorkbookPart not found in the document.");
-		var relId = $"mapping_{worksheetName.Replace(" ", "_")}";
-		if (wbPart.Parts.FirstOrDefault(p => p.RelationshipId == relId && p.OpenXmlPart is CustomXmlPart).OpenXmlPart is not CustomXmlPart part)
-			throw new InvalidOperationException($"Custom XML part for worksheet '{worksheetName}' not found.");
-		using var stream = part.GetStream();
-		using var reader = new StreamReader(stream);
-		return reader.ReadToEnd();
+		return ReadAllCustomXmlMappings(wbPart);
 	}
 }
