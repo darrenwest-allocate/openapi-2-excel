@@ -251,6 +251,9 @@ public static class CommentMigrationHelper
         var newId = Guid.NewGuid().ToString("B");
         newComment.Id = newId;
 
+        // Add legacy comment for Excel visibility
+        AddLegacyComment(worksheetPart, cellReference, sourceComment, newId);
+
         // Store the ID mapping for use by child comments
         idMapping[originalId] = newId;
 
@@ -436,6 +439,89 @@ public static class CommentMigrationHelper
             Console.WriteLine($"[DEBUG] Error extracting person {personId} from source: {ex.Message}");
             return defaultPerson;
         }
+    }
+
+    /// <summary>
+    /// Adds a legacy comment for Excel backward compatibility and visibility.
+    /// Legacy comments are required for Excel to display threaded comments properly.
+    /// </summary>
+    private static void AddLegacyComment(
+        WorksheetPart worksheetPart,
+        string cellReference,
+        ThreadedCommentWithContext sourceComment,
+        string commentId)
+    {
+        // Get or create WorksheetCommentsPart for legacy comments
+        var commentsPart = worksheetPart.GetPartsOfType<WorksheetCommentsPart>().FirstOrDefault();
+        if (commentsPart == null)
+        {
+            commentsPart = worksheetPart.AddNewPart<WorksheetCommentsPart>();
+            commentsPart.Comments = new Comments();
+            commentsPart.Comments.CommentList = new CommentList();
+            commentsPart.Comments.Authors = new Authors();
+        }
+
+        // Ensure Comments structure is properly initialized
+        if (commentsPart.Comments.CommentList == null)
+        {
+            commentsPart.Comments.CommentList = new CommentList();
+        }
+        if (commentsPart.Comments.Authors == null)
+        {
+            commentsPart.Comments.Authors = new Authors();
+        }
+
+        // Get or create author for the comment
+        var authorName = GetAuthorNameFromPersonId(sourceComment.Comment.PersonId?.Value);
+        var authorIndex = EnsureAuthorExists(commentsPart.Comments.Authors, authorName);
+
+        // Create legacy comment with "[Threaded comment]" text for threaded comment compatibility
+        var legacyComment = new Comment
+        {
+            Reference = cellReference,
+            AuthorId = (uint)authorIndex
+        };
+
+        // Create comment text with the special "[Threaded comment]" format that Excel expects
+        var commentText = new CommentText();
+        commentText.AppendChild(new Text("[Threaded comment]"));
+        legacyComment.CommentText = commentText;
+
+        commentsPart.Comments.CommentList.AppendChild(legacyComment);
+
+        Console.WriteLine($"[DEBUG] Added legacy comment for cell {cellReference} with author '{authorName}' (index {authorIndex})");
+    }
+
+    /// <summary>
+    /// Ensures an author exists in the Authors collection and returns the author index.
+    /// </summary>
+    private static int EnsureAuthorExists(Authors authors, string authorName)
+    {
+        // Check if author already exists
+        var existingAuthors = authors.Elements<Author>().ToList();
+        for (int i = 0; i < existingAuthors.Count; i++)
+        {
+            if (existingAuthors[i].Text?.Equals(authorName, StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return i; // Return existing author index
+            }
+        }
+
+        // Add new author
+        var newAuthor = new Author { Text = authorName };
+        authors.AppendChild(newAuthor);
+        return existingAuthors.Count; // Return new author index
+    }
+
+    /// <summary>
+    /// Gets the author name from a person ID by looking up in the persons part.
+    /// Returns a default name if not found.
+    /// </summary>
+    private static string GetAuthorNameFromPersonId(string? personId)
+    {
+        // For now, return a default author name
+        // TODO: Could look up the actual display name from the persons part
+        return !string.IsNullOrEmpty(personId) ? "Comment Author" : "Unknown Author";
     }
 
 }

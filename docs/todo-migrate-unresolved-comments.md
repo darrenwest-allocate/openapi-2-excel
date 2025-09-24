@@ -67,13 +67,13 @@ Update this file as new requirements or edge cases are discovered.
 ### **Root Cause**: Comments migrate without errors but remain invisible in Excel
 Excel requires 3 additional components for threaded comment visibility:
 
-#### **Phase 1: Legacy Comments XML** ⭐⭐⭐ (HIGH PRIORITY)
-- [ ] Create failing test for legacy comment creation (`/xl/comments{n}.xml`)
-- [ ] Implement `AddLegacyComment()` method using `WorksheetCommentsPart`
-- [ ] Handle author management with `Authors` collection and indices
-- [ ] Create legacy comments with "[Threaded comment]" text format
-- [ ] Register content type: `application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml`
-- [ ] Test: Comments become visible in Excel after legacy support
+#### **Phase 1: Legacy Comments XML** ⭐⭐⭐ (HIGH PRIORITY) ✅ **COMPLETED**
+- [x] Create failing test for legacy comment creation (`/xl/comments{n}.xml`)
+- [x] Implement `AddLegacyComment()` method using `WorksheetCommentsPart`
+- [x] Handle author management with `Authors` collection and indices
+- [x] Create legacy comments with "[Threaded comment]" text format
+- [x] Register content type: `application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml`
+- [x] Test: Comments become visible in Excel after legacy support
 
 #### **Phase 2: VML Drawing Files** ⭐⭐ (MEDIUM PRIORITY)  
 - [ ] Create failing test for VML drawing creation (`/xl/drawings/vmlDrawing{n}.vml`)
