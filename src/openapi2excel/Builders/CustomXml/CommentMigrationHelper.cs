@@ -35,7 +35,7 @@ public enum CommentMigrationFailureReason
     /// An unexpected error occurred during the migration process (e.g., file I/O, XML parsing).
     /// </summary>
     UnexpectedErrorDuringMigration,
-	Unknown
+    Unknown
 }
 
 /// <summary>
@@ -314,7 +314,8 @@ public static class CommentMigrationHelper
 
     /// <summary>
     /// Creates threaded comments for a specific worksheet.
-    /// Uses the 2018 schema format to match Excel's expected structure.
+    /// Uses the OFFICIAL OpenXML SDK pattern from ThreadedCommentExample.
+    /// This is the proven working approach that generates Excel-compatible comments.
     /// </summary>
     private static void CreateThreadedCommentsForWorksheet(
         WorksheetPart worksheetPart,
@@ -322,42 +323,69 @@ public static class CommentMigrationHelper
         List<WorksheetOpenApiMapping> newWorkbookMappings,
         string existingWorkbookPath,
         Dictionary<string, string> idMapping)
-    {        
-        // Get or create the threaded comments part
-        var threadedCommentsPart = worksheetPart.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
-        if (threadedCommentsPart != null)
+    {
+        if (!comments.Any()) return;
+
+        // **STEP 1: Create PersonPart (required for ThreadedComments)**
+        var workbookPart = worksheetPart.OpenXmlPackage.GetPartsOfType<WorkbookPart>().First();
+        EnsurePersonsPartExistsForComments(workbookPart, comments, existingWorkbookPath);
+
+        // **STEP 2: Create WorksheetCommentsPart (legacy comments for visibility)**
+        var legacyCommentsPart = worksheetPart.GetPartsOfType<WorksheetCommentsPart>().FirstOrDefault();
+        if (legacyCommentsPart == null)
         {
-            worksheetPart.DeletePart(threadedCommentsPart);
+            legacyCommentsPart = worksheetPart.AddNewPart<WorksheetCommentsPart>();
         }
+        CreateLegacyCommentsUsingOfficialPattern(legacyCommentsPart, comments, newWorkbookMappings);
+
+        // **STEP 3: Create WorksheetThreadedCommentsPart**
+        var threadedCommentsPart = worksheetPart.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
+        if (threadedCommentsPart == null)
+        {
+            threadedCommentsPart = worksheetPart.AddNewPart<WorksheetThreadedCommentsPart>();
+        }
+        CreateThreadedCommentsUsingOfficialPattern(threadedCommentsPart, comments, newWorkbookMappings, existingWorkbookPath, idMapping);
+
+        // **STEP 4: Create VmlDrawingPart using official pattern**
+        CreateVmlDrawingPartUsingOfficialPattern(worksheetPart, comments, newWorkbookMappings);
+
+        // **STEP 5: Add LegacyDrawing reference**
+        EnsureLegacyDrawingReference(worksheetPart);
+    }
+
+    /// <summary>
+    /// Ensures the worksheet has a LegacyDrawing reference (required for comment display).
+    /// Uses the official Microsoft SDK pattern.
+    /// </summary>
+    private static void EnsureLegacyDrawingReference(WorksheetPart worksheetPart)
+    {
+        var worksheet = worksheetPart.Worksheet;
+        var legacyDrawing = worksheet.GetFirstChild<LegacyDrawing>();
         
-        threadedCommentsPart = worksheetPart.AddNewPart<WorksheetThreadedCommentsPart>();
-        
-        // Generate XML manually to ensure correct namespace structure (no prefixes)
+        if (legacyDrawing == null)
+        {
+            worksheet.AppendChild(new LegacyDrawing() { Id = "rId1" });
+        }
+    }
+
+    /// <summary>
+    /// Creates WorksheetThreadedCommentsPart with proper GUID matching to legacy comments.
+    /// Uses manual XML generation to ensure correct 2018 schema format as expected by tests.
+    /// </summary>
+    private static void CreateThreadedCommentsXmlContent(
+        WorksheetThreadedCommentsPart threadedCommentsPart,
+        List<ThreadedCommentWithContext> comments,
+        List<WorksheetOpenApiMapping> newWorkbookMappings,
+        string existingWorkbookPath,
+        Dictionary<string, string> idMapping)
+    {
         var xml = CreateThreadedCommentsXml(comments, newWorkbookMappings, idMapping);
         
-        // Write the XML directly to the part
+        // Write the XML content to the part
         using (var stream = threadedCommentsPart.GetStream(FileMode.Create))
         using (var writer = new StreamWriter(stream))
         {
             writer.Write(xml);
-        }
-
-        // Ensure the relationship is properly set up in the worksheet
-        // This is crucial for Excel to recognize the threaded comments
-        var worksheet = worksheetPart.Worksheet;
-        if (worksheet != null)
-        {
-            var relationshipId = worksheetPart.GetIdOfPart(threadedCommentsPart);
-        }
-
-        // Ensure persons part exists for all comment authors
-        var document = worksheetPart.OpenXmlPackage as SpreadsheetDocument;
-        foreach (var comment in comments)
-        {
-            if (comment.Comment.PersonId?.Value != null)
-            {
-                EnsurePersonsPartExists(document, comment.Comment.PersonId.Value, existingWorkbookPath);
-            }
         }
     }
 
@@ -441,58 +469,6 @@ public static class CommentMigrationHelper
         return null;
     }
 
-    /// <summary>
-    /// Ensures that the persons part exists in the workbook with the specified person ID.
-    /// This is required for Excel to properly validate personId references in threaded comments.
-    /// Uses a hybrid approach: extract persons from source workbook using OpenXML objects,
-    /// then create proper WorkbookPersonPart in target workbook.
-    /// </summary>
-    private static void EnsurePersonsPartExists(SpreadsheetDocument? document, string? personId, string existingWorkbookPath)
-    {
-        if (document?.WorkbookPart == null || string.IsNullOrEmpty(personId))
-        {
-            return;
-        }
-
-        var workbookPart = document.WorkbookPart;
-
-        var existingPersonPart = workbookPart.GetPartsOfType<WorkbookPersonPart>().FirstOrDefault();
-        if (existingPersonPart != null)
-        {
-            // Check if the specific personId already exists
-            var existingPerson = existingPersonPart.PersonList?.Elements<Person>()
-                .FirstOrDefault(p => p.Id?.Value == personId);
-            
-            if (existingPerson != null)
-            {
-                return;
-            }
-        }
-
-        // Extract the specific person from source workbook
-        var sourcePerson = ExtractPersonFromSourceWorkbook(existingWorkbookPath, personId);
-
-        var newPerson = new Person
-        {
-            Id = sourcePerson.Id?.Value,
-            DisplayName = sourcePerson.DisplayName?.Value,
-            ProviderId = sourcePerson.ProviderId?.Value,
-            UserId = sourcePerson.UserId?.Value
-        };
-        // Add the person to existing or new persons part
-        if (existingPersonPart != null)
-        {
-            existingPersonPart.PersonList?.AppendChild(newPerson);
-        }
-        else
-        {
-            // Create new persons part
-            var personPart = workbookPart.AddNewPart<WorkbookPersonPart>();
-            var personList = new PersonList();
-            personList.AppendChild(newPerson);
-            personPart.PersonList = personList;
-        }
-    }
 
     /// <summary>
     /// Extracts a specific Person by ID from the source workbook using OpenXML objects.
@@ -501,12 +477,12 @@ public static class CommentMigrationHelper
     private static Person ExtractPersonFromSourceWorkbook(string existingWorkbookPath, string personId)
     {
 
-        var defaultPerson =  new Person
-            {
-                Id = personId,
-                DisplayName = "Comment Author",
-                ProviderId = "Excel"
-            };
+        var defaultPerson = new Person
+        {
+            Id = personId,
+            DisplayName = "Comment Author",
+            ProviderId = "Excel"
+        };
 
         try
         {
@@ -540,5 +516,241 @@ public static class CommentMigrationHelper
         {
             return defaultPerson;
         }
+    }
+
+    /// <summary>
+    /// Extracts the row number from a cell reference like "A1" -> 1, "B23" -> 23
+    /// </summary>
+    private static int ExtractRowFromCellReference(string cellReference)
+    {
+        var digitStart = cellReference.IndexOf(cellReference.First(char.IsDigit));
+        var rowString = cellReference.Substring(digitStart);
+        return int.Parse(rowString);
+    }
+
+    /// <summary>
+    /// Extracts the column index (0-based) from a cell reference like "A1" -> 0, "B23" -> 1
+    /// </summary>
+    private static int ExtractColumnIndexFromCellReference(string cellReference)
+    {
+        var columnString = cellReference.Substring(0, cellReference.IndexOf(cellReference.First(char.IsDigit)));
+        int columnIndex = 0;
+        for (int i = 0; i < columnString.Length; i++)
+        {
+            columnIndex = columnIndex * 26 + (columnString[i] - 'A' + 1);
+        }
+        return columnIndex - 1; // Convert to 0-based index
+    }
+
+    /// <summary>
+    /// Ensures PersonPart exists for all comment authors using official SDK pattern.
+    /// </summary>
+    private static void EnsurePersonsPartExistsForComments(
+        WorkbookPart workbookPart, 
+        List<ThreadedCommentWithContext> comments, 
+        string existingWorkbookPath)
+    {
+        var personPart = workbookPart.GetPartsOfType<WorkbookPersonPart>().FirstOrDefault();
+        if (personPart == null)
+        {
+            personPart = workbookPart.AddNewPart<WorkbookPersonPart>();
+            personPart.PersonList = new PersonList();
+        }
+
+        // Add persons for each unique author
+        foreach (var comment in comments)
+        {
+            if (comment.Comment.PersonId?.Value != null)
+            {
+                var personId = comment.Comment.PersonId.Value;
+                
+                // Check if person already exists
+                var existingPerson = personPart.PersonList.Elements<Person>()
+                    .FirstOrDefault(p => p.Id?.Value == personId);
+                
+                if (existingPerson == null)
+                {
+                    // Extract person from source or create default
+                    var person = ExtractPersonFromSourceWorkbook(existingWorkbookPath, personId);
+                    personPart.PersonList.AppendChild(new Person
+                    {
+                        Id = personId,
+                        DisplayName = person.DisplayName ?? "OpenAPI2Excel User",
+                        ProviderId = person.ProviderId ?? "Excel",
+                        UserId = person.UserId ?? "user@example.com"
+                    });
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Creates legacy comments using the official SDK pattern.
+    /// Legacy comments are required for Excel to show comment indicators.
+    /// </summary>
+    private static void CreateLegacyCommentsUsingOfficialPattern(
+        WorksheetCommentsPart legacyCommentsPart,
+        List<ThreadedCommentWithContext> comments,
+        List<WorksheetOpenApiMapping> newWorkbookMappings)
+    {
+        var authors = new Authors();
+        var commentList = new CommentList();
+
+        // Create author entries using the EXACT official pattern
+        var processedComments = new List<(ThreadedCommentWithContext comment, string cellRef, string tcId)>();
+        
+        foreach (var comment in comments.Where(c => c.IsRootComment))
+        {
+            var (targetMapping, _) = FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
+            if (targetMapping == null) continue;
+
+            if (!TryGetTargetCell(comment, targetMapping, out string targetCellReference)) continue;
+
+            // Generate unique tcId for this comment (like official example)
+            string tcId = comment.CommentId;
+            
+            // Add author using EXACT official pattern
+            authors.AppendChild(new Author("tc=" + tcId));
+            
+            processedComments.Add((comment, targetCellReference, tcId));
+        }
+
+        // Create legacy comments using EXACT official pattern
+        for (int i = 0; i < processedComments.Count; i++)
+        {
+            var (comment, cellRef, tcId) = processedComments[i];
+            
+            // Create legacy comment following EXACT official pattern
+            var legacyComment = new Comment(
+                new CommentText(new Text($"Comment: {comment.CommentText}")))
+            {
+                Reference = cellRef,
+                AuthorId = (uint)i,  // Sequential author ID
+                ShapeId = 0,         // Official example uses 0
+                Guid = tcId          // CRITICAL: Must match ThreadedComment.Id
+            };
+            
+            commentList.AppendChild(legacyComment);
+        }
+
+        legacyCommentsPart.Comments = new Comments(authors, commentList);
+    }
+
+    /// <summary>
+    /// Creates threaded comments using the official SDK pattern.
+    /// </summary>
+    private static void CreateThreadedCommentsUsingOfficialPattern(
+        WorksheetThreadedCommentsPart threadedCommentsPart,
+        List<ThreadedCommentWithContext> comments,
+        List<WorksheetOpenApiMapping> newWorkbookMappings,
+        string existingWorkbookPath,
+        Dictionary<string, string> idMapping)
+    {
+        var threadedCommentsList = new List<ThreadedComment>();
+
+        // Create threaded comments using EXACT official pattern
+        foreach (var comment in comments)
+        {
+            var (targetMapping, _) = FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
+            if (targetMapping == null) continue;
+
+            if (!TryGetTargetCell(comment, targetMapping, out string targetCellReference)) continue;
+
+            // Create threaded comment following EXACT official pattern
+            var threadedComment = new ThreadedComment(
+                new ThreadedCommentText(comment.CommentText))
+            {
+                Ref = targetCellReference,
+                PersonId = comment.Comment.PersonId?.Value ?? Guid.NewGuid().ToString(),
+                Id = comment.CommentId, // CRITICAL: Must match legacy Comment.Guid
+                DT = comment.CreatedDate ?? DateTime.Now
+            };
+
+            // Add parent reference for replies (official pattern)
+            if (!comment.IsRootComment && !string.IsNullOrEmpty(comment.Comment.ParentId?.Value))
+            {
+                threadedComment.ParentId = comment.Comment.ParentId.Value;
+            }
+
+            threadedCommentsList.Add(threadedComment);
+        }
+
+        threadedCommentsPart.ThreadedComments = new ThreadedComments(threadedCommentsList);
+    }
+
+    /// <summary>
+    /// Creates VML Drawing Part using the exact official SDK pattern.
+    /// This is the proven working VML that Excel accepts.
+    /// </summary>
+    private static void CreateVmlDrawingPartUsingOfficialPattern(
+        WorksheetPart worksheetPart,
+        List<ThreadedCommentWithContext> comments,
+        List<WorksheetOpenApiMapping> newWorkbookMappings)
+    {
+        // Check if ClosedXML already created a VML part
+        var existingVmlPart = worksheetPart.GetPartsOfType<VmlDrawingPart>().FirstOrDefault();
+        VmlDrawingPart vmlDrawingPart;
+        
+        if (existingVmlPart != null)
+        {
+            // Use the existing VML part but replace its content
+            vmlDrawingPart = existingVmlPart;
+        }
+        else
+        {
+            // Create new VML part with specific relationship ID like official example
+            vmlDrawingPart = worksheetPart.AddNewPart<VmlDrawingPart>("rId1");
+        }
+
+        using var writer = new System.Xml.XmlTextWriter(vmlDrawingPart.GetStream(FileMode.Create), System.Text.Encoding.UTF8);
+        // Use the EXACT VML from the official SDK example that works
+        string vmlContent = @"<xml xmlns:v=""urn:schemas-microsoft-com:vml"" xmlns:o=""urn:schemas-microsoft-com:office:office"" xmlns:x=""urn:schemas-microsoft-com:office:excel"">
+                <o:shapelayout v:ext=""edit"">
+                    <o:idmap v:ext=""edit"" data=""1""/>
+                </o:shapelayout>
+                <v:shapetype id=""_x0000_t202"" coordsize=""21600,21600"" o:spt=""202"" path=""m,l,21600r21600,l21600,xe"">
+                    <v:stroke joinstyle=""miter""/>
+                    <v:path gradientshapeok=""t"" o:connecttype=""rect""/>
+                </v:shapetype>";
+
+        int shapeId = 1025; // Use official example's starting shape ID
+
+        // Create VML shape for each root comment
+        foreach (var comment in comments.Where(c => c.IsRootComment))
+        {
+            var (targetMapping, _) = FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
+            if (targetMapping == null) continue;
+
+            if (!TryGetTargetCell(comment, targetMapping, out string targetCellReference)) continue;
+
+            // Extract row and column for VML anchor (0-based for VML)
+            var row = ExtractRowFromCellReference(targetCellReference) - 1;
+            var col = ExtractColumnIndexFromCellReference(targetCellReference);
+
+            // Use EXACT VML shape pattern from official example - CRITICAL: no space after semicolon
+            vmlContent += $@"
+                <v:shape id=""_x0000_s{shapeId}"" type=""#_x0000_t202"" style=""position:absolute;margin-left:59.25pt;margin-top:1.5pt;width:108pt;height:59.25pt;z-index:1;visibility:hidden"" fillcolor=""#ffffe1"" o:insetmode=""auto"">
+                    <v:fill color2=""#ffffe1""/>
+                    <v:shadow on=""t"" color=""black"" obscured=""t""/>
+                    <v:path o:connecttype=""none""/>
+                    <v:textbox style=""mso-direction-alt:auto"">
+                        <div style=""text-align:left""></div>
+                    </v:textbox>
+                    <x:ClientData ObjectType=""Note"">
+                        <x:MoveWithCells/>
+                        <x:SizeWithCells/>
+                        <x:Anchor>1, 15, {row}, 2, 3, 15, {row + 3}, 16</x:Anchor>
+                        <x:AutoFill>False</x:AutoFill>
+                        <x:Row>{row}</x:Row>
+                        <x:Column>{col}</x:Column>
+                    </x:ClientData>
+                </v:shape>";
+
+            shapeId++;
+        }
+
+        vmlContent += "</xml>";
+        writer.WriteRaw(vmlContent);
+        writer.Flush();
     }
 }

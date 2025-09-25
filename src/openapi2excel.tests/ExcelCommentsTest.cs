@@ -75,7 +75,7 @@ public class ExcelCommentsTest
             using (var workbook = new XLWorkbook(tempNewWorkbookPath))
             {
                 var legacyCommentCount = workbook.Worksheets.Sum(ws => ws.Cells().Count(c => c.HasComment));
-                
+
                 // There are 10 root comments, one of which is unmappable. So 9 comments should be migrated.
                 Assert.Equal(9, legacyCommentCount);
             }
@@ -114,36 +114,53 @@ public class ExcelCommentsTest
         {
             await PrepareWorkbookWithMigratedComments(tempNewWorkbookPath);
 
-			using var spreadsheetDocument = SpreadsheetDocument.Open(tempNewWorkbookPath, false);
-			var workbookPart = spreadsheetDocument.WorkbookPart;
-			Assert.NotNull(workbookPart);
+            using var spreadsheetDocument = SpreadsheetDocument.Open(tempNewWorkbookPath, false);
+            var workbookPart = spreadsheetDocument.WorkbookPart;
+            Assert.NotNull(workbookPart);
 
-			var allThreadedComments = new List<ThreadedComment>();
-			foreach (var worksheetPart in workbookPart.WorksheetParts)
-			{
-				var threadedCommentsPart = worksheetPart.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
-				if (threadedCommentsPart?.ThreadedComments != null)
-				{
-					allThreadedComments.AddRange(threadedCommentsPart.ThreadedComments.Elements<ThreadedComment>());
-				}
-			}
+            var allThreadedComments = new List<ThreadedComment>();
+            foreach (var worksheetPart in workbookPart.WorksheetParts)
+            {
+                var threadedCommentsPart = worksheetPart.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
+                if (threadedCommentsPart?.ThreadedComments != null)
+                {
+                    allThreadedComments.AddRange(threadedCommentsPart.ThreadedComments.Elements<ThreadedComment>());
+                }
+            }
 
-			// A "discussion" is a root comment with at least one reply.
-			// We convert to ThreadedCommentWithContext to use its helper methods.
-			var allCommentsWithContext = allThreadedComments
-				.Select(c => new ThreadedCommentWithContext { Comment = c })
-				.ToList();
+            // A "discussion" is a root comment with at least one reply.
+            // We convert to ThreadedCommentWithContext to use its helper methods.
+            var allCommentsWithContext = allThreadedComments
+                .Select(c => new ThreadedCommentWithContext { Comment = c })
+                .ToList();
 
-			var rootComments = allCommentsWithContext.Where(c => c.IsRootComment).ToList();
-			var discussionCount = rootComments.Count(rc => rc.HasReplies(allCommentsWithContext));
+            var rootComments = allCommentsWithContext.Where(c => c.IsRootComment).ToList();
+            var discussionCount = rootComments.Count(rc => rc.HasReplies(allCommentsWithContext));
 
-			// The sample file has at least two distinct comment threads.
-			Assert.True(discussionCount >= 2, $"Expected at least 2 discussions, but found {discussionCount}.");
-		}
+            // The sample file has at least two distinct comment threads.
+            Assert.True(discussionCount >= 2, $"Expected at least 2 discussions, but found {discussionCount}.");
+        }
         finally
         {
             // Cleanup
             if (File.Exists(tempNewWorkbookPath)) File.Delete(tempNewWorkbookPath);
         }
+    }
+
+    [Fact]
+    public void Can_List_Replies()
+    {
+        const string existingWorkbook = "Sample/sample-api-gw-with-mappings.xlsx";
+        const string discussionStart = "A comment about a description";
+        const string discussionEnd = "This is the end of the discussion";
+        var allComments = ExcelOpenXmlHelper.ExtractAndAnnotateAllComments(existingWorkbook);
+        var originalComment = allComments.FirstOrDefault(c => c.CommentText.Contains(discussionStart));
+
+        Assert.NotNull(originalComment);
+        Assert.True(originalComment.HasReplies(allComments));
+
+        var replyTexts = originalComment.GetReplyTexts(allComments).ToList();
+        Assert.True(replyTexts.Count > 2, "Should have found reply texts");
+        Assert.Contains(discussionEnd, replyTexts);
     }
 }
