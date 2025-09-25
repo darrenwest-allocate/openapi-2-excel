@@ -118,10 +118,32 @@ public class ExcelCommentsTest
         {
             await PrepareWorkbookWithMigratedComments(tempNewWorkbookPath);
 
-            // Examine the comments and assure that there are Threaded comments for at least 2 discussions 
-            // TODO
+			using var spreadsheetDocument = SpreadsheetDocument.Open(tempNewWorkbookPath, false);
+			var workbookPart = spreadsheetDocument.WorkbookPart;
+			Assert.NotNull(workbookPart);
 
-        }
+			var allThreadedComments = new List<ThreadedComment>();
+			foreach (var worksheetPart in workbookPart.WorksheetParts)
+			{
+				var threadedCommentsPart = worksheetPart.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
+				if (threadedCommentsPart?.ThreadedComments != null)
+				{
+					allThreadedComments.AddRange(threadedCommentsPart.ThreadedComments.Elements<ThreadedComment>());
+				}
+			}
+
+			// A "discussion" is a root comment with at least one reply.
+			// We convert to ThreadedCommentWithContext to use its helper methods.
+			var allCommentsWithContext = allThreadedComments
+				.Select(c => new ThreadedCommentWithContext { Comment = c })
+				.ToList();
+
+			var rootComments = allCommentsWithContext.Where(c => c.IsRootComment).ToList();
+			var discussionCount = rootComments.Count(rc => rc.HasReplies(allCommentsWithContext));
+
+			// The sample file has at least two distinct comment threads.
+			Assert.True(discussionCount >= 2, $"Expected at least 2 discussions, but found {discussionCount}.");
+		}
         finally
         {
             // Cleanup
