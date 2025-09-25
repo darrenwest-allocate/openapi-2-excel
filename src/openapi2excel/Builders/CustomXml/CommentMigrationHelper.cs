@@ -54,27 +54,33 @@ public static class CommentMigrationHelper
          string existingWorkbookPath,
          string newWorkbookPath,
          List<WorksheetOpenApiMapping> newWorkbookMappings)
-    {
+    {        
         // Step 1: Extract unresolved comments from existing workbook with annotations
         var commentsToMigrate = ExcelOpenXmlHelper.ExtractAndAnnotateUnresolvedComments(existingWorkbookPath);
+        
         if (!commentsToMigrate.Any()) return new List<(ThreadedCommentWithContext, CommentMigrationFailureReason)>();
 
         // Tracks old ID -> new ID mapping to preserve threaded comment chains
         var idMapping = new Dictionary<string, string>();
         var sortedComments = SortCommentsForMigration(commentsToMigrate);
         var nonMigratableComments = new List<(ThreadedCommentWithContext, CommentMigrationFailureReason)>();
+        var processedCells = new HashSet<string>(); // Track cells that already have legacy comments
 
-        // PHASE 1: Create legacy comments using ClosedXML
+        // PHASE 1: Create legacy comments using ClosedXML (only root comments)
         using (var newWorkbook = new XLWorkbook(newWorkbookPath))
         {
             foreach (var comment in sortedComments)
             {
+                // Only process root comments for legacy comment creation
+                if (!comment.IsRootComment) continue;
+                
                 var migrationResult = TryMigrateThreadedComment(
                     comment,
                     newWorkbook,
                     newWorkbookMappings,
                     idMapping,
-                    existingWorkbookPath);
+                    existingWorkbookPath,
+                    processedCells);
 
                 if (!migrationResult.Success)
                 {
@@ -98,7 +104,8 @@ public static class CommentMigrationHelper
         IXLWorkbook workbook,
         List<WorksheetOpenApiMapping> newWorkbookMappings,
         Dictionary<string, string> idMapping,
-        string existingWorkbookPath)
+        string existingWorkbookPath,
+        HashSet<string> processedCells)
     {
         try
         {
@@ -123,7 +130,14 @@ public static class CommentMigrationHelper
                 return (false, CommentMigrationFailureReason.TargetWorksheetNotFound, "Could not determine target cell for migration.");
             }
 
-            ReplicateSourceCommentOnNewWorksheet(worksheet, targetCellReference, comment);
+            // Create a unique key for this cell to avoid duplicate legacy comments
+            var cellKey = $"{worksheetName}:{targetCellReference}";
+            if (!processedCells.Contains(cellKey))
+            {
+                ReplicateSourceCommentOnNewWorksheet(worksheet, targetCellReference, comment);
+                processedCells.Add(cellKey);
+            }
+            
             return (true, null, null);
         }
         catch (Exception ex)
@@ -250,8 +264,6 @@ public static class CommentMigrationHelper
         
         sortedComments.AddRange(remainingComments);
         
-        Console.WriteLine($"[DEBUG] Sorted {sortedComments.Count} comments for migration (Root: {rootComments.Count}, Replies: {comments.Count - rootComments.Count})");
-        
         return sortedComments;
     }
 
@@ -302,6 +314,7 @@ public static class CommentMigrationHelper
 
     /// <summary>
     /// Creates threaded comments for a specific worksheet.
+    /// Uses the 2018 schema format to match Excel's expected structure.
     /// </summary>
     private static void CreateThreadedCommentsForWorksheet(
         WorksheetPart worksheetPart,
@@ -309,20 +322,32 @@ public static class CommentMigrationHelper
         List<WorksheetOpenApiMapping> newWorkbookMappings,
         string existingWorkbookPath,
         Dictionary<string, string> idMapping)
-    {
+    {        
         // Get or create the threaded comments part
         var threadedCommentsPart = worksheetPart.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
-        if (threadedCommentsPart == null)
+        if (threadedCommentsPart != null)
         {
-            threadedCommentsPart = worksheetPart.AddNewPart<WorksheetThreadedCommentsPart>();
-            threadedCommentsPart.ThreadedComments = new ThreadedComments();
+            worksheetPart.DeletePart(threadedCommentsPart);
+        }
+        
+        threadedCommentsPart = worksheetPart.AddNewPart<WorksheetThreadedCommentsPart>();
+        
+        // Generate XML manually to ensure correct namespace structure (no prefixes)
+        var xml = CreateThreadedCommentsXml(comments, newWorkbookMappings, idMapping);
+        
+        // Write the XML directly to the part
+        using (var stream = threadedCommentsPart.GetStream(FileMode.Create))
+        using (var writer = new StreamWriter(stream))
+        {
+            writer.Write(xml);
         }
 
-        var threadedCommentsElement = threadedCommentsPart.ThreadedComments;
-        if (threadedCommentsElement == null)
+        // Ensure the relationship is properly set up in the worksheet
+        // This is crucial for Excel to recognize the threaded comments
+        var worksheet = worksheetPart.Worksheet;
+        if (worksheet != null)
         {
-            threadedCommentsElement = new ThreadedComments();
-            threadedCommentsPart.ThreadedComments = threadedCommentsElement;
+            var relationshipId = worksheetPart.GetIdOfPart(threadedCommentsPart);
         }
 
         // Ensure persons part exists for all comment authors
@@ -334,8 +359,23 @@ public static class CommentMigrationHelper
                 EnsurePersonsPartExists(document, comment.Comment.PersonId.Value, existingWorkbookPath);
             }
         }
+    }
 
-        // Add root comments and their replies
+    /// <summary>
+    /// Creates the threaded comments XML content manually to ensure correct 2018 schema format.
+    /// </summary>
+    private static string CreateThreadedCommentsXml(
+        List<ThreadedCommentWithContext> comments,
+        List<WorksheetOpenApiMapping> newWorkbookMappings,
+        Dictionary<string, string> idMapping)
+    {
+        var xmlBuilder = new System.Text.StringBuilder();
+        
+        // XML header and root element with correct 2018 namespaces
+        xmlBuilder.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
+        xmlBuilder.AppendLine("<ThreadedComments xmlns=\"http://schemas.microsoft.com/office/spreadsheetml/2018/threadedcomments\" xmlns:x=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
+        
+        // Process root comments and their replies
         foreach (var rootComment in comments.Where(c => c.IsRootComment))
         {
             var (targetMapping, _) = FindMatchingMapping(rootComment.OpenApiAnchor, newWorkbookMappings);
@@ -344,58 +384,46 @@ public static class CommentMigrationHelper
             if (!TryGetTargetCell(rootComment, targetMapping, out string targetCellReference)) continue;
 
             // Create the root threaded comment
-            var newThreadedComment = CreateThreadedComment(rootComment, targetCellReference, null);
-            threadedCommentsElement.AppendChild(newThreadedComment);
-
-            // Track the old->new ID mapping
-            if (!string.IsNullOrEmpty(rootComment.CommentId) && newThreadedComment.Id?.Value != null)
+            var rootId = Guid.NewGuid().ToString("B").ToUpper(); // Format: {GUID}
+            var rootDateTime = rootComment.Comment.DT?.Value.ToString("yyyy-MM-ddTHH:mm:ss.ff") ?? DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.ff");
+            var personId = rootComment.Comment.PersonId?.Value ?? "";
+            
+            var doneAttr = rootComment.Comment.Done?.Value == true ? " done=\"1\"" : "";
+            
+            xmlBuilder.AppendLine($"<threadedComment ref=\"{targetCellReference}\" dT=\"{rootDateTime}\" personId=\"{personId}\" id=\"{rootId}\"{doneAttr}>");
+            xmlBuilder.AppendLine($"<text>{System.Security.SecurityElement.Escape(rootComment.CommentText)}</text>");
+            xmlBuilder.AppendLine("</threadedComment>");
+            
+            // Track the ID mapping
+            if (!string.IsNullOrEmpty(rootComment.CommentId))
             {
-                idMapping[rootComment.CommentId] = newThreadedComment.Id.Value;
+                idMapping[rootComment.CommentId] = rootId;
             }
 
             // Add replies to this root comment
             var replies = rootComment.GetReplies(comments).ToList();
             foreach (var reply in replies)
             {
-                var newReplyComment = CreateThreadedComment(reply, targetCellReference, newThreadedComment.Id?.Value);
-                threadedCommentsElement.AppendChild(newReplyComment);
-
+                var replyId = Guid.NewGuid().ToString("B").ToUpper();
+                var replyDateTime = reply.Comment.DT?.Value.ToString("yyyy-MM-ddTHH:mm:ss.ff") ?? DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.ff");
+                var replyPersonId = reply.Comment.PersonId?.Value ?? "";
+                
+                xmlBuilder.AppendLine($"<threadedComment ref=\"{targetCellReference}\" dT=\"{replyDateTime}\" personId=\"{replyPersonId}\" id=\"{replyId}\" parentId=\"{rootId}\">");
+                xmlBuilder.AppendLine($"<text>{System.Security.SecurityElement.Escape(reply.CommentText)}</text>");
+                xmlBuilder.AppendLine("</threadedComment>");
+                
                 // Track the reply ID mapping
-                if (!string.IsNullOrEmpty(reply.CommentId) && newReplyComment.Id?.Value != null)
+                if (!string.IsNullOrEmpty(reply.CommentId))
                 {
-                    idMapping[reply.CommentId] = newReplyComment.Id.Value;
+                    idMapping[reply.CommentId] = replyId;
                 }
             }
         }
-    }
-
-    /// <summary>
-    /// Creates a new ThreadedComment object from a source comment.
-    /// </summary>
-    private static ThreadedComment CreateThreadedComment(ThreadedCommentWithContext sourceComment, string cellReference, string? parentId)
-    {
-        var newId = Guid.NewGuid().ToString();
         
-        var threadedComment = new ThreadedComment
-        {
-            Id = newId,
-            Ref = cellReference,
-            PersonId = sourceComment.Comment.PersonId?.Value,
-            DT = sourceComment.Comment.DT?.Value ?? DateTime.UtcNow
-        };
-
-        if (!string.IsNullOrEmpty(parentId))
-        {
-            threadedComment.ParentId = parentId;
-        }
-
-        // Add the comment text
-        var text = new ThreadedCommentText();
-        text.Text = sourceComment.CommentText;
-        threadedComment.AppendChild(text);
-
-        return threadedComment;
+        xmlBuilder.AppendLine("</ThreadedComments>");
+        return xmlBuilder.ToString();
     }
+
 
     /// <summary>
     /// Finds the WorksheetPart for a given worksheet name.
@@ -431,19 +459,14 @@ public static class CommentMigrationHelper
         var existingPersonPart = workbookPart.GetPartsOfType<WorkbookPersonPart>().FirstOrDefault();
         if (existingPersonPart != null)
         {
-            Console.WriteLine($"[DEBUG] Persons part already exists, checking for personId: {personId}");
-            
             // Check if the specific personId already exists
             var existingPerson = existingPersonPart.PersonList?.Elements<Person>()
                 .FirstOrDefault(p => p.Id?.Value == personId);
             
             if (existingPerson != null)
             {
-                Console.WriteLine($"[DEBUG] Person {personId} already exists in persons part");
                 return;
             }
-            
-            Console.WriteLine($"[DEBUG] Person {personId} not found, need to add from source workbook");
         }
 
         // Extract the specific person from source workbook
@@ -460,7 +483,6 @@ public static class CommentMigrationHelper
         if (existingPersonPart != null)
         {
             existingPersonPart.PersonList?.AppendChild(newPerson);
-            Console.WriteLine($"[DEBUG] Added person to existing persons part: {newPerson.Id} - {newPerson.DisplayName}");
         }
         else
         {
@@ -469,7 +491,6 @@ public static class CommentMigrationHelper
             var personList = new PersonList();
             personList.AppendChild(newPerson);
             personPart.PersonList = personList;
-            Console.WriteLine($"[DEBUG] Created new WorkbookPersonPart with person: {newPerson.Id} - {newPerson.DisplayName}");
         }
     }
 
@@ -493,14 +514,12 @@ public static class CommentMigrationHelper
             var sourceWorkbookPart = sourceDocument.WorkbookPart;
             if (sourceWorkbookPart == null)
             {
-                Console.WriteLine("[DEBUG] No workbook part in source document");
                 return defaultPerson;
             }
 
             var sourcePersonPart = sourceWorkbookPart.GetPartsOfType<WorkbookPersonPart>().FirstOrDefault();
             if (sourcePersonPart?.PersonList == null)
             {
-                Console.WriteLine("[DEBUG] No persons part found in source workbook");
                 return defaultPerson;
             }
 
@@ -510,18 +529,15 @@ public static class CommentMigrationHelper
 
             if (person != null)
             {
-                Console.WriteLine($"[DEBUG] Found person {personId} in source workbook: {person.DisplayName?.Value}");
                 return (Person)person.Clone();
             }
             else
             {
-                Console.WriteLine($"[DEBUG] Person {personId} not found in source workbook");
                 return defaultPerson;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"[DEBUG] Error extracting person {personId} from source: {ex.Message}");
             return defaultPerson;
         }
     }
