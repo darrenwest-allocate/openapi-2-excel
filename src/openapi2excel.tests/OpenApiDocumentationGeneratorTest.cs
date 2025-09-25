@@ -137,6 +137,8 @@ public class OpenApiDocumentationGeneratorTest
       Assert.True(File.Exists(newWorkbookPath));
       
       var migratedComments = ExcelOpenXmlHelper.ExtractAndAnnotateAllComments(newWorkbookPath);
+
+      // TODO: Test currently fails because we have yet to implement threaded comments to the legacy comments already added
       
       Assert.True(migratedComments.Count > 0, "Should have some migrated comments");
       Assert.True(migratedComments.Count < originalUnresolvedComments.Count + originalResolvedCommentsCount, "Less than all the comments");

@@ -56,21 +56,38 @@ public static class OpenApiDocumentationGenerator
          ));
 
       var filePath = new FileInfo(outputFile).FullName;
-      workbook.SaveAs(filePath);
 
-      if (options.IncludeMappings)
+      if (options.IncludeMappings || !string.IsNullOrEmpty(options.FilepathToPreserveComments))
       {
-         WorksheetOpenApiMapping.AllWorksheetMappings
-            .ForEach(worksheetMapping => ExcelCustomXmlHelper.WriteCustomXmlMapping(filePath, worksheetMapping));
+         // Save to a temporary file to add custom XML parts
+         var tempFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.xlsx");
+         workbook.SaveAs(tempFile);
+
+         if (options.IncludeMappings)
+         {
+            WorksheetOpenApiMapping.AllWorksheetMappings
+               .ForEach(worksheetMapping => ExcelCustomXmlHelper.WriteCustomXmlMapping(tempFile, worksheetMapping));
+         }
+
+         // Migrate comments from existing workbook if specified
+         if (!string.IsNullOrEmpty(options.FilepathToPreserveComments))
+         {
+            var newWorkbookMappings = ExcelOpenXmlHelper.ExtractCustomXmlMappingsFromWorkbook(tempFile);
+            using var newWorkbook = new XLWorkbook(tempFile);
+            CommentMigrationHelper.MigrateComments(
+               options.FilepathToPreserveComments,
+               newWorkbook,
+               newWorkbookMappings);
+            newWorkbook.Save();
+         }
+
+         // Move the modified temp file to the final output path
+         File.Copy(tempFile, filePath, true);
+         File.Delete(tempFile);
       }
-
-      // Migrate comments from existing workbook if specified
-      if (!string.IsNullOrEmpty(options.FilepathToPreserveComments))
+      else
       {
-         CommentMigrationHelper.MigrateComments(
-            options.FilepathToPreserveComments, 
-            filePath, 
-            WorksheetOpenApiMapping.AllWorksheetMappings);
+         workbook.SaveAs(filePath);
       }
    }
 

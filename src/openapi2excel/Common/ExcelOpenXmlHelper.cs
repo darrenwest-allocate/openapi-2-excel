@@ -106,7 +106,7 @@ public static class ExcelOpenXmlHelper
 				var isResolved = comment.Done == "1";
 				if ((isResolved && includeResolved) || (!isResolved && includeUnresolved))
 				{
-					comments.Add(new ThreadedCommentWithContext(comment, worksheetName));
+					comments.Add(new ThreadedCommentWithContext(comment, worksheetName, filePath));
 				}
 			}
 		}

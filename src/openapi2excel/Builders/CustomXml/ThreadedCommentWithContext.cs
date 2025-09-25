@@ -1,6 +1,10 @@
-using System;
-using System.Linq;
 using DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Person = DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments.Person;
 
 namespace openapi2excel.core.Builders.CustomXml;
 
@@ -9,18 +13,46 @@ namespace openapi2excel.core.Builders.CustomXml;
 /// </summary>
 public class ThreadedCommentWithContext
 {
+    private readonly Dictionary<string, Person> _personCache = new();
+    private string _lastWorkbookPath = string.Empty;
 
     public ThreadedCommentWithContext() { }
 
-    public ThreadedCommentWithContext(ThreadedComment comment, string worksheetName)
+    public ThreadedCommentWithContext(ThreadedComment comment, string worksheetName, string workbookPath)
     {
         Comment = comment;
         WorksheetName = worksheetName;
+
+        if (_lastWorkbookPath != workbookPath)
+        {
+            _personCache.Clear();
+            _lastWorkbookPath = workbookPath;
+        }
+
+        if (Comment.PersonId?.Value != null && !_personCache.ContainsKey(Comment.PersonId.Value))
+        {
+            var person = ExtractPersonFromSourceWorkbook(workbookPath, Comment.PersonId.Value);
+            if (person != null)
+            {
+                _personCache[Comment.PersonId.Value] = (Person)person.CloneNode(true);
+            }
+        }
     }
 
     public ThreadedComment Comment { get; set; } = null!;
     public string WorksheetName { get; set; } = string.Empty;
     public string OpenApiAnchor { get; set; } = string.Empty; // Added for mapping
+    public string Author
+    {
+        get
+        {
+            if (Comment.PersonId?.Value != null && _personCache.TryGetValue(Comment.PersonId.Value, out var person))
+            {
+                return person.DisplayName?.Value ?? "Unknown Author";
+            }
+            return "Unknown Author";
+        }
+    }
     public string CellReference => Comment?.Ref?.Value ?? string.Empty;
     public string CommentText
     {
@@ -42,6 +74,8 @@ public class ThreadedCommentWithContext
             return null;
         }
     }
+
+    public bool IsRootComment => string.IsNullOrEmpty(Comment?.ParentId?.Value) || Comment.ParentId?.Value == Comment.Id?.Value;
 
     /// <summary>
     /// Gets the reply texts for this comment by finding other comments in the collection that reference this comment's ID as their parentId.
@@ -84,5 +118,17 @@ public class ThreadedCommentWithContext
     public bool HasReplies(IEnumerable<ThreadedCommentWithContext> allComments)
     {
         return allComments.Any(c => c.Comment.ParentId?.Value == this.CommentId);
+    }
+
+    private static Person? ExtractPersonFromSourceWorkbook(string existingWorkbookPath, string personId)
+    {
+        using var sourceDoc = SpreadsheetDocument.Open(existingWorkbookPath, false);
+        var sourceWbPart = sourceDoc.WorkbookPart;
+        if (sourceWbPart == null) return null;
+
+        var personsPart = sourceWbPart.GetPartsOfType<WorkbookPersonPart>().FirstOrDefault();
+        if (personsPart == null) return null;
+
+        return personsPart.RootElement?.Elements<Person>().FirstOrDefault(p => p.Id?.Value == personId);
     }
 }
