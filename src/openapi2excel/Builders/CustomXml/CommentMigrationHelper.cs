@@ -47,10 +47,12 @@ public static class CommentMigrationHelper
     /// <summary>
     /// Migrates unresolved comments from an existing Excel workbook to a new workbook
     /// using OpenAPI anchor mappings to determine the correct cell placement.
+    /// Uses a two-phase approach: Phase 1 creates legacy comments with ClosedXML,
+    /// Phase 2 adds threaded comment parts using OpenXML.
     /// </summary>
     public static List<(ThreadedCommentWithContext, CommentMigrationFailureReason)> MigrateComments(
          string existingWorkbookPath,
-         IXLWorkbook newWorkbook,
+         string newWorkbookPath,
          List<WorksheetOpenApiMapping> newWorkbookMappings)
     {
         // Step 1: Extract unresolved comments from existing workbook with annotations
@@ -59,38 +61,32 @@ public static class CommentMigrationHelper
 
         // Tracks old ID -> new ID mapping to preserve threaded comment chains
         var idMapping = new Dictionary<string, string>();
-        // Prevents broken parent-child ID relationships with a ort of comments to ensure parent comments are migrated before their replies
         var sortedComments = SortCommentsForMigration(commentsToMigrate);
-
-        // Migrate comments directly to the saved workbook using OpenXML
-        var migratedCommentCount = 0;
         var nonMigratableComments = new List<(ThreadedCommentWithContext, CommentMigrationFailureReason)>();
 
-        foreach (var comment in sortedComments.Where(c => c.IsRootComment))
+        // PHASE 1: Create legacy comments using ClosedXML
+        using (var newWorkbook = new XLWorkbook(newWorkbookPath))
         {
-            var migrationResult = TryMigrateThreadedComment(
-                comment,
-                newWorkbook,
-                newWorkbookMappings,
-                idMapping,
-                existingWorkbookPath);
+            foreach (var comment in sortedComments)
+            {
+                var migrationResult = TryMigrateThreadedComment(
+                    comment,
+                    newWorkbook,
+                    newWorkbookMappings,
+                    idMapping,
+                    existingWorkbookPath);
 
-            if (migrationResult.Success)
-            {
-                migratedCommentCount++;
-                // Recursively migrate replies
-                // MigrateReplies(comment, workbookPart, newWorkbookMappings, idMapping, existingWorkbookPath, sortedComments);
+                if (!migrationResult.Success)
+                {
+                    nonMigratableComments.Add((comment, migrationResult.FailureReason ?? CommentMigrationFailureReason.Unknown));
+                }
             }
-            else
-            {
-                nonMigratableComments.Add((comment, migrationResult.FailureReason ?? CommentMigrationFailureReason.Unknown));
-                // Also add replies to non-migratable list
-                // nonMigratableComments.AddRange(comment.GetReplies(sortedComments).Select(r => (r, CommentMigrationFailureReason.ParentFailedToMigrate)));
-            }
+            newWorkbook.Save();
         }
 
+        // PHASE 2: Add threaded comment parts using OpenXML
+        AddThreadedCommentParts(existingWorkbookPath, newWorkbookPath, sortedComments, newWorkbookMappings, idMapping);
 
-        // TODO: Handle nonMigratableComments in a future iteration (create "Lost Commentary" worksheet)
         return nonMigratableComments;
     }
 
@@ -190,7 +186,7 @@ public static class CommentMigrationHelper
     /// Adds a legacy comment for Excel backward compatibility and visibility.
     /// Legacy comments are required for Excel to display threaded comments properly.
     /// </summary>
-    private static string ReplicateSourceCommentOnNewWorksheet(
+    private static void ReplicateSourceCommentOnNewWorksheet(
         IXLWorksheet newWorksheet,
         string cellReference,
         ThreadedCommentWithContext sourceComment)
@@ -203,7 +199,7 @@ public static class CommentMigrationHelper
         }
         comment.AddText(sourceComment.CommentText);
         comment.Author = sourceComment.Author;
-        return string.Empty;
+        return;
     }
 
     /// <summary>
@@ -257,6 +253,164 @@ public static class CommentMigrationHelper
         Console.WriteLine($"[DEBUG] Sorted {sortedComments.Count} comments for migration (Root: {rootComments.Count}, Replies: {comments.Count - rootComments.Count})");
         
         return sortedComments;
+    }
+
+    /// <summary>
+    /// Adds threaded comment parts to the workbook using OpenXML.
+    /// This method handles the creation of WorksheetThreadedCommentsPart and ThreadedComment objects
+    /// for root comments and their replies.
+    /// </summary>
+    private static void AddThreadedCommentParts(
+        string existingWorkbookPath,
+        string newWorkbookPath,
+        List<ThreadedCommentWithContext> sortedComments,
+        List<WorksheetOpenApiMapping> newWorkbookMappings,
+        Dictionary<string, string> idMapping)
+    {
+        using var document = SpreadsheetDocument.Open(newWorkbookPath, true);
+        var workbookPart = document.WorkbookPart;
+        if (workbookPart == null) return;
+
+        // Group comments by their target worksheet
+        var commentsByWorksheet = new Dictionary<string, List<ThreadedCommentWithContext>>();
+        
+        foreach (var comment in sortedComments)
+        {
+            if (string.IsNullOrEmpty(comment.OpenApiAnchor)) continue;
+            
+            var (targetMapping, worksheetName) = FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
+            if (targetMapping == null) continue;
+            
+            if (!commentsByWorksheet.ContainsKey(worksheetName))
+            {
+                commentsByWorksheet[worksheetName] = new List<ThreadedCommentWithContext>();
+            }
+            commentsByWorksheet[worksheetName].Add(comment);
+        }
+
+        // Process each worksheet
+        foreach (var (worksheetName, worksheetComments) in commentsByWorksheet)
+        {
+            var worksheetPart = FindWorksheetPart(workbookPart, worksheetName);
+            if (worksheetPart == null) continue;
+
+            CreateThreadedCommentsForWorksheet(worksheetPart, worksheetComments, newWorkbookMappings, existingWorkbookPath, idMapping);
+        }
+
+        document.Save();
+    }
+
+    /// <summary>
+    /// Creates threaded comments for a specific worksheet.
+    /// </summary>
+    private static void CreateThreadedCommentsForWorksheet(
+        WorksheetPart worksheetPart,
+        List<ThreadedCommentWithContext> comments,
+        List<WorksheetOpenApiMapping> newWorkbookMappings,
+        string existingWorkbookPath,
+        Dictionary<string, string> idMapping)
+    {
+        // Get or create the threaded comments part
+        var threadedCommentsPart = worksheetPart.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
+        if (threadedCommentsPart == null)
+        {
+            threadedCommentsPart = worksheetPart.AddNewPart<WorksheetThreadedCommentsPart>();
+            threadedCommentsPart.ThreadedComments = new ThreadedComments();
+        }
+
+        var threadedCommentsElement = threadedCommentsPart.ThreadedComments;
+        if (threadedCommentsElement == null)
+        {
+            threadedCommentsElement = new ThreadedComments();
+            threadedCommentsPart.ThreadedComments = threadedCommentsElement;
+        }
+
+        // Ensure persons part exists for all comment authors
+        var document = worksheetPart.OpenXmlPackage as SpreadsheetDocument;
+        foreach (var comment in comments)
+        {
+            if (comment.Comment.PersonId?.Value != null)
+            {
+                EnsurePersonsPartExists(document, comment.Comment.PersonId.Value, existingWorkbookPath);
+            }
+        }
+
+        // Add root comments and their replies
+        foreach (var rootComment in comments.Where(c => c.IsRootComment))
+        {
+            var (targetMapping, _) = FindMatchingMapping(rootComment.OpenApiAnchor, newWorkbookMappings);
+            if (targetMapping == null) continue;
+
+            if (!TryGetTargetCell(rootComment, targetMapping, out string targetCellReference)) continue;
+
+            // Create the root threaded comment
+            var newThreadedComment = CreateThreadedComment(rootComment, targetCellReference, null);
+            threadedCommentsElement.AppendChild(newThreadedComment);
+
+            // Track the old->new ID mapping
+            if (!string.IsNullOrEmpty(rootComment.CommentId) && newThreadedComment.Id?.Value != null)
+            {
+                idMapping[rootComment.CommentId] = newThreadedComment.Id.Value;
+            }
+
+            // Add replies to this root comment
+            var replies = rootComment.GetReplies(comments).ToList();
+            foreach (var reply in replies)
+            {
+                var newReplyComment = CreateThreadedComment(reply, targetCellReference, newThreadedComment.Id?.Value);
+                threadedCommentsElement.AppendChild(newReplyComment);
+
+                // Track the reply ID mapping
+                if (!string.IsNullOrEmpty(reply.CommentId) && newReplyComment.Id?.Value != null)
+                {
+                    idMapping[reply.CommentId] = newReplyComment.Id.Value;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Creates a new ThreadedComment object from a source comment.
+    /// </summary>
+    private static ThreadedComment CreateThreadedComment(ThreadedCommentWithContext sourceComment, string cellReference, string? parentId)
+    {
+        var newId = Guid.NewGuid().ToString();
+        
+        var threadedComment = new ThreadedComment
+        {
+            Id = newId,
+            Ref = cellReference,
+            PersonId = sourceComment.Comment.PersonId?.Value,
+            DT = sourceComment.Comment.DT?.Value ?? DateTime.UtcNow
+        };
+
+        if (!string.IsNullOrEmpty(parentId))
+        {
+            threadedComment.ParentId = parentId;
+        }
+
+        // Add the comment text
+        var text = new ThreadedCommentText();
+        text.Text = sourceComment.CommentText;
+        threadedComment.AppendChild(text);
+
+        return threadedComment;
+    }
+
+    /// <summary>
+    /// Finds the WorksheetPart for a given worksheet name.
+    /// </summary>
+    private static WorksheetPart? FindWorksheetPart(WorkbookPart workbookPart, string worksheetName)
+    {
+        var sheet = workbookPart.Workbook.Descendants<Sheet>()
+            .FirstOrDefault(s => s.Name?.Value?.Equals(worksheetName, StringComparison.OrdinalIgnoreCase) == true);
+        
+        if (sheet?.Id?.Value != null)
+        {
+            return workbookPart.GetPartById(sheet.Id.Value) as WorksheetPart;
+        }
+        
+        return null;
     }
 
     /// <summary>

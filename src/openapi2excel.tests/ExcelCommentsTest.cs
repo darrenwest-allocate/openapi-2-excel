@@ -103,11 +103,7 @@ public class ExcelCommentsTest
         var newWorkbookMappings = ExcelOpenXmlHelper.ExtractCustomXmlMappingsFromWorkbook(tempNewWorkbookPath);
 
         // Act: Migrate comments to the new workbook
-        using (var newWorkbook = new XLWorkbook(tempNewWorkbookPath))
-        {
-            var nonMigratableComments = CommentMigrationHelper.MigrateComments(existingWorkbookPath, newWorkbook, newWorkbookMappings);
-            newWorkbook.Save();
-        }
+        var nonMigratableComments = CommentMigrationHelper.MigrateComments(existingWorkbookPath, tempNewWorkbookPath, newWorkbookMappings);
     }
 
     [Fact]

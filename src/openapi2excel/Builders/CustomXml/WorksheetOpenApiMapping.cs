@@ -37,7 +37,15 @@ public class CellOpenApiMapping
 /// </summary>
 public class WorksheetOpenApiMapping
 {
-	public static List<WorksheetOpenApiMapping> AllWorksheetMappings { get; } = new();
+	public static List<WorksheetOpenApiMapping> AllWorksheetMappings { get; } = new(); /* I regret doing this */
+
+	/// <summary>
+	/// Clears the static AllWorksheetMappings collection. Used for test isolation.
+	/// </summary>
+	public static void ClearAllMappings()
+	{
+		AllWorksheetMappings.Clear();
+	}
 
 	public string WorksheetName { get; set; }
 	public List<CellOpenApiMapping> Mappings { get; set; } = new();

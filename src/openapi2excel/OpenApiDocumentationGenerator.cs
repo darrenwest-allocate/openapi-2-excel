@@ -73,12 +73,10 @@ public static class OpenApiDocumentationGenerator
          if (!string.IsNullOrEmpty(options.FilepathToPreserveComments))
          {
             var newWorkbookMappings = ExcelOpenXmlHelper.ExtractCustomXmlMappingsFromWorkbook(tempFile);
-            using var newWorkbook = new XLWorkbook(tempFile);
-            CommentMigrationHelper.MigrateComments(
+            var nonMigratableComments = CommentMigrationHelper.MigrateComments(
                options.FilepathToPreserveComments,
-               newWorkbook,
+               tempFile,
                newWorkbookMappings);
-            newWorkbook.Save();
          }
 
          // Move the modified temp file to the final output path
