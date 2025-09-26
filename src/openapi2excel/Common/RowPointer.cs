@@ -1,6 +1,6 @@
 namespace openapi2excel.core.Common;
 
-internal class RowPointer(int rowNumber)
+public class RowPointer(int rowNumber)
 {
    public static implicit operator int(RowPointer d) => d.Get();
    public static explicit operator RowPointer(int b) => new(b);
