@@ -16,7 +16,7 @@ namespace OpenApi2Excel.Tests;
 public class ExcelCommentsTest
 {
     [Fact]
-    public void ExtractUnresolvedComments_FromOldWorkbook_FindsOnlyUnresolvedComments()
+    public void ExtractUnresolvedComments_FindsOnlyUnresolvedComments_FromOldWorkbook()
     {
         var samplePath = "Sample/sample-api-gw.xlsx"; // This file should contain both types
 
@@ -40,7 +40,7 @@ public class ExcelCommentsTest
     }
 
     [Fact]
-    public void ExtractCustomXmlMappings_FromOldWorkbook_LinksCommentsToOpenApiAnchors()
+    public void ExtractCustomXmlMappings_LinksCommentsToOpenApiAnchors_FromOldWorkbook()
     {
         var samplePath = "Sample/sample-api-gw-with-mappings.xlsx";
 
@@ -64,7 +64,7 @@ public class ExcelCommentsTest
     }
 
     [Fact]
-    public async Task MigratedComments_ShouldCreateLegacyComments()
+    public async Task MigratedComments_CreatesLegacyComments()
     {
         var tempNewWorkbookPath = Path.Combine(Path.GetTempPath(), $"test_{Guid.NewGuid():N}.xlsx");
         try
@@ -107,7 +107,7 @@ public class ExcelCommentsTest
     }
 
     [Fact]
-    public async Task MigratedComments_ShouldCIncludeThreadedComments()
+    public async Task MigratedComments_IncludesThreadedComments()
     {
         var tempNewWorkbookPath = Path.Combine(Path.GetTempPath(), $"test_{Guid.NewGuid():N}.xlsx");
         try
@@ -148,7 +148,7 @@ public class ExcelCommentsTest
     }
 
     [Fact]
-    public void Can_List_Replies()
+    public void ListReplies_ReturnsAllReplies_ForDiscussion()
     {
         const string existingWorkbook = "Sample/sample-api-gw-with-mappings.xlsx";
         const string discussionStart = "A comment about a description";

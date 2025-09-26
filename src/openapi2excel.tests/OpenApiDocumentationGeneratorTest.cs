@@ -16,7 +16,7 @@ namespace OpenApi2Excel.Tests;
 public class OpenApiDocumentationGeneratorTest
 {
    [Fact]
-   public async Task GenerateDocumentation_create_excel_file_for_correct_openapi_document()
+   public async Task GenerateDocumentation_CreatesExcelFile_ForValidOpenApiDocument()
    {
       const string inputFIle = "Sample/Sample1.yaml";
       const string outputFile = "output.xlsx";
@@ -27,7 +27,7 @@ public class OpenApiDocumentationGeneratorTest
    }
 
    [Fact]
-   public void CustomXmlMappingParts_AreWrittenAndReadPerWorksheet()
+   public void CustomXmlMappingParts_AreWrittenAndRead_PerWorksheet()
    {
       // Arrange
       var tempFile = Path.GetTempFileName().Replace(".tmp", ".xlsx");
@@ -50,7 +50,7 @@ public class OpenApiDocumentationGeneratorTest
    }
 
    [Fact]
-   public async Task OperationWorksheetBuilder_CreatesExpectedMappings()
+   public async Task OperationWorksheetBuilder_Creates_ExpectedMappings()
    {
       const string openApiFile = "Sample/sample-api-gw.json";
       var readResult = await new OpenApiStreamReader().ReadAsync(File.OpenRead(openApiFile));
@@ -89,7 +89,7 @@ public class OpenApiDocumentationGeneratorTest
    }
 
    [Fact]
-   public async Task Generated_excel_file_records_mappings_in_custom_xml_for_openapi()
+   public async Task GenerateDocumentation_RecordsMappings_InCustomXmlForOpenApi()
    {
       const string openApiFile = "Sample/sample-api-gw.json";
       const string outputFile = "output-with-mappings.xlsx";
@@ -110,7 +110,7 @@ public class OpenApiDocumentationGeneratorTest
    }
 
    [Fact]
-   public async Task MigrateComments_ToNewWorkbook_PreservesUnresolvedCommentsInCorrectCells()
+   public async Task MigrateComments_PreservesUnresolvedComments_InCorrectCells()
    {
       // Arrange
       const string openApiFilePath = "Sample/sample-api-gw.json";
