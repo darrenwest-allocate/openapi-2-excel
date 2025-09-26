@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace openapi2excel.core.Builders.CustomXml;
+namespace openapi2excel.core.Builders.CommentsManagement;
 
 /// <summary>
 /// Represents the meta custom XML part for the workbook, listing all mapping parts and global metadata.

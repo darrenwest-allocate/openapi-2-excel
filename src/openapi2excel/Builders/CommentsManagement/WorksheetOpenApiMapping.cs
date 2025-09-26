@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
-using DocumentFormat.OpenXml.Bibliography;
-
-namespace openapi2excel.core.Builders.CustomXml;
+namespace openapi2excel.core.Builders.CommentsManagement;
 
 /// <summary>
 /// Represents a mapping between a single cell and an OpenAPI reference.

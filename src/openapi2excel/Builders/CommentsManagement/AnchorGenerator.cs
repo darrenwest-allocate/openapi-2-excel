@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using Microsoft.OpenApi.Models;
 using openapi2excel.core.Builders.WorksheetPartsBuilders.Common;
 
-namespace openapi2excel.core.Builders.CustomXml;
+namespace openapi2excel.core.Builders.CommentsManagement;
 
 /// <summary>
 /// A referenceable anchor used for mapping Excel cells to their OpenAPI source.

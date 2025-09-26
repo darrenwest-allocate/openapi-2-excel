@@ -6,7 +6,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml;
 using System.Xml.Linq;
 
-namespace openapi2excel.core.Builders.CustomXml;
+namespace openapi2excel.core.Builders.CommentsManagement;
 
 public static class ExcelCustomXmlHelper
 {

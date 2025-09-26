@@ -9,7 +9,7 @@ using DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments;
 using DocumentFormat.OpenXml.Spreadsheet;
 using openapi2excel.core;
 using openapi2excel.core.Common;
-using openapi2excel.core.Builders.CustomXml;
+using openapi2excel.core.Builders.CommentsManagement;
 
 namespace OpenApi2Excel.Tests;
 

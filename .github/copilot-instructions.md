@@ -123,7 +123,7 @@ Current TODOs in codebase (search for "TODO"):
 ### Testing
 - **Framework**: xUnit with Visual Studio test adapter
 - **Coverage**: Basic smoke test coverage (1 test currently)
-- **Test Data**: Uses Swagger Petstore sample specification
+- **Test Data**: (basic functionality) Uses Swagger Petstore sample specification; (comments management) sample-api-gw.json sample-api-gw-with-mappings.xlsx
 - **Expected Behavior**: All tests must pass for CI validation
 
 ## Troubleshooting & Validation
@@ -142,7 +142,7 @@ Expected output: "Excel file saved to [path]" with no errors.
 
 ### File Locations for Quick Reference
 - **Projects**: All in `src/` directory
-- **Documentation**: `docs/` directory contains migration plans and technical documentation
+- **Documentation**: `docs/` directory contains migration plans and technical documentation along with TODO lists
 - **Test Output**: Generated Excel files go to `test-output/` directory
 - **Published Scripts**: `PublishScripts/` contains example Excel outputs
 
@@ -150,7 +150,7 @@ Expected output: "Excel file saved to [path]" with no errors.
 
 ### The `docs/` Folder: Feature Planning & Tracking
 
-The `docs/` directory contains **mandatory planning documentation** for new features. **ALWAYS check this folder first** when working on feature branches. Each feature follows a structured planning approach:
+The `docs/` directory contains **planning documentation** for new features. **ALWAYS check this folder first** when working on feature branches. Each feature follows a structured planning approach:
 
 #### Required Documentation Files
 1. **Implementation Plan** (`*-plan.md`): Detailed technical specification
@@ -204,3 +204,7 @@ This process ensures controlled, predictable development and prevents scope cree
 **Always validate changes** by running the full test suite (`dotnet test --configuration Release`) before completing any modification.
 
 **For new features**: Add corresponding tests in `src/openapi2excel.tests/` and ensure they integrate with the existing xUnit test structure.
+
+Experimentation and investigation of problems with new tests should have that test added to a folder Investigation/ within the tests project to avoid interference.
+
+With feature completion, on summary of success, always invite the user to examine the workbook manually before concluding the task. Not all problems are seen in the unit tests.

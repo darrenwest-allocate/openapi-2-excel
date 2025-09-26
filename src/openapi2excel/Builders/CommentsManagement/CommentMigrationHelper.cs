@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace openapi2excel.core.Builders.CustomXml;
+namespace openapi2excel.core.Builders.CommentsManagement;
 
 /// <summary>
 /// Reasons why a threaded comment migration might fail.
