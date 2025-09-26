@@ -25,7 +25,7 @@ public class OpenApiDocumentationOptions
 	{
 		get
 		{
-			return includeMappings || (FilepathToPreserveComments == string.Empty);
+			return includeMappings || !string.IsNullOrEmpty(FilepathToPreserveComments);
 		}
 		set
 		{

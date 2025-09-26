@@ -74,40 +74,40 @@ internal class PropertiesTreeBuilder(
 
       if (schema.AllOf.Any())
       {
-         // Add all subSchemas on the current level
-         schema.AllOf.ForEach(subSchema =>
+         // Add all subschemas on the current level
+         schema.AllOf.ForEach(subschema =>
          {
-            AddProperties(subSchema, level, options, mappingAnchor);
+            AddProperties(subschema, level, options, mappingAnchor);
          });
       }
 
       if (schema.AnyOf.Count == 1)
       {
-         // If there is only one subSchema, we can treat it as a single schema
+         // If there is only one subschema, we can treat it as a single schema
          AddProperties(schema.AnyOf[0], level, options, mappingAnchor);
       }
       else if (schema.AnyOf.Any())
       {
-         // Otherwise, add each subSchema one level below, indicating their disjunction composition
-         schema.AnyOf.ForEach(subSchema =>
+         // Otherwise, add each subschema one level below, indicating their disjunction composition
+         schema.AnyOf.ForEach(subschema =>
          {
-            AddPropertyRow("<anyOf>", subSchema, false, level, mappingAnchor);
-            AddProperties(subSchema, level + 1, options, mappingAnchor);
+            AddPropertyRow("<anyOf>", subschema, false, level, mappingAnchor);
+            AddProperties(subschema, level + 1, options, mappingAnchor);
          });
       }
 
       if (schema.OneOf.Count == 1)
       {
-         // If there is only one subSchema, we can treat it as a single schema
+         // If there is only one subschema, we can treat it as a single schema
          AddProperties(schema.OneOf[0], level, options, mappingAnchor);
       }
       else if (schema.OneOf.Any())
       {
-         // Otherwise, add each subSchema one level below, indicating their disjunction composition
-         schema.OneOf.ForEach(subSchema =>
+         // Otherwise, add each subschema one level below, indicating their disjunction composition
+         schema.OneOf.ForEach(subschema =>
          {
-            AddPropertyRow("<oneOf>", subSchema, false, level, mappingAnchor);
-            AddProperties(subSchema, level + 1, options, mappingAnchor);
+            AddPropertyRow("<oneOf>", subschema, false, level, mappingAnchor);
+            AddProperties(subschema, level + 1, options, mappingAnchor);
          });
       }
       foreach (var property in schema.Properties)
@@ -120,7 +120,7 @@ internal class PropertiesTreeBuilder(
    {
       if (schema.Items.Properties.Any() || schema.Items.AllOf.Any() || schema.Items.AnyOf.Any() || schema.Items.OneOf.Any())
       {
-         // An array of either object properties or subSchemas
+         // An array of either object properties or subschemas
          AddProperties(schema.Items, level, options, mappingAnchor);
       }
       else

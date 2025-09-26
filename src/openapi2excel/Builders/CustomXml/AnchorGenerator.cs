@@ -10,8 +10,7 @@ namespace openapi2excel.core.Builders.CustomXml;
 /// </summary>
 public class Anchor(string value)
 {
-	private string? _value = value;
-	public string Value { get { return _value ?? string.Empty; } }
+	 public string Value { get; } = value ?? string.Empty;
 	public override string ToString() => Value;
 
 	/// <summary>
