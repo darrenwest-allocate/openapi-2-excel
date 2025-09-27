@@ -47,9 +47,36 @@ Update this file as new requirements or edge cases are discovered.
 - ✅ Backward compatibility with older Excel versions
 
 ## 5. Handling non-migratable Comments
-- [ ] Create a failing unit test for non-migratable comments (no match)
-- [ ] Implement logic to add these to the "Lost Commentary" worksheet with all required metadata
+
+### 5A. Type A - "NoAnchor" Comments (on existing worksheets, no OpenAPI anchor)
+- [x] Create a failing unit test for "NoAnchor" comments that should migrate to heading rows
+- [ ] Implement logic to find nearest anchor ending with `/TitleRow` above the comment location  
+- [ ] Implement column preservation from original location
+- [ ] Implement collision handling (place in row below heading if target cell occupied)
+- [ ] Extend ID mapping dictionary to track Type A comment migrations
+- [ ] Ensure full comment thread migration (Legacy + ThreadedComment approach)
 - [ ] Refactor as needed
+
+### 5B. Type B - "NoWorksheet" Comments (on worksheets not in new workbook)  
+- [x] Create a failing unit test for "NoWorksheet" comments that should migrate to Info sheet
+- [ ] Implement logic to identify Info sheet using `OpenApiDocumentationLanguageConst.Info`
+- [ ] Implement placement in column V starting at row 1, stacking downward
+- [ ] Extend ID mapping dictionary to track Type B comment migrations  
+- [ ] Ensure full comment thread migration with original worksheet context
+- [ ] Refactor as needed
+
+### 5C. Integration with Existing Migration Flow
+- [ ] Extend `CommentMigrationFailureReason` enum with new success categories (or remove from "failure" tracking)
+- [ ] Update main `MigrateComments` method to handle Type A and Type B cases  
+- [ ] Ensure Type A/B processing doesn't interfere with existing exact-match migrations
+- [ ] Update tests to account for additional successful migrations (adjust expected counts)
+- [ ] Refactor as needed
+
+
+## NEW. Github action that will allow the upload of the old workbook so that its comments can be migrated across
+- [ ] decide options
+- [ ] implement
+
 
 ## 6. Preserving Comment Metadata
 - [ ] Create a failing unit test to ensure author and timestamp are preserved in migrated and lost comments

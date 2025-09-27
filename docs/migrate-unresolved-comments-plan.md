@@ -36,6 +36,22 @@ Reference: Parent Issue #5
   - Flag for manual resolution
 - **Structure Changes**: If layout changes significantly, fallback to fuzzy matching (e.g., by operation summary, parameter name, or property path).
 
+## 3A. Handling Non-Migratable Comments (Types A & B)
+
+### Type A: "NoAnchor" Comments
+Comments found on worksheets that exist in the new workbook but are located on rows without OpenAPI anchors:
+- **Migration Strategy**: Migrate to the same worksheet, preserving the original column
+- **Row Placement**: Find the nearest row above that contains an anchor ending with `/TitleRow` (heading row)
+- **Collision Handling**: If target cell has content/comments, place in the row below the heading row
+- **Full Thread Migration**: Migrate complete comment threads (root + replies) using the established Legacy + ThreadedComment approach
+
+### Type B: "NoWorksheet" Comments  
+Comments found on worksheets that will not exist in the new workbook:
+- **Migration Strategy**: Migrate to the Info sheet (identified by `OpenApiDocumentationLanguageConst.Info`)
+- **Placement**: Column V, starting at row 1, stacking downward for subsequent comments
+- **Full Thread Migration**: Preserve complete comment threads as threaded comments
+- **Metadata Preservation**: Include reference to original worksheet name in comment context
+
 ## 4. Integrating the Old Workbook as an Input
 - Update CLI/API to accept an optional "previous workbook" input parameter.
 - Processing flow:
@@ -74,6 +90,7 @@ Reference: Parent Issue #5
 
 5. How should the user be notified of unmigratable comments?
   - **Answer:** Unmigratable comments will be added to a new worksheet named "Lost Commentary" in the generated workbook. This worksheet will list all comments that could not be mapped to an exact location.
+  - **Note:** Comments of Type A (NoAnchor) and Type B (NoWorksheet) are considered successfully migrated when placed in their designated fallback locations, not "lost commentary."
 
 ### Requirements for the "Lost Commentary" Worksheet
 
