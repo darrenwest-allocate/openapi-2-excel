@@ -6,6 +6,7 @@ public static class WorksheetLanguage
 	public static class Generic
 	{
 		public const string Name = "Name";
+		public const string TitleRow = "/TitleRow";
 	}
 
 	public static class Schema
@@ -33,7 +34,7 @@ public static class WorksheetLanguage
 
 	public static class Operations
 	{
-		public const string Heading = "OPERATION INFORMATION";
+		public const string Title = "OPERATION INFORMATION";
 		public const string OperationType = "Operation type";
 		public const string Id = "Id";
 		public const string Path = "Path";

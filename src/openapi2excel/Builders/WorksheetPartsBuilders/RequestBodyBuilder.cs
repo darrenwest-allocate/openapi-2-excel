@@ -17,12 +17,12 @@ internal class RequestBodyBuilder(
       if (operation.RequestBody is null)
          return;
 
+      var mappingAnchor = AnchorGenerator.GenerateRequestBodyAnchor(anchor);
+
       Cell(1).SetTextBold(WorksheetLanguage.Request.Title)
-         .MapRowWithDetail(AnchorGenerator.GenerateParameterAnchor("/Title"));
+         .MapRow(mappingAnchor.With(WorksheetLanguage.Generic.TitleRow));
 
       ActualRow.MoveNext();
-
-      var mappingAnchor = AnchorGenerator.GenerateRequestBodyAnchor(anchor);
 
       using (var _ = new Section(Worksheet, ActualRow))
       {

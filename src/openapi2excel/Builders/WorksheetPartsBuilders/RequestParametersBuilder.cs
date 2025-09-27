@@ -21,7 +21,8 @@ internal class RequestParametersBuilder(
       if (!operation.Parameters.Any())
          return;
 
-      Cell(1).SetTextBold(WorksheetLanguage.Parameters.Title).MapRow(AnchorGenerator.GenerateParameterAnchor("/Title"));
+      Cell(1).SetTextBold(WorksheetLanguage.Parameters.Title)
+         .MapRow(anchor.With(WorksheetLanguage.Generic.TitleRow));
       ActualRow.MoveNext();
       using (var _ = new Section(Worksheet, ActualRow))
       {

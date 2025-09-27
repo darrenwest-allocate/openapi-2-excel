@@ -16,10 +16,13 @@ internal class OperationInfoBuilder(
    public void AddOperationInfoSection(string path, OpenApiPathItem pathItem, OperationType operationType,
       OpenApiOperation operation, List<CellOpenApiMapping> mappings)
    {
-   Cell(1).SetTextBold(WorksheetLanguage.Operations.Heading);
+      Anchor mappingAnchor = AnchorGenerator.GenerateOperationInfoAnchor(path, pathItem, operationType, operation);
+
+      Cell(1).SetTextBold(WorksheetLanguage.Operations.Title).MapRow(mappingAnchor.With(WorksheetLanguage.Generic.TitleRow))
+         .Style.Fill.SetBackgroundColor(HeaderBackgroundColor);
+
       ActualRow.MoveNext();
 
-      Anchor mappingAnchor = AnchorGenerator.GenerateOperationInfoAnchor(path, pathItem, operationType, operation); 
 
       using (var _ = new Section(Worksheet, ActualRow))
       {
