@@ -32,6 +32,10 @@ public class GenerateExcelCommand : Command<GenerateExcelCommand.GenerateExcelSe
       [CommandOption("-g|--debug")]
       public bool Debug { get; init; }
 
+      [Description("Path to existing Excel workbook from which to preserve comments.")]
+      [CommandOption("-e|--existing-workbook")]
+      public string? ExistingWorkbook { get; init; }
+
       internal FileInfo InputFileParsed { get; set; } = null!;
       internal FileInfo OutputFileParsed { get; set; } = null!;
       internal bool IsOutputDirectory { get; set; }
@@ -172,7 +176,11 @@ public class GenerateExcelCommand : Command<GenerateExcelCommand.GenerateExcelSe
 
       try
       {
-         var options = new OpenApiDocumentationOptions { MaxDepth = settings.Depth };
+         var options = new OpenApiDocumentationOptions 
+         { 
+            MaxDepth = settings.Depth,
+            FilepathToPreserveComments = settings.ExistingWorkbook ?? string.Empty
+         };
 
          OpenApiDocumentationGenerator
             .GenerateDocumentation(settings.InputFileParsed.FullName, settings.OutputFileParsed.FullName, options)
