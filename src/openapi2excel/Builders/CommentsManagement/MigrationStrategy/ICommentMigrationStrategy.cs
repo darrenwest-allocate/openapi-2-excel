@@ -1,8 +1,7 @@
 using ClosedXML.Excel;
-using openapi2excel.core.Common;
 using System.Collections.Generic;
 
-namespace openapi2excel.core.Builders.CommentsManagement;
+namespace openapi2excel.core.Builders.CommentsManagement.MigrationStrategy;
 
 /// <summary>
 /// Strategy interface for different types of comment migration approaches.

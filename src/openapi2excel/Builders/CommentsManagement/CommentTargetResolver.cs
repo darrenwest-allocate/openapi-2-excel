@@ -1,4 +1,3 @@
-using openapi2excel.core.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,14 +12,14 @@ public class CommentTargetResolver
     /// <summary>
     /// Gets the target cell reference for a comment, handling both regular mapped comments and override scenarios.
     /// </summary>
-    public bool TryGetTargetCellForThreadedComment(
+    public static bool TryGetTargetCellForThreadedComment(
         ThreadedCommentWithContext comment, 
         List<WorksheetOpenApiMapping> newWorkbookMappings, 
         out string targetCellReference)
     {
         targetCellReference = string.Empty;
         
-        // Handle comments with override target cells (Type A/B migrations)
+        // Handle comments with override target cells (NoAnchor and NoWorksheet comment migrations)
         if (!string.IsNullOrEmpty(comment.OverrideTargetCell))
         {
             targetCellReference = comment.OverrideTargetCell;
@@ -43,11 +42,10 @@ public class CommentTargetResolver
     /// <summary>
     /// Gets target cell reference from a specific mapping.
     /// </summary>
-    public bool TryGetTargetCell(ThreadedCommentWithContext comment, CellOpenApiMapping targetMapping, out string targetCellReference)
+    public static bool TryGetTargetCell(ThreadedCommentWithContext comment, CellOpenApiMapping targetMapping, out string targetCellReference)
     {
         if (!string.IsNullOrEmpty(targetMapping.Cell))
         {
-            // Exact cell match - use the mapped cell
             targetCellReference = targetMapping.Cell;
         }
         else if (targetMapping.Row > 0)
@@ -67,7 +65,7 @@ public class CommentTargetResolver
     /// <summary>
     /// Finds a matching cell mapping based on OpenAPI anchor.
     /// </summary>
-    public (CellOpenApiMapping? Mapping, string WorksheetName) FindMatchingMapping(
+    public static (CellOpenApiMapping? Mapping, string WorksheetName) FindMatchingMapping(
         string openApiAnchor,
         List<WorksheetOpenApiMapping> mappings)
     {
@@ -88,7 +86,7 @@ public class CommentTargetResolver
     /// <summary>
     /// Extracts the column part from a cell reference (e.g., "A5" -> "A").
     /// </summary>
-    public string ExtractColumnFromCellReference(string cellReference)
+    public static string ExtractColumnFromCellReference(string cellReference)
     {
         return new string([.. cellReference.TakeWhile(c => !char.IsDigit(c))]);
     }
@@ -96,7 +94,7 @@ public class CommentTargetResolver
     /// <summary>
     /// Extracts the row number from a cell reference like "A1" -> 1, "B23" -> 23
     /// </summary>
-    public int ExtractRowFromCellReference(string cellReference)
+    public static int ExtractRowFromCellReference(string cellReference)
     {
         var digitStart = cellReference.IndexOf(cellReference.First(char.IsDigit));
         var rowString = cellReference.Substring(digitStart);
@@ -106,7 +104,7 @@ public class CommentTargetResolver
     /// <summary>
     /// Extracts the column index (0-based) from a cell reference like "A1" -> 0, "B23" -> 1
     /// </summary>
-    public int ExtractColumnIndexFromCellReference(string cellReference)
+    public static int ExtractColumnIndexFromCellReference(string cellReference)
     {
         var columnString = cellReference.Substring(0, cellReference.IndexOf(cellReference.First(char.IsDigit)));
         int columnIndex = 0;
