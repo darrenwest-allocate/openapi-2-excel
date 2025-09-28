@@ -24,8 +24,8 @@ public class CellCollisionResolver
         }
         
         // Find the next available row below
-        var originalColumn = ExtractColumnFromCellReference(targetCellReference);
-        var startRow = ExtractRowFromCellReference(targetCellReference);
+        var originalColumn = CommentTargetResolver.ExtractColumnFromCellReference(targetCellReference);
+        var startRow = CommentTargetResolver.ExtractRowFromCellReference(targetCellReference);
         
         for (int row = startRow + 1; row <= startRow + 5; row++) // Check up to 5 rows below
         {
@@ -38,7 +38,6 @@ public class CellCollisionResolver
                 return candidateCell;
             }
         }
-        
         // If still no space, use the original target (will merge with existing comment)
         return targetCellReference;
     }
@@ -48,7 +47,6 @@ public class CellCollisionResolver
     /// </summary>
     public static int FindNextAvailableRowInColumn(IXLWorksheet worksheet, int column, HashSet<string> processedCells)
     {
-        // Start from row 1 and find the first available row
         for (int row = 1; row <= 1000; row++) // Reasonable limit
         {
             var cellReference = worksheet.Cell(row, column).Address.ToString();
@@ -56,26 +54,12 @@ public class CellCollisionResolver
             
             var cell = worksheet.Cell(row, column);
             
-            // Check if this cell is available (empty, no comment, not processed)
             if ((cell.IsEmpty() || !cell.HasComment) && !processedCells.Contains(cellKey))
             {
                 return row;
             }
         }
-        
         // Fallback to row 1 if no space found
         return 1;
-    }
-
-    private static string ExtractColumnFromCellReference(string cellReference)
-    {
-        return new string([.. cellReference.TakeWhile(c => !char.IsDigit(c))]);
-    }
-
-    private static int ExtractRowFromCellReference(string cellReference)
-    {
-        var digitStart = cellReference.IndexOf(cellReference.First(char.IsDigit));
-        var rowString = cellReference.Substring(digitStart);
-        return int.Parse(rowString);
     }
 }

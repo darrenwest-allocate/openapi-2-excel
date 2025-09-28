@@ -30,8 +30,8 @@ public interface ICommentMigrationStrategy
     /// <param name="processedCells">Set of cells that already have legacy comments</param>
     /// <param name="allComments">All comments in the migration batch (for reply handling)</param>
     /// <param name="newWorkbookMappings">OpenAPI mappings for the new workbook</param>
-    /// <returns>Result indicating success/failure and details</returns>
-    (bool Success, CommentMigrationFailureReason? FailureReason, string? ErrorDetails) TryMigrate(
+    /// <returns>Result indicating success/failure and category</returns>
+    (bool Success, CommentMigrationState? MigrationState) TryMigrate(
         ThreadedCommentWithContext comment,
         IXLWorkbook workbook,
         HashSet<string> processedCells,

@@ -24,13 +24,13 @@ public static class CommentMigrationHelper
     /// Uses a two-phase approach: Phase 1 creates legacy comments with ClosedXML,
     /// Phase 2 adds threaded comment parts using OpenXML.
     /// </summary>
-    public static List<(ThreadedCommentWithContext, CommentMigrationFailureReason)> MigrateComments(
+    public static List<(ThreadedCommentWithContext, CommentMigrationState)> MigrateComments(
          string existingWorkbookPath,
          string newWorkbookPath,
          List<WorksheetOpenApiMapping> newWorkbookMappings)
     {
         var commentsToMigrate = ExtractCommentsToMigrate(existingWorkbookPath);
-        if (!commentsToMigrate.Any()) return new List<(ThreadedCommentWithContext, CommentMigrationFailureReason)>();
+        if (!commentsToMigrate.Any()) return [];
 
         var migrationContext = InitializeMigrationContext(commentsToMigrate);
         var nonMigratableComments = CreateLegacyComments(newWorkbookPath, newWorkbookMappings, migrationContext);
@@ -62,12 +62,12 @@ public static class CommentMigrationHelper
     /// Creates legacy comments in the new workbook using ClosedXML (Phase 1).
     /// Processes only root comments and tracks migration failures.
     /// </summary>
-    private static List<(ThreadedCommentWithContext, CommentMigrationFailureReason)> CreateLegacyComments(
+    private static List<(ThreadedCommentWithContext, CommentMigrationState)> CreateLegacyComments(
         string newWorkbookPath,
         List<WorksheetOpenApiMapping> newWorkbookMappings,
         MigrationContext migrationContext)
     {
-        var nonMigratableComments = new List<(ThreadedCommentWithContext, CommentMigrationFailureReason)>();
+        var nonMigratableComments = new List<(ThreadedCommentWithContext, CommentMigrationState)>();
 
         using var newWorkbook = new XLWorkbook(newWorkbookPath);
 
@@ -76,17 +76,16 @@ public static class CommentMigrationHelper
             // Only process root comments for legacy comment creation
             if (!comment.IsRootComment) continue;
 
-            var (Success, FailureReason, ErrorDetails) = TryMigrateThreadedComment(
+            var (Success, MigrationState) = TryMigrateThreadedComment(
                 comment,
                 newWorkbook,
                 newWorkbookMappings,
-                migrationContext.IdMapping,
                 migrationContext.ProcessedCells,
                 migrationContext.SortedComments);
 
             if (!Success)
             {
-                nonMigratableComments.Add((comment, FailureReason ?? CommentMigrationFailureReason.Unknown));
+                nonMigratableComments.Add((comment, MigrationState ?? CommentMigrationState.Unknown));
             }
         }
 
@@ -97,11 +96,10 @@ public static class CommentMigrationHelper
     /// <summary>
     /// Attempts to migrate a single threaded comment using available strategies.
     /// </summary>
-    private static (bool Success, CommentMigrationFailureReason? FailureReason, string? ErrorDetails) TryMigrateThreadedComment(
+    private static (bool Success, CommentMigrationState? MigrationState) TryMigrateThreadedComment(
         ThreadedCommentWithContext comment,
         IXLWorkbook workbook,
         List<WorksheetOpenApiMapping> newWorkbookMappings,
-        Dictionary<string, string> idMapping,
         HashSet<string> processedCells,
         List<ThreadedCommentWithContext> sortedComments)
     {
@@ -111,29 +109,27 @@ public static class CommentMigrationHelper
     /// <summary>
     /// Processes a comment using the available migration strategies in order of preference.
     /// </summary>
-    private static (bool Success, CommentMigrationFailureReason? FailureReason, string? ErrorDetails) ProcessCommentWithStrategies(
+    private static (bool Success, CommentMigrationState? MigrationState) ProcessCommentWithStrategies(
         ThreadedCommentWithContext comment,
         IXLWorkbook workbook,
         List<WorksheetOpenApiMapping> newWorkbookMappings,
         HashSet<string> processedCells,
         List<ThreadedCommentWithContext> sortedComments)
     {
-        var strategies = CreateMigrationStrategies();
-        foreach (var strategy in strategies)
+        foreach (var strategy in MigrationStrategies())
         {
             if (strategy.CanHandle(comment, workbook, newWorkbookMappings))
             {
                 return strategy.TryMigrate(comment, workbook, processedCells, sortedComments, newWorkbookMappings);
             }
         }
-
-        return (false, CommentMigrationFailureReason.NoOpenApiAnchorFound, "No migration strategy could handle this comment.");
+        return (false, CommentMigrationState.NoOpenApiAnchorFound);
     }
 
     /// <summary>
     /// Creates the list of migration strategies in order of preference.
     /// </summary>
-    private static List<ICommentMigrationStrategy> CreateMigrationStrategies()
+    private static List<ICommentMigrationStrategy> MigrationStrategies()
     {
         return
         [
@@ -143,8 +139,6 @@ public static class CommentMigrationHelper
         ];
     }
 
-
-
     /// <summary>
     /// Gets the target cell reference for a comment using the CommentTargetResolver.
     /// </summary>
@@ -153,7 +147,6 @@ public static class CommentMigrationHelper
         List<WorksheetOpenApiMapping> newWorkbookMappings,
         out string targetCellReference)
     {
-        var targetResolver = new CommentTargetResolver();
         return CommentTargetResolver.TryGetTargetCellForThreadedComment(comment, newWorkbookMappings, out targetCellReference);
     }
 
@@ -254,7 +247,6 @@ public static class CommentMigrationHelper
             value.Add(comment);
         }
 
-        // Process each worksheet
         foreach (var (worksheetName, worksheetComments) in commentsByWorksheet)
         {
             var worksheetPart = FindWorksheetPart(workbookPart, worksheetName);
@@ -296,7 +288,7 @@ public static class CommentMigrationHelper
         {
             threadedCommentsPart = worksheetPart.AddNewPart<WorksheetThreadedCommentsPart>();
         }
-        CreateThreadedCommentsUsingOfficialPattern(threadedCommentsPart, comments, newWorkbookMappings, existingWorkbookPath, idMapping);
+        CreateThreadedCommentsUsingOfficialPattern(threadedCommentsPart, comments, newWorkbookMappings);
 
 		// **STEP 4: Create VmlDrawingPart using factory**
 		VmlDrawingFactory.CreateVmlDrawingPartUsingOfficialPattern(worksheetPart, comments, newWorkbookMappings);
@@ -383,44 +375,6 @@ public static class CommentMigrationHelper
     }
 
     /// <summary>
-    /// Ensures PersonPart exists for all comment authors using official SDK pattern.
-    /// </summary>
-    private static void EnsurePersonsPartExistsForComments(
-        WorkbookPart workbookPart,
-        List<ThreadedCommentWithContext> comments,
-        string existingWorkbookPath)
-    {
-        var personPart = workbookPart.GetPartsOfType<WorkbookPersonPart>().FirstOrDefault();
-        if (personPart == null)
-        {
-            personPart = workbookPart.AddNewPart<WorkbookPersonPart>();
-            personPart.PersonList = new PersonList();
-        }
-
-        foreach (var comment in comments)
-        {
-            if (comment.Comment.PersonId?.Value != null)
-            {
-                var personId = comment.Comment.PersonId.Value;
-                var existingPerson = personPart.PersonList.Elements<Person>()
-                    .FirstOrDefault(p => p.Id?.Value == personId);
-
-                if (existingPerson == null)
-                {
-                    var person = ExtractPersonFromSourceWorkbook(existingWorkbookPath, personId);
-                    personPart.PersonList.AppendChild(new Person
-                    {
-                        Id = personId,
-                        DisplayName = person.DisplayName ?? "OpenAPI2Excel User",
-                        ProviderId = person.ProviderId ?? "Excel",
-                        UserId = person.UserId ?? "user@example.com"
-                    });
-                }
-            }
-        }
-    }
-
-    /// <summary>
     /// Creates legacy comments using the official SDK pattern.
     /// Legacy comments are required for Excel to show comment indicators.
     /// </summary>
@@ -469,9 +423,7 @@ public static class CommentMigrationHelper
     private static void CreateThreadedCommentsUsingOfficialPattern(
         WorksheetThreadedCommentsPart threadedCommentsPart,
         List<ThreadedCommentWithContext> comments,
-        List<WorksheetOpenApiMapping> newWorkbookMappings,
-        string existingWorkbookPath,
-        Dictionary<string, string> idMapping)
+        List<WorksheetOpenApiMapping> newWorkbookMappings)
     {
         var threadedCommentsList = new List<ThreadedComment>();
 

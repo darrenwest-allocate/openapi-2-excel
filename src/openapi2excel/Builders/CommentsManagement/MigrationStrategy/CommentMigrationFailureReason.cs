@@ -3,7 +3,7 @@ namespace openapi2excel.core.Builders.CommentsManagement.MigrationStrategy;
 /// <summary>
 /// Reasons why a threaded comment migration might fail.
 /// </summary>
-public enum CommentMigrationFailureReason
+public enum CommentMigrationState
 {
     /// <summary>
     /// The comment has no associated OpenAPI anchor, making it impossible to map to the new workbook.
@@ -34,6 +34,8 @@ public enum CommentMigrationFailureReason
     /// Comment successfully migrated from missing worksheet - placed on Info sheet.
     /// </summary>
     SuccessfullyMigratedAsNoWorksheetComment,
+
+    Successful,
     
     Unknown
 }

@@ -35,7 +35,7 @@ public class NoWorksheetCommentMigrationStrategy : ICommentMigrationStrategy
         return !workbook.Worksheets.TryGetWorksheet(worksheetName, out _);
     }
 
-    public (bool Success, CommentMigrationFailureReason? FailureReason, string? ErrorDetails) TryMigrate(
+    public (bool Success, CommentMigrationState? MigrationState) TryMigrate(
         ThreadedCommentWithContext comment,
         IXLWorkbook workbook,
         HashSet<string> processedCells,
@@ -45,11 +45,10 @@ public class NoWorksheetCommentMigrationStrategy : ICommentMigrationStrategy
         try
         {
             // Get the Info sheet - this is where NoWorksheet comments go
-            const string infoSheetName = "Info"; // Using the standard Info sheet name
+            const string infoSheetName = OpenApiDocumentationLanguageConst.Info;
             if (!workbook.Worksheets.TryGetWorksheet(infoSheetName, out var infoSheet))
             {
-                return (false, CommentMigrationFailureReason.TargetWorksheetNotFound, 
-                    $"Info sheet not found in new workbook for  NoWorksheet comment migration.");
+                return (false, CommentMigrationState.TargetWorksheetNotFound);
             }
 
             const int targetColumn = 22; // Column V
@@ -63,12 +62,12 @@ public class NoWorksheetCommentMigrationStrategy : ICommentMigrationStrategy
             StrategyHelper.SetOverrideTargetCellForCommentAndReplies(
                 comment, targetCellReference, infoSheetName, allComments);
             
-            return (true, CommentMigrationFailureReason.SuccessfullyMigratedAsNoWorksheetComment, "Successfully migrated comment from missing worksheet");
+            return (true, CommentMigrationState.SuccessfullyMigratedAsNoWorksheetComment);
         }
         catch (Exception ex)
         {
-            return (false, CommentMigrationFailureReason.UnexpectedErrorDuringMigration, 
-                $"Error during NoWorksheet comment migration: {ex.Message}");
+            Console.WriteLine($"Error migrating comment from '{comment.WorksheetName}' at '{comment.CellReference}' to Info sheet.\n{ex}");
+            return (false, CommentMigrationState.UnexpectedErrorDuringMigration);
         }
     }
 }

@@ -30,7 +30,7 @@ public class MappedCommentMigrationStrategy : ICommentMigrationStrategy
         return workbook.Worksheets.TryGetWorksheet(worksheetName, out _);
     }
 
-    public (bool Success, CommentMigrationFailureReason? FailureReason, string? ErrorDetails) TryMigrate(
+    public (bool Success, CommentMigrationState? MigrationState) TryMigrate(
         ThreadedCommentWithContext comment,
         IXLWorkbook workbook,
         HashSet<string> processedCells,
@@ -42,20 +42,17 @@ public class MappedCommentMigrationStrategy : ICommentMigrationStrategy
             var (targetMapping, worksheetName) = CommentTargetResolver.FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
             if (targetMapping == null)
             {
-                return (false, CommentMigrationFailureReason.OpenApiAnchorNotFoundInNewWorkbook, 
-                    $"Anchor '{comment.OpenApiAnchor}' not found in new workbook mappings.");
+                return (false, CommentMigrationState.OpenApiAnchorNotFoundInNewWorkbook);
             }
 
             if (!workbook.Worksheets.TryGetWorksheet(worksheetName, out var worksheet))
             {
-                return (false, CommentMigrationFailureReason.TargetWorksheetNotFound, 
-                    $"Worksheet '{worksheetName}' not found in the new workbook.");
+                return (false, CommentMigrationState.TargetWorksheetNotFound);
             }
 
             if (!CommentTargetResolver.TryGetTargetCell(comment, targetMapping, out string targetCellReference))
             {
-                return (false, CommentMigrationFailureReason.TargetWorksheetNotFound, 
-                    "Could not determine target cell for migration.");
+                return (false, CommentMigrationState.TargetWorksheetNotFound);
             }
 
             // Create a unique key for this cell to avoid duplicate legacy comments
@@ -66,11 +63,12 @@ public class MappedCommentMigrationStrategy : ICommentMigrationStrategy
                 processedCells.Add(cellKey);
             }
             
-            return (true, null, null);
+            return (true, CommentMigrationState.Successful);
         }
         catch (Exception ex)
         {
-            return (false, CommentMigrationFailureReason.UnexpectedErrorDuringMigration, ex.Message);
+            Console.WriteLine($"Error migrating comment from '{comment.WorksheetName}' at '{comment.CellReference}' to Info sheet.\n{ex}");
+            return (false, CommentMigrationState.UnexpectedErrorDuringMigration);
         }
     }
 }

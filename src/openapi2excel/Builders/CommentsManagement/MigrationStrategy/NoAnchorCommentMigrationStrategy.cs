@@ -23,7 +23,7 @@ public class NoAnchorCommentMigrationStrategy : ICommentMigrationStrategy
                && workbook.Worksheets.TryGetWorksheet(comment.WorksheetName, out _);
     }
 
-    public (bool Success, CommentMigrationFailureReason? FailureReason, string? ErrorDetails) TryMigrate(
+    public (bool Success, CommentMigrationState? MigrationState) TryMigrate(
         ThreadedCommentWithContext comment,
         IXLWorkbook workbook,
         HashSet<string> processedCells,
@@ -34,8 +34,7 @@ public class NoAnchorCommentMigrationStrategy : ICommentMigrationStrategy
         {
             if (!workbook.Worksheets.TryGetWorksheet(comment.WorksheetName, out var worksheet))
             {
-                return (false, CommentMigrationFailureReason.TargetWorksheetNotFound, 
-                    $"Worksheet '{comment.WorksheetName}' not found in new workbook for Type A migration.");
+                return (false, CommentMigrationState.TargetWorksheetNotFound);
             }
 
             // Preserve the original column
@@ -60,12 +59,12 @@ public class NoAnchorCommentMigrationStrategy : ICommentMigrationStrategy
             StrategyHelper.SetOverrideTargetCellForCommentAndReplies(
                 comment, finalCellReference, comment.WorksheetName, allComments);
             
-            return (true, CommentMigrationFailureReason.SuccessfullyMigratedAsNoAnchorComment, "Successfully migrated comment with no OpenAPI anchor");
+            return (true, CommentMigrationState.SuccessfullyMigratedAsNoAnchorComment);
         }
         catch (Exception ex)
         {
-            return (false, CommentMigrationFailureReason.UnexpectedErrorDuringMigration, 
-                $"Error during Type A migration: {ex.Message}");
+            Console.WriteLine($"Error migrating comment from '{comment.WorksheetName}' at '{comment.CellReference}' to Info sheet.\n{ex}");
+            return (false, CommentMigrationState.UnexpectedErrorDuringMigration);
         }
     }
 
