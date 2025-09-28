@@ -1,9 +1,6 @@
-using DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments;
 using DocumentFormat.OpenXml.Packaging;
-using openapi2excel.core.Common;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -14,12 +11,8 @@ namespace openapi2excel.core.Builders.CommentsManagement;
 /// </summary>
 public class ThreadedCommentXmlFactory
 {
-    private readonly CommentTargetResolver _targetResolver;
 
-    public ThreadedCommentXmlFactory(CommentTargetResolver targetResolver)
-    {
-        _targetResolver = targetResolver ?? throw new ArgumentNullException(nameof(targetResolver));
-    }
+    public ThreadedCommentXmlFactory() { }
 
     /// <summary>
     /// Creates WorksheetThreadedCommentsPart with proper GUID matching to legacy comments.
@@ -58,10 +51,10 @@ public class ThreadedCommentXmlFactory
         // Process root comments and their replies
         foreach (var rootComment in comments.Where(c => c.IsRootComment))
         {
-            var (targetMapping, _) = _targetResolver.FindMatchingMapping(rootComment.OpenApiAnchor, newWorkbookMappings);
+            var (targetMapping, _) = CommentTargetResolver.FindMatchingMapping(rootComment.OpenApiAnchor, newWorkbookMappings);
             if (targetMapping == null) continue;
 
-            if (!_targetResolver.TryGetTargetCell(rootComment, targetMapping, out string targetCellReference)) continue;
+            if (!CommentTargetResolver.TryGetTargetCell(rootComment, targetMapping, out string targetCellReference)) continue;
 
             // Create the root threaded comment
             var rootId = Guid.NewGuid().ToString("B").ToUpper(); // Format: {GUID}

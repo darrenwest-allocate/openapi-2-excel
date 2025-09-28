@@ -1,10 +1,9 @@
 using ClosedXML.Excel;
-using openapi2excel.core.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace openapi2excel.core.Builders.CommentsManagement;
+namespace openapi2excel.core.Builders.CommentsManagement.MigrationStrategy;
 
 /// <summary>
 /// Strategy for migrating comments with no OpenAPI anchor on existing worksheets.
@@ -12,16 +11,10 @@ namespace openapi2excel.core.Builders.CommentsManagement;
 /// </summary>
 public class NoAnchorCommentMigrationStrategy : ICommentMigrationStrategy
 {
-    private readonly CellCollisionResolver _collisionResolver;
-    private readonly CommentTargetResolver _targetResolver;
 
     public string StrategyName => "Type A (NoAnchor)";
 
-    public NoAnchorCommentMigrationStrategy(CellCollisionResolver collisionResolver, CommentTargetResolver targetResolver)
-    {
-        _collisionResolver = collisionResolver ?? throw new ArgumentNullException(nameof(collisionResolver));
-        _targetResolver = targetResolver ?? throw new ArgumentNullException(nameof(targetResolver));
-    }
+    public NoAnchorCommentMigrationStrategy() { }
 
     public bool CanHandle(ThreadedCommentWithContext comment, IXLWorkbook workbook, List<WorksheetOpenApiMapping> newWorkbookMappings)
     {
@@ -46,7 +39,7 @@ public class NoAnchorCommentMigrationStrategy : ICommentMigrationStrategy
             }
 
             // Preserve the original column
-            var originalColumn = _targetResolver.ExtractColumnFromCellReference(comment.CellReference);
+            var originalColumn = CommentTargetResolver.ExtractColumnFromCellReference(comment.CellReference);
             
             // Find the target row near a title row using OpenAPI mappings
             var targetRow = FindTargetRowForTypeAComment(worksheet, comment, newWorkbookMappings);
@@ -54,17 +47,17 @@ public class NoAnchorCommentMigrationStrategy : ICommentMigrationStrategy
             var targetCellReference = $"{originalColumn}{targetRow}";
             
             // Check for collision and adjust if necessary
-            var finalCellReference = _collisionResolver.HandleTypeACollision(worksheet, targetCellReference, processedCells);
+            var finalCellReference = CellCollisionResolver.HandleTypeACollision(worksheet, targetCellReference, processedCells);
             
             // Create the legacy comment (this creates the visible comment indicator)
-            CommentMigrationSharedHelper.ReplicateSourceCommentOnNewWorksheet(worksheet, finalCellReference, comment);
+            StrategyHelper.ReplicateSourceCommentOnNewWorksheet(worksheet, finalCellReference, comment);
             
             // Mark cell as processed
             var cellKey = $"{comment.WorksheetName}:{finalCellReference}";
             processedCells.Add(cellKey);
             
             // Store the target cell reference for ThreadedComment processing
-            CommentMigrationSharedHelper.SetOverrideTargetCellForCommentAndReplies(
+            StrategyHelper.SetOverrideTargetCellForCommentAndReplies(
                 comment, finalCellReference, comment.WorksheetName, allComments);
             
             return (true, CommentMigrationFailureReason.SuccessfullyMigratedAsNoAnchorComment, "Successfully migrated comment with no OpenAPI anchor");
@@ -79,7 +72,7 @@ public class NoAnchorCommentMigrationStrategy : ICommentMigrationStrategy
     private int FindTargetRowForTypeAComment(IXLWorksheet worksheet, ThreadedCommentWithContext comment, List<WorksheetOpenApiMapping> newWorkbookMappings)
     {
         // Start from the original row and search upward for title rows
-        var originalRow = _targetResolver.ExtractRowFromCellReference(comment.CellReference);
+        var originalRow = CommentTargetResolver.ExtractRowFromCellReference(comment.CellReference);
         
         // Find the worksheet mapping for this comment's worksheet
         var worksheetMapping = newWorkbookMappings.FirstOrDefault(w => w.WorksheetName == comment.WorksheetName);

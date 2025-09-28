@@ -1,13 +1,12 @@
 using ClosedXML.Excel;
-using openapi2excel.core.Common;
 using System.Collections.Generic;
 
-namespace openapi2excel.core.Builders.CommentsManagement;
+namespace openapi2excel.core.Builders.CommentsManagement.MigrationStrategy;
 
 /// <summary>
 /// Shared helper methods used by multiple migration strategies and the main migration helper.
 /// </summary>
-public static class CommentMigrationSharedHelper
+public static class StrategyHelper
 {
     /// <summary>
     /// Creates a legacy comment for Excel backward compatibility and visibility.

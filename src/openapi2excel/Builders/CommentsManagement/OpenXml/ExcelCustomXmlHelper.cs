@@ -31,8 +31,7 @@ public static class ExcelCustomXmlHelper
 		using (var doc = SpreadsheetDocument.Open(filePath, true))
 		{
 			var wbPart = doc.WorkbookPart ?? doc.AddWorkbookPart();
-			if (wbPart.Workbook == null)
-				wbPart.Workbook = new DocumentFormat.OpenXml.Spreadsheet.Workbook();
+			wbPart.Workbook ??= new DocumentFormat.OpenXml.Spreadsheet.Workbook();
 
 			// Use a valid NCName for the relationship ID
 			var relId = GetRelId(worksheetName);

@@ -2,7 +2,7 @@ using ClosedXML.Excel;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace openapi2excel.core.Builders.CommentsManagement;
+namespace openapi2excel.core.Builders.CommentsManagement.MigrationStrategy;
 
 /// <summary>
 /// Handles collision detection and resolution when placing comments in cells.
@@ -12,7 +12,7 @@ public class CellCollisionResolver
     /// <summary>
     /// Handles collision detection for Type A comments and finds an alternative cell if needed.
     /// </summary>
-    public string HandleTypeACollision(IXLWorksheet worksheet, string targetCellReference, HashSet<string> processedCells)
+    public static string HandleTypeACollision(IXLWorksheet worksheet, string targetCellReference, HashSet<string> processedCells)
     {
         var targetCell = worksheet.Cell(targetCellReference);
         var cellKey = $"{worksheet.Name}:{targetCellReference}";
@@ -46,7 +46,7 @@ public class CellCollisionResolver
     /// <summary>
     /// Finds the next available row in a specific column for Type B comment placement.
     /// </summary>
-    public int FindNextAvailableRowInColumn(IXLWorksheet worksheet, int column, HashSet<string> processedCells)
+    public static int FindNextAvailableRowInColumn(IXLWorksheet worksheet, int column, HashSet<string> processedCells)
     {
         // Start from row 1 and find the first available row
         for (int row = 1; row <= 1000; row++) // Reasonable limit

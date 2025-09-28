@@ -15,7 +15,7 @@ public class PersonPartManager
     /// <summary>
     /// Ensures PersonPart exists for all comment authors using official SDK pattern.
     /// </summary>
-    public void EnsurePersonsPartExistsForComments(
+    public static void EnsurePersonsPartExistsForComments(
         WorkbookPart workbookPart, 
         List<ThreadedCommentWithContext> comments, 
         string existingWorkbookPath)

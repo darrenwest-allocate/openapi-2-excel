@@ -1,6 +1,5 @@
 using DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments;
 using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Spreadsheet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,14 +40,14 @@ public class ThreadedCommentWithContext
 
     public ThreadedComment Comment { get; set; } = null!;
     public string WorksheetName { get; set; } = string.Empty;
-    public string OpenApiAnchor { get; set; } = string.Empty; // Added for mapping
+    public string OpenApiAnchor { get; set; } = string.Empty;
     
-    // Override properties for Type A/B comment migration
+    // Override properties for comment migration strategies
     public string? OverrideTargetCell { get; private set; }
     public string? OverrideWorksheetName { get; private set; }
     
     /// <summary>
-    /// Sets override target cell and worksheet for Type A/B comment migration.
+    /// Sets override target cell and worksheet for comment migration strategies.
     /// </summary>
     public void SetOverrideTargetCell(string targetCell, string worksheetName)
     {
@@ -71,7 +70,6 @@ public class ThreadedCommentWithContext
     {
         get
         {
-            // Extract text from the ThreadedComment XML structure
             var textElement = Comment?.Elements().FirstOrDefault(e => e.LocalName == "text");
             return textElement?.InnerText ?? string.Empty;
         }

@@ -1,5 +1,4 @@
 using DocumentFormat.OpenXml.Packaging;
-using openapi2excel.core.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,18 +11,14 @@ namespace openapi2excel.core.Builders.CommentsManagement;
 /// </summary>
 public class VmlDrawingFactory
 {
-    private readonly CommentTargetResolver _targetResolver;
 
-    public VmlDrawingFactory(CommentTargetResolver targetResolver)
-    {
-        _targetResolver = targetResolver ?? throw new ArgumentNullException(nameof(targetResolver));
-    }
+    public VmlDrawingFactory() { }
 
     /// <summary>
     /// Creates VML Drawing Part using the exact official SDK pattern.
     /// This is the proven working VML that Excel accepts.
     /// </summary>
-    public void CreateVmlDrawingPartUsingOfficialPattern(
+    public static void CreateVmlDrawingPartUsingOfficialPattern(
         WorksheetPart worksheetPart,
         List<ThreadedCommentWithContext> comments,
         List<WorksheetOpenApiMapping> newWorkbookMappings)
@@ -63,8 +58,8 @@ public class VmlDrawingFactory
                 continue;
 
             // Extract row and column for VML anchor (0-based for VML)
-            var row = _targetResolver.ExtractRowFromCellReference(targetCellReference) - 1;
-            var col = _targetResolver.ExtractColumnIndexFromCellReference(targetCellReference);
+            var row = CommentTargetResolver.ExtractRowFromCellReference(targetCellReference) - 1;
+            var col = CommentTargetResolver.ExtractColumnIndexFromCellReference(targetCellReference);
 
             // Use EXACT VML shape pattern from official example - CRITICAL: no space after semicolon
             vmlContent += $@"
@@ -93,11 +88,11 @@ public class VmlDrawingFactory
         writer.Flush();
     }
 
-    private bool TryGetTargetCellForThreadedComment(
+    private static bool TryGetTargetCellForThreadedComment(
         ThreadedCommentWithContext comment, 
         List<WorksheetOpenApiMapping> newWorkbookMappings, 
         out string targetCellReference)
     {
-        return _targetResolver.TryGetTargetCellForThreadedComment(comment, newWorkbookMappings, out targetCellReference);
+        return CommentTargetResolver.TryGetTargetCellForThreadedComment(comment, newWorkbookMappings, out targetCellReference);
     }
 }
