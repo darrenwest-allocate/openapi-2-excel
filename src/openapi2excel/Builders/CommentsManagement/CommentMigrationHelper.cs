@@ -131,19 +131,38 @@ public static class CommentMigrationHelper
                     return (true, CommentMigrationFailureReason.SuccessfullyMigratedAsTypeA, "Successfully migrated as Type A");
                 }
                 
-                // TODO: Try Type B migration (NoWorksheet - comment on non-existing worksheet)
-                // For now, return the original failure
-                return (false, CommentMigrationFailureReason.NoOpenApiAnchorFound, "Comment has no OpenAPI anchor.");
+                // Try Type B migration (NoWorksheet - comment on non-existing worksheet)
+                var typeBResult = TryMigrateTypeBComment(comment, workbook, processedCells, sortedComments, newWorkbookMappings);
+                if (typeBResult.Success)
+                {
+                    return (true, CommentMigrationFailureReason.SuccessfullyMigratedAsTypeB, "Successfully migrated as Type B");
+                }
+                
+                return (false, CommentMigrationFailureReason.NoOpenApiAnchorFound, "Comment has no OpenAPI anchor and failed both Type A and Type B migration.");
             }
 
             var (targetMapping, worksheetName) = FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
             if (targetMapping == null)
             {
+                // Try Type B migration if the anchor isn't found (could be from a worksheet that doesn't exist in new workbook)
+                var typeBResult = TryMigrateTypeBComment(comment, workbook, processedCells, sortedComments, newWorkbookMappings);
+                if (typeBResult.Success)
+                {
+                    return (true, CommentMigrationFailureReason.SuccessfullyMigratedAsTypeB, "Successfully migrated as Type B (unmapped anchor)");
+                }
+                
                 return (false, CommentMigrationFailureReason.OpenApiAnchorNotFoundInNewWorkbook, $"Anchor '{comment.OpenApiAnchor}' not found in new workbook mappings.");
             }
 
             if (!workbook.Worksheets.TryGetWorksheet(worksheetName, out var worksheet))
             {
+                // Try Type B migration if the target worksheet doesn't exist
+                var typeBResult = TryMigrateTypeBComment(comment, workbook, processedCells, sortedComments, newWorkbookMappings);
+                if (typeBResult.Success)
+                {
+                    return (true, CommentMigrationFailureReason.SuccessfullyMigratedAsTypeB, "Successfully migrated as Type B (target worksheet missing)");
+                }
+                
                 return (false, CommentMigrationFailureReason.TargetWorksheetNotFound, $"Worksheet '{worksheetName}' not found in the new workbook.");
             }
 
@@ -222,6 +241,89 @@ public static class CommentMigrationHelper
         {
             return (false, $"Error during Type A migration: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Attempts to migrate a Type B comment (NoWorksheet - comment on worksheet that doesn't exist in new workbook).
+    /// Places the comment on the Info sheet in column V (column 22).
+    /// </summary>
+    private static (bool Success, string? ErrorDetails) TryMigrateTypeBComment(
+        ThreadedCommentWithContext comment,
+        IXLWorkbook workbook,
+        HashSet<string> processedCells,
+        List<ThreadedCommentWithContext> allComments,
+        List<WorksheetOpenApiMapping> newWorkbookMappings)
+    {
+        try
+        {
+            // Type B comments are those that either:
+            // 1. Have no OpenAPI anchor and their source worksheet doesn't exist in new workbook
+            // 2. Have an OpenAPI anchor that maps to a non-existent worksheet
+            // 3. Have an unmappable OpenAPI anchor
+
+            // Get the Info sheet - this is where Type B comments go
+            const string infoSheetName = "Info"; // Using the standard Info sheet name
+            if (!workbook.Worksheets.TryGetWorksheet(infoSheetName, out var infoSheet))
+            {
+                return (false, $"Info sheet not found in new workbook for Type B migration.");
+            }
+
+            // Type B comments go in column V (column 22)
+            const int targetColumn = 22; // Column V
+            
+            // Find the next available row in column V
+            var targetRow = FindNextAvailableRowInColumn(infoSheet, targetColumn, processedCells);
+            
+            var targetCellReference = $"V{targetRow}";
+            
+            // Create the legacy comment on the Info sheet
+            ReplicateSourceCommentOnNewWorksheet(infoSheet, targetCellReference, comment);
+            
+            // Mark cell as processed
+            var cellKey = $"{infoSheetName}:{targetCellReference}";
+            processedCells.Add(cellKey);
+            
+            // CRITICAL: Store the target cell reference for ThreadedComment processing
+            // This redirects the comment to the Info sheet instead of its original worksheet
+            comment.SetOverrideTargetCell(targetCellReference, infoSheetName);
+            
+            // CRITICAL: Apply the same override to ALL REPLIES so they migrate to the same location
+            var replies = comment.GetReplies(allComments);
+            foreach (var reply in replies)
+            {
+                reply.SetOverrideTargetCell(targetCellReference, infoSheetName);
+            }
+            
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Error during Type B migration: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Finds the next available row in a specific column for Type B comment placement.
+    /// </summary>
+    private static int FindNextAvailableRowInColumn(IXLWorksheet worksheet, int column, HashSet<string> processedCells)
+    {
+        // Start from row 1 and find the first available row
+        for (int row = 1; row <= 1000; row++) // Reasonable limit
+        {
+            var cellReference = worksheet.Cell(row, column).Address.ToString();
+            var cellKey = $"{worksheet.Name}:{cellReference}";
+            
+            var cell = worksheet.Cell(row, column);
+            
+            // Check if this cell is available (empty, no comment, not processed)
+            if ((cell.IsEmpty() || !cell.HasComment) && !processedCells.Contains(cellKey))
+            {
+                return row;
+            }
+        }
+        
+        // Fallback to row 1 if no space found
+        return 1;
     }
 
     /// <summary>

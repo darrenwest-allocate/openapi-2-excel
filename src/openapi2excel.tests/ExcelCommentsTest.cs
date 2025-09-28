@@ -82,9 +82,12 @@ public class ExcelCommentsTest
             {
                 var legacyCommentCount = workbook.Worksheets.Sum(ws => ws.Cells().Count(c => c.HasComment));
 
-                // There are 10 root comments, now with Type A improvements we migrate more.
-                // We should have: 9 exact matches + more Type A migrations = 14 total.
-                Assert.Equal(14, legacyCommentCount);
+                // With Type A and Type B implementations working, we now migrate more comments:
+                // - Original exact matches: 9
+                // - Type A (NoAnchor) migrations: 5 
+                // - Type B (NoWorksheet) migrations: 3
+                // Total expected: 17
+                Assert.Equal(17, legacyCommentCount);
             }
         }
         finally
@@ -255,7 +258,7 @@ public class ExcelCommentsTest
         }
     }
 
-    [Fact(Skip = "Type B (NoWorksheet) migration not yet implemented")]
+    [Fact]
     public async Task MigrateComments_HandlesNoWorksheetComments_ByPlacingOnInfoSheet()
     {
         var tempNewWorkbookPath = Path.Combine(Path.GetTempPath(), $"test_noworksheet_{Guid.NewGuid():N}.xlsx");
@@ -285,26 +288,30 @@ public class ExcelCommentsTest
                 
                 Assert.NotNull(infoSheet);
                 
-                // Look for comments in column V starting from row 1
-                var columnV = 22; // Column V is the 22nd column
-                var commentsInColumnV = new List<IXLCell>();
-                for (int row = 1; row <= 10; row++) // Check first 10 rows
+                // Look for comments in column V using proper OpenXML extraction
+                // (ClosedXML HasComment might not detect threaded comments properly)
+                var allComments = ExcelOpenXmlHelper.ExtractAndAnnotateAllComments(tempNewWorkbookPath);
+                
+                // Filter for comments on Info sheet in column V
+                var infoColumnVComments = allComments.Where(c => 
+                    c.WorksheetName.Equals(infoSheetName, StringComparison.OrdinalIgnoreCase) &&
+                    c.CellReference.StartsWith("V")).ToList();
+                
+                Console.WriteLine($"[DEBUG] Found {infoColumnVComments.Count} comments in Info sheet column V");
+                foreach (var comment in infoColumnVComments)
                 {
-                    var cell = infoSheet.Cell(row, columnV);
-                    if (cell.HasComment)
-                    {
-                        commentsInColumnV.Add(cell);
-                    }
+                    Console.WriteLine($"[DEBUG] Comment at Info!{comment.CellReference}: '{comment.CommentText}'");
                 }
                 
                 // Should have at least one NoWorksheet comment migrated to column V
-                Assert.True(commentsInColumnV.Count > 0, 
+                Assert.True(infoColumnVComments.Count > 0, 
                     "Should have found NoWorksheet comments migrated to column V of Info sheet");
                 
-                // Verify one of the comments is from the ROGUE* worksheet
-                var foundRogueComment = commentsInColumnV.Any(c => 
-                    c.GetComment().Text.Contains("ROGUE") || 
-                    c.GetComment().Text.Contains("Comment on a sheet not generated"));
+                // Verify one of the comments is from the ROGUE* worksheet content
+                var foundRogueComment = infoColumnVComments.Any(c => 
+                    c.CommentText.Contains("Comment on a sheet not generated") ||
+                    c.CommentText.Contains("second rogue comment") ||
+                    c.CommentText.Contains("Third rogue comment"));
                 
                 Assert.True(foundRogueComment, 
                     "Should have found at least one comment from the ROGUE* worksheet migrated to Info sheet");
