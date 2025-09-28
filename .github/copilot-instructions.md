@@ -74,6 +74,9 @@ dotnet run --configuration Release --framework net9.0 --project src/openapi2exce
 
 # Full test suite
 dotnet test --configuration Release --framework net9.0
+
+# create a workbook with migrated comments
+dotnet run --project src/openapi2excel.cli --configuration Release -- "src/openapi2excel.tests/Sample/sample-api-gw.json" "test-output/debug-workbook.xlsx" --existing-workbook "src/openapi2excel.tests/Sample/sample-api-gw-with-mappings.xlsx" --no-logo
 ```
 
 ## Project Architecture
@@ -125,6 +128,7 @@ Current TODOs in codebase (search for "TODO"):
 - **Coverage**: Basic smoke test coverage (1 test currently)
 - **Test Data**: (basic functionality) Uses Swagger Petstore sample specification; (comments management) sample-api-gw.json sample-api-gw-with-mappings.xlsx
 - **Expected Behavior**: All tests must pass for CI validation
+- **Examine Workbook** You can copy an xlsx to a zip and unpack it to examine the content to check the links and patterns of the xml files
 
 ## Troubleshooting & Validation
 
