@@ -1,11 +1,12 @@
 <OpenApiMappings>
     <Worksheet>GET_tenant-duties-vacant</Worksheet>
+    <MapOpenApiRef Row="3">paths./{tenant}/duties/vacant.get./TitleRow</MapOpenApiRef>
     <MapOpenApiRef Row="4">paths./{tenant}/duties/vacant.get</MapOpenApiRef>
     <MapOpenApiRef Row="5">paths./{tenant}/duties/vacant.get/@path</MapOpenApiRef>
     <MapOpenApiRef Row="6">paths./{tenant}/duties/vacant.get/@operation_description</MapOpenApiRef>
     <MapOpenApiRef Row="7">paths./{tenant}/duties/vacant.get/@operation_summary</MapOpenApiRef>
     <MapOpenApiRef Row="8">paths./{tenant}/duties/vacant.get/@deprecated</MapOpenApiRef>
-    <MapOpenApiRef Row="10">components.parameters./Title</MapOpenApiRef>
+    <MapOpenApiRef Row="10">paths./{tenant}/duties/vacant.get./TitleRow</MapOpenApiRef>
     <MapOpenApiRef Row="11">components.parameters./ParameterHeadings</MapOpenApiRef>
     <MapOpenApiRef Row="12">components.parameters.tenant</MapOpenApiRef>
     <MapOpenApiRef Cell="A12">components.parameters.tenant/@name</MapOpenApiRef>
@@ -126,7 +127,7 @@
     <MapOpenApiRef Cell="O18">components.parameters.vacantDutyGradeId/@default</MapOpenApiRef>
     <MapOpenApiRef Cell="P18">components.parameters.vacantDutyGradeId/@example</MapOpenApiRef>
     <MapOpenApiRef Cell="Q18">components.parameters.vacantDutyGradeId/@description</MapOpenApiRef>
-    <MapOpenApiRef Row="20">paths./{tenant}/duties/vacant.get.responseBody</MapOpenApiRef>
+    <MapOpenApiRef Row="20">paths./{tenant}/duties/vacant.get.responseBody./TitleRow</MapOpenApiRef>
     <MapOpenApiRef Row="21">paths./{tenant}/duties/vacant.get.responseBody.200</MapOpenApiRef>
     <MapOpenApiRef Row="22">paths./{tenant}/duties/vacant.get.responses.200/@bodyformat</MapOpenApiRef>
     <MapOpenApiRef Row="23">paths./{tenant}/duties/vacant.get.responses.200/SchemaDescriptionHeader</MapOpenApiRef>

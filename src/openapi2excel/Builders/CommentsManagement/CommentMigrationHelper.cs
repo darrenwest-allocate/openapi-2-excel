@@ -35,6 +35,17 @@ public enum CommentMigrationFailureReason
     /// An unexpected error occurred during the migration process (e.g., file I/O, XML parsing).
     /// </summary>
     UnexpectedErrorDuringMigration,
+    
+    /// <summary>
+    /// Comment successfully migrated as Type A (NoAnchor) - placed near title row on existing worksheet.
+    /// </summary>
+    SuccessfullyMigratedAsTypeA,
+    
+    /// <summary>
+    /// Comment successfully migrated as Type B (NoWorksheet) - placed on Info sheet.
+    /// </summary>
+    SuccessfullyMigratedAsTypeB,
+    
     Unknown
 }
 
@@ -80,7 +91,8 @@ public static class CommentMigrationHelper
                     newWorkbookMappings,
                     idMapping,
                     existingWorkbookPath,
-                    processedCells);
+                    processedCells,
+                    sortedComments);
 
                 if (!migrationResult.Success)
                 {
@@ -105,12 +117,22 @@ public static class CommentMigrationHelper
         List<WorksheetOpenApiMapping> newWorkbookMappings,
         Dictionary<string, string> idMapping,
         string existingWorkbookPath,
-        HashSet<string> processedCells)
+        HashSet<string> processedCells,
+        List<ThreadedCommentWithContext> sortedComments)
     {
         try
         {
             if (string.IsNullOrEmpty(comment.OpenApiAnchor))
             {
+                // Try Type A migration (NoAnchor - comment on existing worksheet without anchor)
+                var typeAResult = TryMigrateTypeAComment(comment, workbook, processedCells, sortedComments, newWorkbookMappings);
+                if (typeAResult.Success)
+                {
+                    return (true, CommentMigrationFailureReason.SuccessfullyMigratedAsTypeA, "Successfully migrated as Type A");
+                }
+                
+                // TODO: Try Type B migration (NoWorksheet - comment on non-existing worksheet)
+                // For now, return the original failure
                 return (false, CommentMigrationFailureReason.NoOpenApiAnchorFound, "Comment has no OpenAPI anchor.");
             }
 
@@ -144,6 +166,164 @@ public static class CommentMigrationHelper
         {
             return (false, CommentMigrationFailureReason.UnexpectedErrorDuringMigration, ex.Message);
         }
+    }
+
+    /// <summary>
+    /// Attempts to migrate a Type A comment (NoAnchor - comment on existing worksheet without OpenAPI anchor).
+    /// Places the comment near the nearest title row above its original position, or at row 1 if no title found.
+    /// </summary>
+    private static (bool Success, string? ErrorDetails) TryMigrateTypeAComment(
+        ThreadedCommentWithContext comment,
+        IXLWorkbook workbook,
+        HashSet<string> processedCells,
+        List<ThreadedCommentWithContext> allComments,
+        List<WorksheetOpenApiMapping> newWorkbookMappings)
+    {
+        try
+        {
+            // Check if the source worksheet exists in the new workbook
+            if (!workbook.Worksheets.TryGetWorksheet(comment.WorksheetName, out var worksheet))
+            {
+                return (false, $"Worksheet '{comment.WorksheetName}' not found in new workbook for Type A migration.");
+            }
+
+            // Preserve the original column
+            var originalColumn = ExtractColumnFromCellReference(comment.CellReference);
+            
+            // Find the target row near a title row using OpenAPI mappings
+            var targetRow = FindTargetRowForTypeAComment(worksheet, comment, newWorkbookMappings);
+            
+            var targetCellReference = $"{originalColumn}{targetRow}";
+            
+            // Check for collision and adjust if necessary
+            var finalCellReference = HandleTypeACollision(worksheet, targetCellReference, processedCells);
+            
+            // Create the legacy comment (this creates the visible comment indicator)
+            ReplicateSourceCommentOnNewWorksheet(worksheet, finalCellReference, comment);
+            
+            // Mark cell as processed
+            var cellKey = $"{comment.WorksheetName}:{finalCellReference}";
+            processedCells.Add(cellKey);
+            
+            // CRITICAL: Store the target cell reference in the comment context for ThreadedComment processing
+            // This ensures that the full conversation thread (including replies) gets migrated
+            comment.SetOverrideTargetCell(finalCellReference, comment.WorksheetName);
+            
+            // CRITICAL: Apply the same override to ALL REPLIES so they migrate to the same location
+            var replies = comment.GetReplies(allComments);
+            foreach (var reply in replies)
+            {
+                reply.SetOverrideTargetCell(finalCellReference, comment.WorksheetName);
+            }
+            
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Error during Type A migration: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Finds the appropriate target row for a Type A comment by looking for title rows using OpenAPI mappings.
+    /// </summary>
+    private static int FindTargetRowForTypeAComment(IXLWorksheet worksheet, ThreadedCommentWithContext comment, List<WorksheetOpenApiMapping> newWorkbookMappings)
+    {
+        // Start from the original row and search upward for title rows
+        var originalRow = ExtractRowFromCellReference(comment.CellReference);
+        
+        // Find the worksheet mapping for this comment's worksheet
+        var worksheetMapping = newWorkbookMappings.FirstOrDefault(w => w.WorksheetName == comment.WorksheetName);
+        if (worksheetMapping == null)
+        {
+            return 1; // Fallback to row 1 if no mapping found
+        }
+        
+        // Find all title row mappings - now that /TitleRow mappings are fixed, use only those
+        var titleRowMappings = worksheetMapping.Mappings
+            .Where(m => m.OpenApiRef.EndsWith("/TitleRow", StringComparison.OrdinalIgnoreCase))
+            .Where(m => m.Row > 0) // Only row mappings, not cell mappings
+            .OrderByDescending(m => m.Row) // Order by row descending to find closest title above
+            .ToList();
+            
+        // Find the closest title row above the original comment
+        var bestTitleRow = titleRowMappings
+            .Where(m => m.Row < originalRow) // Only consider title rows above the comment
+            .OrderByDescending(m => m.Row) // Get the closest one (highest row number below originalRow)
+            .FirstOrDefault();
+            
+        if (bestTitleRow != null)
+        {
+            var targetRow = bestTitleRow.Row;
+            return targetRow;
+        }
+        
+        // No title found, default to row 1
+        return 1;
+    }
+
+    /// <summary>
+    /// Handles collision detection for Type A comments and finds an alternative cell if needed.
+    /// </summary>
+    private static string HandleTypeACollision(IXLWorksheet worksheet, string targetCellReference, HashSet<string> processedCells)
+    {
+        var targetCell = worksheet.Cell(targetCellReference);
+        var cellKey = $"{worksheet.Name}:{targetCellReference}";
+        
+        // If the target cell is empty and not already processed, use it
+        if ((targetCell.IsEmpty() || !targetCell.HasComment) && !processedCells.Contains(cellKey))
+        {
+            return targetCellReference;
+        }
+        
+        // Find the next available row below
+        var originalColumn = ExtractColumnFromCellReference(targetCellReference);
+        var startRow = ExtractRowFromCellReference(targetCellReference);
+        
+        for (int row = startRow + 1; row <= startRow + 5; row++) // Check up to 5 rows below
+        {
+            var candidateCell = $"{originalColumn}{row}";
+            var candidateKey = $"{worksheet.Name}:{candidateCell}";
+            var cell = worksheet.Cell(candidateCell);
+            
+            if ((cell.IsEmpty() || !cell.HasComment) && !processedCells.Contains(candidateKey))
+            {
+                return candidateCell;
+            }
+        }
+        
+        // If still no space, use the original target (will merge with existing comment)
+        return targetCellReference;
+    }
+
+    /// <summary>
+    /// Gets the target cell reference for a comment, handling both regular mapped comments and Type A overrides.
+    /// </summary>
+    private static bool TryGetTargetCellForThreadedComment(
+        ThreadedCommentWithContext comment, 
+        List<WorksheetOpenApiMapping> newWorkbookMappings, 
+        out string targetCellReference)
+    {
+        targetCellReference = string.Empty;
+        
+        // Handle Type A comments with override target cells
+        if (!string.IsNullOrEmpty(comment.OverrideTargetCell))
+        {
+            targetCellReference = comment.OverrideTargetCell;
+            return true;
+        }
+        
+        // Handle regular comments with OpenAPI anchors
+        if (!string.IsNullOrEmpty(comment.OpenApiAnchor))
+        {
+            var (targetMapping, _) = FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
+            if (targetMapping != null)
+            {
+                return TryGetTargetCell(comment, targetMapping, out targetCellReference);
+            }
+        }
+        
+        return false;
     }
 
     private static bool TryGetTargetCell(ThreadedCommentWithContext comment, CellOpenApiMapping targetMapping, out string targetCellReference)
@@ -288,10 +468,24 @@ public static class CommentMigrationHelper
         
         foreach (var comment in sortedComments)
         {
-            if (string.IsNullOrEmpty(comment.OpenApiAnchor)) continue;
+            string worksheetName;
             
-            var (targetMapping, worksheetName) = FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
-            if (targetMapping == null) continue;
+            // Handle Type A comments with override target cells
+            if (!string.IsNullOrEmpty(comment.OverrideTargetCell) && !string.IsNullOrEmpty(comment.OverrideWorksheetName))
+            {
+                worksheetName = comment.OverrideWorksheetName;
+            }
+            // Handle regular comments with OpenAPI anchors
+            else if (!string.IsNullOrEmpty(comment.OpenApiAnchor))
+            {
+                var (targetMapping, mappedWorksheetName) = FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
+                if (targetMapping == null) continue;
+                worksheetName = mappedWorksheetName;
+            }
+            else
+            {
+                continue; // Skip comments that cannot be mapped
+            }
             
             if (!commentsByWorksheet.ContainsKey(worksheetName))
             {
@@ -601,10 +795,8 @@ public static class CommentMigrationHelper
         
         foreach (var comment in comments.Where(c => c.IsRootComment))
         {
-            var (targetMapping, _) = FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
-            if (targetMapping == null) continue;
-
-            if (!TryGetTargetCell(comment, targetMapping, out string targetCellReference)) continue;
+            if (!TryGetTargetCellForThreadedComment(comment, newWorkbookMappings, out string targetCellReference))
+                continue;
 
             // Generate unique tcId for this comment (like official example)
             string tcId = comment.CommentId;
@@ -651,10 +843,8 @@ public static class CommentMigrationHelper
         // Create threaded comments using EXACT official pattern
         foreach (var comment in comments)
         {
-            var (targetMapping, _) = FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
-            if (targetMapping == null) continue;
-
-            if (!TryGetTargetCell(comment, targetMapping, out string targetCellReference)) continue;
+            if (!TryGetTargetCellForThreadedComment(comment, newWorkbookMappings, out string targetCellReference))
+                continue;
 
             // Create threaded comment following EXACT official pattern
             var threadedComment = new ThreadedComment(
@@ -718,10 +908,8 @@ public static class CommentMigrationHelper
         // Create VML shape for each root comment
         foreach (var comment in comments.Where(c => c.IsRootComment))
         {
-            var (targetMapping, _) = FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
-            if (targetMapping == null) continue;
-
-            if (!TryGetTargetCell(comment, targetMapping, out string targetCellReference)) continue;
+            if (!TryGetTargetCellForThreadedComment(comment, newWorkbookMappings, out string targetCellReference))
+                continue;
 
             // Extract row and column for VML anchor (0-based for VML)
             var row = ExtractRowFromCellReference(targetCellReference) - 1;

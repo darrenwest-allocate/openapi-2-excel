@@ -17,7 +17,7 @@ internal class ResponseBodyBuilder(
       if (!operation.Responses.Any())
          return;
       var responseAnchor = AnchorGenerator.GenerateResponseBodyAnchor(anchor);
-      Cell(1).SetTextBold("RESPONSE").MapRow(responseAnchor);
+      Cell(1).SetTextBold("RESPONSE").MapRow(responseAnchor.With(WorksheetLanguage.Generic.TitleRow));
       ActualRow.MoveNext();
       using (var _ = new Section(Worksheet, ActualRow))
       {

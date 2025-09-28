@@ -42,6 +42,19 @@ public class ThreadedCommentWithContext
     public ThreadedComment Comment { get; set; } = null!;
     public string WorksheetName { get; set; } = string.Empty;
     public string OpenApiAnchor { get; set; } = string.Empty; // Added for mapping
+    
+    // Override properties for Type A/B comment migration
+    public string? OverrideTargetCell { get; private set; }
+    public string? OverrideWorksheetName { get; private set; }
+    
+    /// <summary>
+    /// Sets override target cell and worksheet for Type A/B comment migration.
+    /// </summary>
+    public void SetOverrideTargetCell(string targetCell, string worksheetName)
+    {
+        OverrideTargetCell = targetCell;
+        OverrideWorksheetName = worksheetName;
+    }
     public string Author
     {
         get
