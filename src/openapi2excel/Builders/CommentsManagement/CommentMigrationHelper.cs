@@ -29,22 +29,14 @@ public static class CommentMigrationHelper
          string newWorkbookPath,
          List<WorksheetOpenApiMapping> newWorkbookMappings)
     {
-        var commentsToMigrate = ExtractCommentsToMigrate(existingWorkbookPath);
+        var commentsToMigrate = ExcelOpenXmlHelper.ExtractAndAnnotateUnresolvedComments(existingWorkbookPath);
         if (!commentsToMigrate.Any()) return [];
 
         var migrationContext = InitializeMigrationContext(commentsToMigrate);
         var nonMigratableComments = CreateLegacyComments(newWorkbookPath, newWorkbookMappings, migrationContext);
-        AddThreadedCommentParts(existingWorkbookPath, newWorkbookPath, migrationContext.SortedComments, newWorkbookMappings, migrationContext.IdMapping);
+        AddThreadedCommentParts(existingWorkbookPath, newWorkbookPath, migrationContext.SortedComments, newWorkbookMappings);
 
         return nonMigratableComments;
-    }
-
-    /// <summary>
-    /// Extracts unresolved comments from the existing workbook.
-    /// </summary>
-    private static List<ThreadedCommentWithContext> ExtractCommentsToMigrate(string existingWorkbookPath)
-    {
-        return ExcelOpenXmlHelper.ExtractAndAnnotateUnresolvedComments(existingWorkbookPath);
     }
 
     /// <summary>
@@ -140,17 +132,6 @@ public static class CommentMigrationHelper
     }
 
     /// <summary>
-    /// Gets the target cell reference for a comment using the CommentTargetResolver.
-    /// </summary>
-    private static bool TryGetTargetCellForThreadedComment(
-        ThreadedCommentWithContext comment,
-        List<WorksheetOpenApiMapping> newWorkbookMappings,
-        out string targetCellReference)
-    {
-        return CommentTargetResolver.TryGetTargetCellForThreadedComment(comment, newWorkbookMappings, out targetCellReference);
-    }
-
-    /// <summary>
     /// Sorts comments to ensure parent comments are migrated before their replies.
     /// This prevents broken parent-child ID relationships in the migrated workbook.
     /// </summary>
@@ -209,8 +190,7 @@ public static class CommentMigrationHelper
         string existingWorkbookPath,
         string newWorkbookPath,
         List<ThreadedCommentWithContext> sortedComments,
-        List<WorksheetOpenApiMapping> newWorkbookMappings,
-        Dictionary<string, string> idMapping)
+        List<WorksheetOpenApiMapping> newWorkbookMappings)
     {
         using var document = SpreadsheetDocument.Open(newWorkbookPath, true);
         var workbookPart = document.WorkbookPart;
@@ -228,7 +208,6 @@ public static class CommentMigrationHelper
             }
             else if (!string.IsNullOrEmpty(comment.OpenApiAnchor))
             {
-                var targetResolver = new CommentTargetResolver();
                 var (targetMapping, mappedWorksheetName) = CommentTargetResolver.FindMatchingMapping(comment.OpenApiAnchor, newWorkbookMappings);
                 if (targetMapping == null) continue;
                 worksheetName = mappedWorksheetName;
@@ -252,7 +231,7 @@ public static class CommentMigrationHelper
             var worksheetPart = FindWorksheetPart(workbookPart, worksheetName);
             if (worksheetPart == null) continue;
 
-            CreateThreadedCommentsForWorksheet(worksheetPart, worksheetComments, newWorkbookMappings, existingWorkbookPath, idMapping);
+            CreateThreadedCommentsForWorksheet(worksheetPart, worksheetComments, newWorkbookMappings, existingWorkbookPath);
         }
         document.Save();
     }
@@ -264,8 +243,7 @@ public static class CommentMigrationHelper
         WorksheetPart worksheetPart,
         List<ThreadedCommentWithContext> comments,
         List<WorksheetOpenApiMapping> newWorkbookMappings,
-        string existingWorkbookPath,
-        Dictionary<string, string> idMapping)
+        string existingWorkbookPath)
     {
         if (!comments.Any()) return;
 
@@ -326,54 +304,6 @@ public static class CommentMigrationHelper
         return null;
     }
 
-
-    /// <summary>
-    /// Extracts a specific Person by ID from the source workbook using OpenXML objects.
-    /// Returns null if no persons part exists or the person is not found.
-    /// </summary>
-    private static Person ExtractPersonFromSourceWorkbook(string existingWorkbookPath, string personId)
-    {
-        var defaultPerson = new Person
-        {
-            Id = personId,
-            DisplayName = "Comment Author",
-            ProviderId = "Excel"
-        };
-
-        try
-        {
-            using var sourceDocument = SpreadsheetDocument.Open(existingWorkbookPath, false);
-            var sourceWorkbookPart = sourceDocument.WorkbookPart;
-            if (sourceWorkbookPart == null)
-            {
-                return defaultPerson;
-            }
-
-            var sourcePersonPart = sourceWorkbookPart.GetPartsOfType<WorkbookPersonPart>().FirstOrDefault();
-            if (sourcePersonPart?.PersonList == null)
-            {
-                return defaultPerson;
-            }
-
-            // Find the specific person by ID
-            var person = sourcePersonPart.PersonList.Elements<Person>()
-                .FirstOrDefault(p => p.Id?.Value == personId);
-
-            if (person != null)
-            {
-                return (Person)person.Clone();
-            }
-            else
-            {
-                return defaultPerson;
-            }
-        }
-        catch (Exception)
-        {
-            return defaultPerson;
-        }
-    }
-
     /// <summary>
     /// Creates legacy comments using the official SDK pattern.
     /// Legacy comments are required for Excel to show comment indicators.
@@ -389,7 +319,8 @@ public static class CommentMigrationHelper
         var processedComments = new List<(ThreadedCommentWithContext comment, string cellRef, string tcId)>();
         foreach (var comment in comments.Where(c => c.IsRootComment))
         {
-            if (!TryGetTargetCellForThreadedComment(comment, newWorkbookMappings, out string targetCellReference))
+
+            if (!CommentTargetResolver.TryGetTargetCellForThreadedComment(comment, newWorkbookMappings, out string targetCellReference))
                 continue;
             // Generate unique tcId for this comment (like official example)
             string tcId = comment.CommentId;
@@ -430,7 +361,7 @@ public static class CommentMigrationHelper
         // Create threaded comments using official pattern
         foreach (var comment in comments)
         {
-            if (!TryGetTargetCellForThreadedComment(comment, newWorkbookMappings, out string targetCellReference))
+            if (!CommentTargetResolver.TryGetTargetCellForThreadedComment(comment, newWorkbookMappings, out string targetCellReference))
                 continue;
 
             // Create threaded comment following official pattern

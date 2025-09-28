@@ -130,7 +130,7 @@ public class OperationWorksheetBuilder : WorksheetBuilder
    private void AddOperationInfos(string path, OpenApiPathItem pathItem, OperationType operationType,
       OpenApiOperation operation) =>
    new OperationInfoBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
-      .AddOperationInfoSection(path, pathItem, operationType, operation, _worksheetMapping!.Mappings);
+      .AddOperationInfoSection(path, pathItem, operationType, operation);
 
    private void AddRequestParameters(OpenApiOperation operation, Anchor anchor) =>
       new RequestParametersBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)

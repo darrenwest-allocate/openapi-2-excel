@@ -9,7 +9,7 @@ namespace openapi2excel.core.Builders.CommentsManagement.MigrationStrategy;
 /// </summary>
 public class MappedCommentMigrationStrategy : ICommentMigrationStrategy
 {
-    public string StrategyName => "Mapped Comment";
+    public string StrategyName => "Anchored comment";
 
     public MappedCommentMigrationStrategy() { }
 

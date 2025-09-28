@@ -10,7 +10,7 @@ namespace openapi2excel.core.Builders.CommentsManagement.MigrationStrategy;
 /// </summary>
 public class NoWorksheetCommentMigrationStrategy : ICommentMigrationStrategy
 {
-    public string StrategyName => "No Worksheet";
+    public string StrategyName => "No Worksheet comments";
 
     public NoWorksheetCommentMigrationStrategy() { }
 

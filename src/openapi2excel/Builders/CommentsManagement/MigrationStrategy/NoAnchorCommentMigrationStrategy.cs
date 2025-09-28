@@ -1,4 +1,5 @@
 using ClosedXML.Excel;
+using openapi2excel.core.Builders.WorksheetPartsBuilders.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace openapi2excel.core.Builders.CommentsManagement.MigrationStrategy;
 public class NoAnchorCommentMigrationStrategy : ICommentMigrationStrategy
 {
 
-    public string StrategyName => "Type A (NoAnchor)";
+    public string StrategyName => "No Anchor comments";
 
     public NoAnchorCommentMigrationStrategy() { }
 
@@ -82,7 +83,7 @@ public class NoAnchorCommentMigrationStrategy : ICommentMigrationStrategy
         
         // Find all title row mappings
         var titleRowMappings = worksheetMapping.Mappings
-            .Where(m => m.OpenApiRef.EndsWith("/TitleRow", StringComparison.OrdinalIgnoreCase))
+            .Where(m => m.OpenApiRef.EndsWith(WorksheetLanguage.Generic.TitleRow, StringComparison.OrdinalIgnoreCase))
             .Where(m => m.Row > 0) // Only row mappings, not cell mappings
             .OrderByDescending(m => m.Row) // Order by row descending to find closest title above
             .ToList();

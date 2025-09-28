@@ -11,16 +11,6 @@ namespace openapi2excel.core.Builders.CommentsManagement;
 public static partial class AnchorGenerator
 {
 	/// <summary>
-	/// Generates an anchor for operation information (combines path and operation).
-	/// Format: paths.{path}.{method}
-	/// Example: paths./pets.get
-	/// </summary>
-	public static Anchor GenerateOperationInfoAnchor(string path, OpenApiPathItem pathItem, OperationType operationType, OpenApiOperation operation)
-	{
-		return GenerateOperationAnchor(path, operationType);
-	}
-
-	/// <summary>
 	/// Generates an anchor for a path and operation.
 	/// Format: paths.{path}.{method}
 	/// Example: paths./pets.get
@@ -42,6 +32,15 @@ public static partial class AnchorGenerator
 		return new Anchor($"{path_operationType}.responses.{statusCode}");
 	}
 
+	/// <summary>
+	/// Generates an anchor for the response body of a response.
+	/// example: paths./pets.get.responses.200.responseBody
+	/// </summary>
+	internal static Anchor GenerateResponseBodyAnchor(Anchor path_operationType)
+	{
+		return new Anchor($"{path_operationType}.responseBody");
+	}
+	
 	/// <summary>
 	/// Generates an anchor for a parameter component.
 	/// Format: components.parameters.{parameterName}
@@ -133,15 +132,6 @@ public static partial class AnchorGenerator
 	internal static Anchor GenerateHeadersAnchor(Anchor anchor)
 	{
 		return new Anchor($"{anchor}.headers");
-	}
-
-	/// <summary>
-	/// Generates an anchor for the response body of a response.
-	/// example: paths./pets.get.responses.200.responseBody
-	/// </summary>
-	internal static Anchor GenerateResponseBodyAnchor(Anchor path_operationType)
-	{
-		return new Anchor($"{path_operationType}.responseBody");
 	}
 
 }

@@ -14,15 +14,14 @@ internal class OperationInfoBuilder(
    : WorksheetPartBuilder(actualRow, worksheet, options)
 {
    public void AddOperationInfoSection(string path, OpenApiPathItem pathItem, OperationType operationType,
-      OpenApiOperation operation, List<CellOpenApiMapping> mappings)
+      OpenApiOperation operation)
    {
-      Anchor mappingAnchor = AnchorGenerator.GenerateOperationInfoAnchor(path, pathItem, operationType, operation);
+      Anchor mappingAnchor = AnchorGenerator.GenerateOperationAnchor(path, operationType);
 
       Cell(1).SetTextBold(WorksheetLanguage.Operations.Title).MapRow(mappingAnchor.With(WorksheetLanguage.Generic.TitleRow))
          .Style.Fill.SetBackgroundColor(HeaderBackgroundColor);
 
       ActualRow.MoveNext();
-
 
       using (var _ = new Section(Worksheet, ActualRow))
       {
