@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments;
-using DocumentFormat.OpenXml.Spreadsheet;
 using openapi2excel.core;
 using openapi2excel.core.Common;
 using openapi2excel.core.Builders.CommentsManagement;
+using openapi2excel.core.Builders.WorksheetPartsBuilders.Common;
 
 namespace OpenApi2Excel.Tests;
 
@@ -49,23 +49,17 @@ public class ExcelCommentsTest
         Assert.NotNull(annotatedComments);
         Assert.True(annotatedComments.Count > 10);
 
-        const string unMappableComment = "This is a comment that is unlikely to be mapped because it is on a blank row";
+        const string commentWithoutAnchorFlag = "[NoAnchor]";
         foreach (var comment in annotatedComments)
         {
             Assert.NotEmpty(comment.WorksheetName);
             Assert.NotEmpty(comment.CellReference);
-            if (comment.CommentText.Contains(unMappableComment))
+            if (comment.CommentText.Contains(commentWithoutAnchorFlag))
             {
                 Assert.Empty(comment.OpenApiAnchor);
                 continue;
             }
-            // TODO this test has to be fixed. currently it only execuse the one
-            // original unmigrated comment, and tnot that most have been added
-            // they all need to be excused (somehow)
-
-            if (comment.CommentText != "") Console.WriteLine(comment.CommentText);
-
-            //Assert.NotEmpty(comment.OpenApiAnchor); // May be empty if no mapping exists
+            Assert.NotEmpty(comment.OpenApiAnchor); // May be empty if no mapping exists
         }
     }
 
@@ -77,22 +71,17 @@ public class ExcelCommentsTest
         {
             await PrepareWorkbookWithMigratedComments(tempNewWorkbookPath);
 
-            // Assert: Check that legacy comments were created
-            using (var workbook = new XLWorkbook(tempNewWorkbookPath))
-            {
-                var legacyCommentCount = workbook.Worksheets.Sum(ws => ws.Cells().Count(c => c.HasComment));
-
-                // With Type A and Type B implementations working, we now migrate more comments:
-                // - Original exact matches: 9
-                // - Type A (NoAnchor) migrations: 5 
-                // - Type B (NoWorksheet) migrations: 3
-                // Total expected: 17
-                Assert.Equal(17, legacyCommentCount);
-            }
-        }
+			// Assert: Check that legacy comments were created
+			using var workbook = new XLWorkbook(tempNewWorkbookPath);
+			var legacyCommentCount = workbook.Worksheets.Sum(ws => ws.Cells().Count(c => c.HasComment));
+			// - Original exact matches: 9
+			// - (NoAnchor) comment migrations: 5 
+			// - (NoWorksheet) comment migrations: 3
+			// Total expected: 17
+			Assert.Equal(17, legacyCommentCount);
+		}
         finally
         {
-            // Cleanup
             if (File.Exists(tempNewWorkbookPath)) File.Delete(tempNewWorkbookPath);
         }
     }
@@ -100,8 +89,6 @@ public class ExcelCommentsTest
     private static async Task PrepareWorkbookWithMigratedComments(string tempNewWorkbookPath)
     {
         var existingWorkbookPath = "Sample/sample-api-gw-with-mappings.xlsx";
-
-        // Create a sample new workbook using the OpenApiDocumentationGenerator
         var sampleOpenApiPath = "Sample/sample-api-gw.json";
         await OpenApiDocumentationGenerator.GenerateDocumentation(
             sampleOpenApiPath,
@@ -109,11 +96,8 @@ public class ExcelCommentsTest
             new OpenApiDocumentationOptions { IncludeMappings = true }
         );
 
-        // Extract mappings from the new workbook for migration
         var newWorkbookMappings = ExcelOpenXmlHelper.ExtractCustomXmlMappingsFromWorkbook(tempNewWorkbookPath);
-
-        // Act: Migrate comments to the new workbook
-        var nonMigratableComments = CommentMigrationHelper.MigrateComments(existingWorkbookPath, tempNewWorkbookPath, newWorkbookMappings);
+        CommentMigrationHelper.MigrateComments(existingWorkbookPath, tempNewWorkbookPath, newWorkbookMappings);
     }
 
     [Fact]
@@ -152,7 +136,6 @@ public class ExcelCommentsTest
         }
         finally
         {
-            // Cleanup
             if (File.Exists(tempNewWorkbookPath)) File.Delete(tempNewWorkbookPath);
         }
     }
@@ -180,7 +163,6 @@ public class ExcelCommentsTest
         var tempNewWorkbookPath = Path.Combine(Path.GetTempPath(), $"test_noanchor_{Guid.NewGuid():N}.xlsx");
         try
         {
-            // Arrange: Create new workbook with mappings
             var sampleOpenApiPath = "Sample/sample-api-gw.json";
             await OpenApiDocumentationGenerator.GenerateDocumentation(
                 sampleOpenApiPath,
@@ -188,68 +170,46 @@ public class ExcelCommentsTest
                 new OpenApiDocumentationOptions { IncludeMappings = true }
             );
 
+            var headingTitles = new string[] {
+                WorksheetLanguage.Schema.Title,
+                WorksheetLanguage.Operations.Title,
+                WorksheetLanguage.Request.Title,
+                WorksheetLanguage.Response.Title,
+                WorksheetLanguage.Parameters.Title
+            };
+
             var existingWorkbookPath = "Sample/sample-api-gw-with-mappings.xlsx";
             var newWorkbookMappings = ExcelOpenXmlHelper.ExtractCustomXmlMappingsFromWorkbook(tempNewWorkbookPath);
-
             // Act: Migrate comments including NoAnchor types
-            var nonMigratableComments = CommentMigrationHelper.MigrateComments(existingWorkbookPath, tempNewWorkbookPath, newWorkbookMappings);
+            CommentMigrationHelper.MigrateComments(existingWorkbookPath, tempNewWorkbookPath, newWorkbookMappings);
 
-            // Assert: Verify NoAnchor comments were successfully migrated (not in failure list)
-            // Comments like "Comment no anchor near the top" should be migrated to near title rows
-            using (var workbook = new XLWorkbook(tempNewWorkbookPath))
+            // Assert: Verify NoAnchor comments were successfully migrated
+            const string commentWithoutAnchorFlag = "[NoAnchor]";
+            var allComments = ExcelOpenXmlHelper.ExtractAndAnnotateAllComments(tempNewWorkbookPath);
+            var commentsWithoutAnchor = allComments.Where(c => c.CommentText.Contains(commentWithoutAnchorFlag)).ToList();
+            Assert.True(commentsWithoutAnchor.Count > 7, $"Expected more than 7 migrated NoAnchor comments, got {commentsWithoutAnchor.Count}");
+
+            // Verify comments were placed at expected NoAnchor (alternative) location
+            using var workbook = new XLWorkbook(tempNewWorkbookPath);
+            foreach (var noAnchorComment in commentsWithoutAnchor)
             {
-                var allComments = workbook.Worksheets.SelectMany(ws => ws.Cells().Where(c => c.HasComment)).ToList();
-                
-                // Should have both exact matches AND NoAnchor placements
-                Assert.True(allComments.Count > 9, $"Expected more than 9 migrated comments including NoAnchor types, got {allComments.Count}");
-                
-                // Verify at least one comment was placed at expected Type A locations
-                // From our debug output, we saw comments at J1 and C28 - these are typical Type A placements
-                var foundTypeAPlacement = false;
-                
-                foreach (var worksheet in workbook.Worksheets)
+                var commentRow = CommentTargetResolver.ExtractRowFromCellReference(noAnchorComment.CellReference);
+                var commentColumn = CommentTargetResolver.ExtractColumnFromCellReference(noAnchorComment.CellReference);
+                if (commentColumn == "V") // "No Worksheet" comments
                 {
-                    var commentsInWorksheet = worksheet.Cells().Where(c => c.HasComment).ToList();
-                    
-                    foreach (var commentCell in commentsInWorksheet)
-                    {
-                        var commentRow = commentCell.Address.RowNumber;
-                        var commentCol = commentCell.Address.ColumnNumber;
-                        
-                        Console.WriteLine($"[DEBUG] Comment at {worksheet.Name}!{commentCell.Address}: Row {commentRow}");
-                        
-                        // Type A placement logic: row 1 (fallback) or near title rows
-                        if (commentRow == 1)
-                        {
-                            foundTypeAPlacement = true;
-                            Console.WriteLine($"[DEBUG] Found Type A fallback placement at row 1");
-                            break;
-                        }
-                        
-                        // Check if this comment is near any title row (within reasonable range)
-                        for (int checkRow = Math.Max(1, commentRow - 5); checkRow <= Math.Min(worksheet.LastRowUsed()?.RowNumber() ?? commentRow + 5, commentRow + 5); checkRow++)
-                        {
-                            var rowCells = worksheet.Row(checkRow).CellsUsed().Select(c => c.GetString().ToUpper()).ToList();
-                            var rowText = string.Join(" ", rowCells);
-                            //TOSO replace with Langugae constants
-                            if (rowText.Contains("REQUEST") || 
-                                rowText.Contains("OPERATION") ||
-                                rowText.Contains("PARAMETER") || 
-                                rowText.Contains("SCHEMA"))
-                            {
-                                foundTypeAPlacement = true;
-                                Console.WriteLine($"[DEBUG] Found Type A comment near title at row {checkRow}: '{rowText}'");
-                                break;
-                            }
-                        }
-                        
-                        if (foundTypeAPlacement) break;
-                    }
-                    
-                    if (foundTypeAPlacement) break;
+                    continue;
                 }
-                
-                Assert.True(foundTypeAPlacement, "Should have found at least one comment placed using Type A logic (row 1 or near title rows)");
+                var worksheet = workbook.Worksheets.First(ws => ws.Name.Equals(noAnchorComment.WorksheetName));
+                var textOfFirstCellForRow = worksheet.Row( commentRow ).CellsUsed().FirstOrDefault()?.GetText() ?? "";
+                if (headingTitles.Contains(textOfFirstCellForRow))
+                {
+                    continue;
+                }
+                if (commentRow == 1) // fallback row
+                {
+                    continue;
+                }
+                Assert.Fail($"{commentWithoutAnchorFlag} comment at {noAnchorComment.WorksheetName}!{noAnchorComment.CellReference} (row {commentRow}) is not near a title row. Found text: '{textOfFirstCellForRow}'");
             }
         }
         finally
@@ -261,6 +221,7 @@ public class ExcelCommentsTest
     [Fact]
     public async Task MigrateComments_HandlesNoWorksheetComments_ByPlacingOnInfoSheet()
     {
+        const string commentWithoutAnchorFlag = "[NoAnchor]";
         var tempNewWorkbookPath = Path.Combine(Path.GetTempPath(), $"test_noworksheet_{Guid.NewGuid():N}.xlsx");
         try
         {
@@ -281,40 +242,22 @@ public class ExcelCommentsTest
             // Assert: Verify NoWorksheet comments were successfully migrated to Info sheet
             using (var workbook = new XLWorkbook(tempNewWorkbookPath))
             {
-                // Find the Info sheet using the language constant
-                var infoSheetName = OpenApiDocumentationLanguageConst.Info; // Should be "Info"
-                var infoSheet = workbook.Worksheets.FirstOrDefault(ws => 
-                    ws.Name.Equals(infoSheetName, StringComparison.OrdinalIgnoreCase));
-                
+                var infoSheetName = OpenApiDocumentationLanguageConst.Info;
+                var infoSheet = workbook.Worksheets.FirstOrDefault(ws => ws.Name.Equals(infoSheetName, StringComparison.OrdinalIgnoreCase));
                 Assert.NotNull(infoSheet);
                 
                 // Look for comments in column V using proper OpenXML extraction
-                // (ClosedXML HasComment might not detect threaded comments properly)
+                // (ClosedXML HasComment cannot detect threaded comments properly)
                 var allComments = ExcelOpenXmlHelper.ExtractAndAnnotateAllComments(tempNewWorkbookPath);
                 
                 // Filter for comments on Info sheet in column V
-                var infoColumnVComments = allComments.Where(c => 
-                    c.WorksheetName.Equals(infoSheetName, StringComparison.OrdinalIgnoreCase) &&
-                    c.CellReference.StartsWith("V")).ToList();
-                
-                Console.WriteLine($"[DEBUG] Found {infoColumnVComments.Count} comments in Info sheet column V");
-                foreach (var comment in infoColumnVComments)
-                {
-                    Console.WriteLine($"[DEBUG] Comment at Info!{comment.CellReference}: '{comment.CommentText}'");
-                }
-                
-                // Should have at least one NoWorksheet comment migrated to column V
-                Assert.True(infoColumnVComments.Count > 0, 
-                    "Should have found NoWorksheet comments migrated to column V of Info sheet");
+                var infoColumnVComments = allComments.Where(c => c.WorksheetName.Equals(infoSheetName) && c.CellReference.StartsWith("V")).ToList();
+                Assert.True(infoColumnVComments.Count > 2, "Should have found NoWorksheet comments migrated to column V of Info sheet");
                 
                 // Verify one of the comments is from the ROGUE* worksheet content
-                var foundRogueComment = infoColumnVComments.Any(c => 
-                    c.CommentText.Contains("Comment on a sheet not generated") ||
-                    c.CommentText.Contains("second rogue comment") ||
-                    c.CommentText.Contains("Third rogue comment"));
+                var foundRogueComment = infoColumnVComments.All(c => c.CommentText.Contains(commentWithoutAnchorFlag));
                 
-                Assert.True(foundRogueComment, 
-                    "Should have found at least one comment from the ROGUE* worksheet migrated to Info sheet");
+                Assert.True(foundRogueComment, "All comments from the ROGUE* worksheet migrated to Info sheet");
             }
         }
         finally

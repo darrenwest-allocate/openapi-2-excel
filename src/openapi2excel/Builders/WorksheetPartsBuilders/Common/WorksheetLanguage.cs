@@ -25,7 +25,15 @@ public static class WorksheetLanguage
 		public const string Example = "Example";
 		public const string Description = "Description";
 	}
-	
+
+	public static class Response
+	{
+		public const string Title = "RESPONSE";
+		public const string ResponseHeaders = "Response headers";
+		public const string HeadersName = "Name";
+		
+	}
+
 	public static class Request
 	{
 		public const string Title = "REQUEST";

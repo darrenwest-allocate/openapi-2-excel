@@ -17,7 +17,7 @@ internal class ResponseBodyBuilder(
       if (!operation.Responses.Any())
          return;
       var responseAnchor = AnchorGenerator.GenerateResponseBodyAnchor(anchor);
-      Cell(1).SetTextBold("RESPONSE").MapRow(responseAnchor.With(WorksheetLanguage.Generic.TitleRow));
+      Cell(1).SetTextBold(WorksheetLanguage.Response.Title).MapRow(responseAnchor.With(WorksheetLanguage.Generic.TitleRow));
       ActualRow.MoveNext();
       using (var _ = new Section(Worksheet, ActualRow))
       {
@@ -42,7 +42,7 @@ internal class ResponseBodyBuilder(
       var headersAnchor = AnchorGenerator.GenerateHeadersAnchor(anchor);
 
       var responseHeaderRowPointer = ActualRow.Copy();
-      Cell(1).SetTextBold("Response headers")
+      Cell(1).SetTextBold(WorksheetLanguage.Response.ResponseHeaders)
          .MapRowWithDetail(headersAnchor);
       ActualRow.MoveNext();
 
@@ -63,7 +63,7 @@ internal class ResponseBodyBuilder(
 
       void InsertHeader(OpenApiSchemaDescriptor schemaDescriptor, Anchor anchor)
       {
-         var nextCell = Cell(1).SetTextBold("Name")
+         var nextCell = Cell(1).SetTextBold(WorksheetLanguage.Response.HeadersName)
             .MapRowWithDetail(anchor)
             .CellRight(attributesColumnIndex + 1).GetColumnNumber();
 

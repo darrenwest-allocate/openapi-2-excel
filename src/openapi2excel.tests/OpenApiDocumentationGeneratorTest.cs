@@ -138,11 +138,8 @@ public class OpenApiDocumentationGeneratorTest
       
       var migratedComments = ExcelOpenXmlHelper.ExtractAndAnnotateAllComments(newWorkbookPath);
 
-      // TODO: Test currently fails because we have yet to implement threaded comments to the legacy comments already added
-      
       Assert.True(migratedComments.Count > 0, "Should have some migrated comments");
       Assert.True(migratedComments.Count < originalUnresolvedComments.Count + originalResolvedCommentsCount, "Less than all the comments");
-      // Updated expectation: With Type A migration working correctly, we expect to migrate more comments
       Assert.True(migratedComments.Count >= originalUnresolvedComments.Count - 4, "Should migrate most comments (allowing for some Type B)");
       Assert.True(originalResolvedCommentsCount > 0, "Test requires some resolved comments in the source workbook");
 
