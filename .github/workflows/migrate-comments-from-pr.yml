@@ -82,52 +82,125 @@ jobs:
           echo "📄 OpenAPI spec URL: ${{ github.event.inputs.openapi_spec_url }}"
           echo "📝 Output directory: migration-output/"
           
+          # Debug: Check current directory and file paths
+          echo "🔍 Debugging environment:"
+          echo "Working directory: $(pwd)"
+          echo "Repository root: $(ls -la)"
+          echo "Source workbook exists: $(test -f "${{ steps.validate-workbook.outputs.workbook_path }}" && echo "YES" || echo "NO")"
+          echo "Output directory exists: $(test -d "migration-output" && echo "YES" || echo "NO")"
+          
+          # Use absolute paths to avoid any working directory issues
+          WORKBOOK_PATH="$(pwd)/${{ steps.validate-workbook.outputs.workbook_path }}"
+          OUTPUT_PATH="$(pwd)/migration-output/"
+          
+          echo "📍 Absolute paths:"
+          echo "Source workbook: $WORKBOOK_PATH"
+          echo "Output directory: $OUTPUT_PATH"
+          echo "Source workbook absolute exists: $(test -f "$WORKBOOK_PATH" && echo "YES" || echo "NO")"
+          
+          # Test URL accessibility first
+          echo "🌐 Testing URL accessibility:"
+          if curl -f -s -I "${{ github.event.inputs.openapi_spec_url }}" >/dev/null 2>&1; then
+            echo "✅ URL is accessible"
+          else
+            echo "❌ URL is not accessible - this may cause CLI to fail"
+            curl -I "${{ github.event.inputs.openapi_spec_url }}" || true
+          fi
+          
+          # Run migration with absolute paths
+          echo "🚀 Running CLI with absolute paths..."
           dotnet run --project src/openapi2excel.cli --configuration Release -- \
             "${{ github.event.inputs.openapi_spec_url }}" \
-            "migration-output/" \
-            --existing-workbook "${{ steps.validate-workbook.outputs.workbook_path }}" \
+            "$OUTPUT_PATH" \
+            --existing-workbook "$WORKBOOK_PATH" \
             --no-logo
           
-          echo "✅ Migration completed successfully"
-          ls -la migration-output/
+          echo "✅ Migration completed"
+          echo "📁 Output directory contents:"
+          ls -la migration-output/ || echo "No files in migration-output/"
           
       - name: Upload migrated workbook
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: migrated-workbook-pr-${{ steps.find-pr.outputs.pr_number }}
           path: migration-output/*.xlsx
           retention-days: 30
           
+      - name: Check for migration results
+        if: always()
+        id: check-results
+        run: |
+          if ls migration-output/*.xlsx 1> /dev/null 2>&1; then
+            echo "migration_success=true" >> $GITHUB_OUTPUT
+            echo "✅ Migration files found"
+            ls -la migration-output/
+          else
+            echo "migration_success=false" >> $GITHUB_OUTPUT
+            echo "❌ No migration files found"
+            echo "📁 Migration output directory contents:"
+            ls -la migration-output/ || echo "Directory does not exist"
+          fi
+          
       - name: Comment on PR with results
+        if: always()
         run: |
           echo "💬 Adding comment to PR #${{ steps.find-pr.outputs.pr_number }}"
           
-          # Get the actual generated filename
-          GENERATED_FILE=$(ls migration-output/*.xlsx 2>/dev/null | head -n 1 | xargs basename || echo "migrated-workbook.xlsx")
-          
-          COMMENT_BODY="## 🎉 Comment Migration Completed!
+          if [ "${{ steps.check-results.outputs.migration_success }}" = "true" ]; then
+            # Success case
+            GENERATED_FILE=$(ls migration-output/*.xlsx 2>/dev/null | head -n 1 | xargs basename || echo "migrated-workbook.xlsx")
+            
+            COMMENT_BODY="## 🎉 Comment Migration Completed!
 
-          Your Excel workbook comments have been successfully migrated to the new OpenAPI specification.
+            Your Excel workbook comments have been successfully migrated to the new OpenAPI specification.
 
-          ### Migration Details
-          - **Source Workbook**: \`${{ steps.validate-workbook.outputs.workbook_path }}\`
-          - **OpenAPI Spec**: ${{ github.event.inputs.openapi_spec_url }}
-          - **Generated File**: \`${GENERATED_FILE}\`
-          - **Branch**: \`${{ github.ref_name }}\`
-          - **Workflow Run**: [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            ### Migration Details
+            - **Source Workbook**: \`${{ steps.validate-workbook.outputs.workbook_path }}\`
+            - **OpenAPI Spec**: ${{ github.event.inputs.openapi_spec_url }}
+            - **Generated File**: \`${GENERATED_FILE}\`
+            - **Branch**: \`${{ github.ref_name }}\`
+            - **Workflow Run**: [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-          ### 📥 Download Your Migrated Workbook
-          The migrated workbook is available as a workflow artifact:
-          [Download migrated-workbook-pr-${{ steps.find-pr.outputs.pr_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            ### 📥 Download Your Migrated Workbook
+            The migrated workbook is available as a workflow artifact:
+            [Download migrated-workbook-pr-${{ steps.find-pr.outputs.pr_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
-          ### 📋 Next Steps
-          1. Download the artifact from the workflow run
-          2. Review the migrated comments in Excel
-          3. Verify that all comments have been properly transferred
-          4. Close this PR
+            ### 📋 Next Steps
+            1. Download the artifact from the workflow run
+            2. Review the migrated comments in Excel
+            3. Verify that all comments have been properly transferred
+            4. Close this PR
 
-          ---
-          *Generated by OpenAPI-2-Excel Comment Migration Workflow*"
+            ---
+            *Generated by OpenAPI-2-Excel Comment Migration Workflow*"
+          else
+            # Failure case
+            COMMENT_BODY="## ❌ Comment Migration Failed
+
+            Unfortunately, the comment migration process encountered an error and could not complete successfully.
+
+            ### Migration Details
+            - **Source Workbook**: \`${{ steps.validate-workbook.outputs.workbook_path }}\`
+            - **OpenAPI Spec**: ${{ github.event.inputs.openapi_spec_url }}
+            - **Branch**: \`${{ github.ref_name }}\`
+            - **Workflow Run**: [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ### 🔍 Troubleshooting
+            Please check the workflow logs for detailed error information:
+            - Verify the OpenAPI URL is accessible: ${{ github.event.inputs.openapi_spec_url }}
+            - Ensure the Excel workbook is valid and contains the expected mapping metadata
+            - Check for network connectivity issues
+
+            ### 📋 Next Steps
+            1. Review the workflow logs for specific error details
+            2. Verify the OpenAPI specification URL is publicly accessible
+            3. Ensure your Excel workbook was generated with the latest version of the tool
+            4. Try running the migration again
+
+            ---
+            *Generated by OpenAPI-2-Excel Comment Migration Workflow*"
+          fi
 
           gh pr comment ${{ steps.find-pr.outputs.pr_number }} --body "$COMMENT_BODY"
         env:
