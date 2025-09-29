@@ -1,0 +1,267 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "api-gw-sample",
+    "version": "v1.0.1"
+  },
+  "paths": {
+    "/{tenant}/duties/vacant": {
+      "get": {
+        "summary": "Retrieve Vacant Duties",
+        "description": "Retrieve vacant duties within a specified date range. Allows filtering by grade type category, grade type, and grade.",
+        "parameters": [
+          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "resourcingOrgUnitId", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "fromDate", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } },
+          { "name": "toDate", "in": "query", "required": true, "schema": { "type": "string", "format": "date" } },
+          { "name": "vacantDutyGradeTypeCategoryId", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "vacantDutyGradeTypeId", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "vacantDutyGradeId", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DutiesDataModelResponse" }
+              }
+            }
+          },
+          "400": { "description": "Bad Request - Missing mandatory parameters or invalid parameter format" },
+          "404": { "description": "Not Found - No vacant duties found matching the criteria" },
+          "500": { "description": "Internal Server Error" }
+        }
+      }
+    },
+    "/{tenant}/duties/{id}": {
+      "post": {
+        "summary": "Book Duty",
+        "description": "Book a vacant duty in Optima by assigning it to a posting.",
+        "parameters": [
+          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BookDutyDataModel" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BookDutyResponseModel" }
+              }
+            }
+          },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "Not Found" },
+          "500": { "description": "Internal Server Error" }
+        }
+      }
+    },
+    "/{tenant}/duties/{id}/split": {
+      "put": {
+        "summary": "Split Duty",
+        "description": "Split a vacant duty into two separate duties.",
+        "parameters": [
+          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SplitDutyDataModel" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DirectResponseModel" }
+              }
+            }
+          },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "Not Found" },
+          "500": { "description": "Internal Server Error" }
+        }
+      }
+    },
+    "/{tenant}/duty-assignments": {
+      "get": {
+        "summary": "Retrieve Assigned Duties",
+        "description": "Retrieve assigned duties for a given Posting, Person, or Org Unit within a specified date range.",
+        "parameters": [
+          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "dutyAssignmentId", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "assignmentNumber", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "personId", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "owningOrgUnitId", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "fromDate", "in": "query", "required": false, "schema": { "type": "string", "format": "date" } },
+          { "name": "toDate", "in": "query", "required": false, "schema": { "type": "string", "format": "date" } },
+          { "name": "activeOnly", "in": "query", "required": false, "schema": { "type": "boolean" } },
+          { "name": "resourcingOrgUnitId", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "dutyId", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "fulfillmentCategory", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AssignedDutiesDataModelResponse" }
+              }
+            }
+          },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "Not Found" },
+          "500": { "description": "Internal Server Error" }
+        }
+      }
+    },
+    "/{tenant}/duty-assignments/{id}/change-cost-centre": {
+      "put": {
+        "summary": "Change Cost Centre",
+        "description": "Change the cost centre of an assigned duty.",
+        "parameters": [
+          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChangeCostCentreModel" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DirectResponseModel" }
+              }
+            }
+          },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "Not Found" },
+          "500": { "description": "Internal Server Error" }
+        }
+      }
+    },
+    "/{tenant}/duty-assignments/{id}/grade-override": {
+      "post": {
+        "summary": "Set Grade Override",
+        "description": "Set a grade override for a DutyAssignment (Booking).",
+        "parameters": [
+          { "name": "tenant", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SetDutyAssignmentGradeOverrideModel" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DirectResponseModel" }
+              }
+            }
+          },
+          "400": { "description": "Bad Request" },
+          "404": { "description": "Not Found" },
+          "500": { "description": "Internal Server Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DutiesDataModelResponse": {
+        "type": "object",
+        "properties": {
+          "duties": { "type": "array", "items": { "type": "object" } }
+        },
+        "description": "Response model for duties data"
+      },
+      "BookDutyDataModel": {
+        "type": "object",
+        "required": ["gradeId", "dutyId", "workerId"],
+        "properties": {
+          "workerId": { "type": "integer", "example": 123456 },
+          "gradeId": { "type": "integer", "example": 30456 },
+          "assignmentNumber": { "type": "string", "example": "29JFIS495898493" },
+          "agencyId": { "type": "integer", "example": 98675 },
+          "externalUrl": { "type": "string" }
+        },
+        "description": "Data needed for booking of a Duty"
+      },
+      "BookDutyResponseModel": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "dutyAssignmentId": { "type": "string", "description": "Unique identifier for the created duty assignment (only present when success is true) - this represents the assigned duty visible in Optima" },
+          "bookingReference": { "type": "string", "description": "The booking reference number assigned to the booked duty (only present when success is true)" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        },
+        "description": "Response model for Book Duty operation with duty assignment details"
+      },
+      "SplitDutyDataModel": {
+        "type": "object",
+        "required": ["splitOffset"],
+        "properties": {
+          "splitOffset": { "type": "integer", "example": 60 },
+          "stubFirstHalf": { "type": "boolean" }
+        },
+        "description": "Data needed for splitting a vacant duty"
+      },
+      "DirectResponseModel": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        },
+        "description": "Direct response model"
+      },
+      "AssignedDutiesDataModelResponse": {
+        "type": "object",
+        "properties": {
+          "assignedDuties": { "type": "array", "items": { "type": "object" } }
+        },
+        "description": "Response model for assigned duties data"
+      },
+      "ChangeCostCentreModel": {
+        "type": "object",
+        "required": ["costCentreId"],
+        "properties": {
+          "costCentreId": { "type": "integer" }
+        },
+        "description": "Data needed to change the cost centre of an assigned duty"
+      },
+      "SetDutyAssignmentGradeOverrideModel": {
+        "type": "object",
+        "properties": {
+          "gradeId": { "type": "integer" }
+        },
+        "description": "Data needed for setting grade override for a duty assignment"
+      }
+    }
+  }
+}

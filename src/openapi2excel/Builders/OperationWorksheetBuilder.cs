@@ -1,39 +1,64 @@
 using ClosedXML.Excel;
 using Microsoft.OpenApi.Models;
+using openapi2excel.core.Builders.CommentsManagement;
 using openapi2excel.core.Builders.WorksheetPartsBuilders;
 using openapi2excel.core.Builders.WorksheetPartsBuilders.Common;
 using openapi2excel.core.Common;
+using System.Text.RegularExpressions;
 
 namespace openapi2excel.core.Builders;
 
-internal class OperationWorksheetBuilder(IXLWorkbook workbook, OpenApiDocumentationOptions options)
-   : WorksheetBuilder(options)
+public class OperationWorksheetBuilder : WorksheetBuilder
 {
    private readonly RowPointer _actualRowPointer = new(1);
+   private readonly IXLWorkbook _workbook;
    private IXLWorksheet _worksheet = null!;
    private int _attributesColumnsStartIndex;
+   private WorksheetOpenApiMapping? _worksheetMapping;
+
+   public OperationWorksheetBuilder(IXLWorkbook workbook, OpenApiDocumentationOptions options)
+      : base(options)
+   {
+      _workbook = workbook;
+   }
+
+   public static List<IXLWorksheet> OperationWorksheets { get; } = [];
+
+   public string CurrentWorksheetName => _worksheet.Name;
+
+   public WorksheetOpenApiMapping CurrentWorksheetMapping => _worksheetMapping!;
 
    public IXLWorksheet Build(string path, OpenApiPathItem pathItem, OperationType operationType,
       OpenApiOperation operation)
    {
-      var worksheet = GetWorksheetName(path, operation, operationType);
+      var worksheetName = GetWorksheetName(path, operation, operationType);
+      OperationWorksheets.Add(CreateNewWorksheet(worksheetName));
 
-      CreateNewWorksheet(worksheet);
       _actualRowPointer.GoTo(1);
 
       _attributesColumnsStartIndex = MaxPropertiesTreeLevel.Calculate(operation, Options.MaxDepth);
       AdjustColumnsWidthToRequestTreeLevel();
+      
+      WorksheetOpenApiMapping.AllWorksheetMappings.Add(CreateWorksheetMapping(worksheetName));
+      var anchor = AnchorGenerator.GenerateOperationAnchor(path, operationType);
 
       AddHomePageLink();
       AddOperationInfos(path, pathItem, operationType, operation);
-      AddRequestParameters(operation);
-      AddRequestBody(operation);
-      AddResponseBody(operation);
+      AddRequestParameters(operation, anchor);
+      AddRequestBody(operation, anchor);
+      AddResponseBody(operation, anchor);
       AdjustLastNamesColumnToContents();
       AdjustDescriptionColumnToContents();
 
       return _worksheet;
    }
+
+   private WorksheetOpenApiMapping CreateWorksheetMapping(string worksheetName)
+   {
+      _worksheetMapping = new WorksheetOpenApiMapping(worksheetName);
+      return _worksheetMapping;
+   }
+
 
    private string GetWorksheetName(string path, OpenApiOperation operation, OperationType operationType)
    {
@@ -51,6 +76,10 @@ internal class OperationWorksheetBuilder(IXLWorkbook workbook, OpenApiDocumentat
          name = operationType.ToString().ToUpper() + "_" + pathName[1..];
       }
 
+      name = Regex.Replace(name, "&", "and");
+      name = Regex.Replace(name, "\\+", "plus");
+      name = Regex.Replace(name, "[{}'\"<>]", string.Empty);
+
       // check if the name is not too long
       if (name.Length > maxLength)
       {
@@ -60,20 +89,21 @@ internal class OperationWorksheetBuilder(IXLWorkbook workbook, OpenApiDocumentat
       // check if the name is unique
       var nr = 2;
       var tmpName = name;
-      while (workbook.Worksheets.Any(s => s.Name.Equals(tmpName, StringComparison.CurrentCultureIgnoreCase)))
+      while (_workbook.Worksheets.Any(s => s.Name.Equals(tmpName, StringComparison.CurrentCultureIgnoreCase)))
       {
          tmpName = name[..maxLength] + "_" + nr++;
       }
       return tmpName;
    }
 
-   private void CreateNewWorksheet(string operation)
+   private IXLWorksheet CreateNewWorksheet(string operation)
    {
-      _worksheet = workbook.Worksheets.Add(operation);
+      _worksheet = _workbook.Worksheets.Add(operation);
       _worksheet.Style.Font.FontSize = 10;
       _worksheet.Style.Font.FontName = "Arial";
       _worksheet.Outline.SummaryHLocation = XLOutlineSummaryHLocation.Left;
       _worksheet.Outline.SummaryVLocation = XLOutlineSummaryVLocation.Top;
+      return _worksheet;
    }
 
    private void AdjustColumnsWidthToRequestTreeLevel()
@@ -99,20 +129,20 @@ internal class OperationWorksheetBuilder(IXLWorkbook workbook, OpenApiDocumentat
 
    private void AddOperationInfos(string path, OpenApiPathItem pathItem, OperationType operationType,
       OpenApiOperation operation) =>
-      new OperationInfoBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
-         .AddOperationInfoSection(path, pathItem, operationType, operation);
+   new OperationInfoBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
+      .AddOperationInfoSection(path, pathItem, operationType, operation);
 
-   private void AddRequestParameters(OpenApiOperation operation) =>
+   private void AddRequestParameters(OpenApiOperation operation, Anchor anchor) =>
       new RequestParametersBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
-         .AddRequestParametersPart(operation);
+         .AddRequestParametersPart(operation, anchor);
 
-   private void AddRequestBody(OpenApiOperation operation) =>
+   private void AddRequestBody(OpenApiOperation operation, Anchor anchor) =>
       new RequestBodyBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
-         .AddRequestBodyPart(operation);
+         .AddRequestBodyPart(operation, anchor);
 
-   private void AddResponseBody(OpenApiOperation operation) =>
+   private void AddResponseBody(OpenApiOperation operation, Anchor anchor) =>
       new ResponseBodyBuilder(_actualRowPointer, _attributesColumnsStartIndex, _worksheet, Options)
-         .AddResponseBodyPart(operation);
+         .AddResponseBodyPart(operation, anchor);
 
    private void AddHomePageLink() => new HomePageLinkBuilder(_actualRowPointer, _worksheet, Options)
       .AddHomePageLinkSection();

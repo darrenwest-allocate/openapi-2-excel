@@ -1,5 +1,6 @@
 using ClosedXML.Excel;
 using Microsoft.OpenApi.Models;
+using openapi2excel.core.Builders.CommentsManagement;
 using openapi2excel.core.Builders.WorksheetPartsBuilders.Common;
 using openapi2excel.core.Common;
 
@@ -11,79 +12,84 @@ internal class ResponseBodyBuilder(
    IXLWorksheet worksheet,
    OpenApiDocumentationOptions options) : WorksheetPartBuilder(actualRow, worksheet, options)
 {
-   public void AddResponseBodyPart(OpenApiOperation operation)
+   public void AddResponseBodyPart(OpenApiOperation operation, Anchor anchor)
    {
       if (!operation.Responses.Any())
          return;
-
-      Cell(1).SetTextBold("RESPONSE");
+      var responseAnchor = AnchorGenerator.GenerateResponseBodyAnchor(anchor);
+      Cell(1).SetTextBold(WorksheetLanguage.Response.Title).MapRow(responseAnchor.With(WorksheetLanguage.Generic.TitleRow));
       ActualRow.MoveNext();
       using (var _ = new Section(Worksheet, ActualRow))
       {
          var builder = new PropertiesTreeBuilder(attributesColumnIndex, Worksheet, Options);
          foreach (var response in operation.Responses)
          {
-            AddResponseHttpCode(response.Key, response.Value.Description);
-            AddReponseHeaders(response.Value.Headers);
-            builder.AddPropertiesTreeForMediaTypes(ActualRow, response.Value.Content, Options);
+            AddResponseHttpCode(response.Key, response.Value.Description, responseAnchor);
+            AddResponseHeaders(response.Value.Headers, responseAnchor);
+            var mappingAnchor = AnchorGenerator.GenerateResponseAnchor(anchor, response.Key);
+            builder.AddPropertiesTreeForMediaTypes(ActualRow, response.Value.Content, Options, mappingAnchor);
          }
       }
       ActualRow.MoveNext();
    }
 
-   private void AddReponseHeaders(IDictionary<string, OpenApiHeader> valueHeaders)
+   private void AddResponseHeaders(IDictionary<string, OpenApiHeader> valueHeaders, Anchor anchor)
    {
       if (!valueHeaders.Any())
          return;
 
       ActualRow.MoveNext();
+      var headersAnchor = AnchorGenerator.GenerateHeadersAnchor(anchor);
 
-      var responseHeadertRowPointer = ActualRow.Copy();
-      Cell(1).SetTextBold("Response headers");
+      var responseHeaderRowPointer = ActualRow.Copy();
+      Cell(1).SetTextBold(WorksheetLanguage.Response.ResponseHeaders)
+         .MapRowWithDetail(headersAnchor);
       ActualRow.MoveNext();
 
       using (var _ = new Section(Worksheet, ActualRow))
       {
          var schemaDescriptor = new OpenApiSchemaDescriptor(Worksheet, Options);
 
-         InsertHeader(schemaDescriptor);
+         InsertHeader(schemaDescriptor, headersAnchor);
          ActualRow.MoveNext();
 
          foreach (var openApiHeader in valueHeaders)
          {
-            InsertProperty(openApiHeader, schemaDescriptor);
+            InsertProperty(openApiHeader, schemaDescriptor, headersAnchor);
             ActualRow.MoveNext();
          }
       }
       ActualRow.MoveNext();
 
-      void InsertHeader(OpenApiSchemaDescriptor schemaDescriptor)
+      void InsertHeader(OpenApiSchemaDescriptor schemaDescriptor, Anchor anchor)
       {
-         var nextCell = Cell(1).SetTextBold("Name")
+         var nextCell = Cell(1).SetTextBold(WorksheetLanguage.Response.HeadersName)
+            .MapRowWithDetail(anchor)
             .CellRight(attributesColumnIndex + 1).GetColumnNumber();
 
-         var lastUsedColumn = schemaDescriptor.AddSchemaDescriptionHeader(ActualRow, nextCell);
+         var lastUsedColumn = schemaDescriptor.AddSchemaDescriptionHeader(ActualRow, nextCell, anchor);
 
          Worksheet.Cell(ActualRow, 1)
             .SetBackground(lastUsedColumn, HeaderBackgroundColor)
             .SetBottomBorder(lastUsedColumn);
 
-         Worksheet.Cell(responseHeadertRowPointer, 1)
+         Worksheet.Cell(responseHeaderRowPointer, 1)
             .SetBackground(lastUsedColumn, HeaderBackgroundColor);
       }
 
-      void InsertProperty(KeyValuePair<string, OpenApiHeader> openApiHeader, OpenApiSchemaDescriptor schemaDescriptor)
+      void InsertProperty(KeyValuePair<string, OpenApiHeader> openApiHeader, OpenApiSchemaDescriptor schemaDescriptor, Anchor mappingAnchor)
       {
          var nextCellNumber = Cell(1).SetText(openApiHeader.Key)
+            .MapRowWithDetail(mappingAnchor)
             .CellRight(attributesColumnIndex + 1).GetColumnNumber();
 
-         nextCellNumber = schemaDescriptor.AddSchemaDescriptionValues(openApiHeader.Value.Schema, openApiHeader.Value.Required, ActualRow, nextCellNumber);
+         nextCellNumber = schemaDescriptor.AddSchemaDescriptionValues(openApiHeader.Value.Schema, openApiHeader.Value.Required, ActualRow, nextCellNumber, mappingAnchor);
 
          Cell(nextCellNumber).SetText(openApiHeader.Value.Description);
       }
    }
 
-   private void AddResponseHttpCode(string httpCode, string? description)
+   private void AddResponseHttpCode(string httpCode, string? description, Anchor anchor)
    {
       var responseCode = httpCode.Equals("default") ? "Default response" : $"Response HttpCode: {httpCode}";
       if (!string.IsNullOrEmpty(description) && !description.Equals("default response"))
@@ -91,7 +97,7 @@ internal class ResponseBodyBuilder(
          responseCode += $": {description}";
       }
 
-      Cell(1).SetTextBold(responseCode);
+      Cell(1).SetTextBold(responseCode).MapRow(anchor.With(httpCode));
 
       ActualRow.MoveNext();
    }

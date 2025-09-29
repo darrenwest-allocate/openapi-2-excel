@@ -3,7 +3,7 @@ using openapi2excel.core.Common;
 
 namespace openapi2excel.core.Builders.WorksheetPartsBuilders
 {
-   internal abstract class WorksheetPartBuilder(
+   public abstract class WorksheetPartBuilder(
       RowPointer actualRow,
       IXLWorksheet worksheet,
       OpenApiDocumentationOptions options)

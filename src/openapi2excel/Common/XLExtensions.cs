@@ -1,4 +1,6 @@
 using ClosedXML.Excel;
+using openapi2excel.core.Builders;
+using openapi2excel.core.Builders.CommentsManagement;
 
 namespace openapi2excel.core.Common;
 
@@ -62,6 +64,29 @@ internal static class XLExtensions
       while (tmpCell.Address.ColumnNumber <= toColumn)
          tmpCell = tmpCell.SetBottomBorder().CellRight();
 
+      return cell;
+   }
+
+   public static IXLCell MapRow(this IXLCell cell, Anchor mappingAnchor)
+   {
+      var mappings = WorksheetOpenApiMapping.AllWorksheetMappings
+         .FirstOrDefault(w => w.WorksheetName == cell.Worksheet.Name)?.Mappings;
+
+      mappings?.Add(new CellOpenApiMapping() { Row = cell.WorksheetRow().RowNumber(), Cell = cell.Address.ToString() ?? string.Empty, OpenApiRef = mappingAnchor.ToString() });
+      return cell;
+   }
+
+   public static IXLCell MapRowWithDetail(this IXLCell cell, Anchor mappingAnchor)
+   {
+      return MapRow(cell, AnchorGenerator.AppendDetailToAnchor(mappingAnchor, cell.GetText() ?? string.Empty));
+   }
+
+   public static IXLCell MapTableCell(this IXLCell cell, Anchor mappingAnchor, string columnName)
+   {
+      var mappings = WorksheetOpenApiMapping.AllWorksheetMappings
+         .FirstOrDefault(w => w.WorksheetName == cell.Worksheet.Name)?.Mappings;
+
+      mappings?.Add(new CellOpenApiMapping() { Cell = cell.Address.ToString() ?? string.Empty, OpenApiRef = $"{mappingAnchor}/@{columnName.Replace(" ", string.Empty).ToLowerInvariant()}" });
       return cell;
    }
 }
