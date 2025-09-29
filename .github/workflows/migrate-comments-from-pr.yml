@@ -1,0 +1,142 @@
+name: Migrate Comments from PR Workbook
+
+on:
+  workflow_dispatch:
+    inputs:
+      openapi_spec_url:
+        description: 'URL to the new OpenAPI specification (YAML or JSON)'
+        required: true
+        type: string
+
+jobs:
+  migrate-comments:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Find associated PR for current branch
+        id: find-pr
+        run: |
+          echo "🔍 Finding PR for current branch: ${{ github.ref_name }}"
+          
+          # Find PR number for current branch
+          PR_NUMBER=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number // empty')
+          
+          if [ -z "$PR_NUMBER" ]; then
+            echo "❌ Error: No PR found for branch '${{ github.ref_name }}'"
+            echo "Please ensure you're running this workflow from a branch that has an open PR"
+            exit 1
+          fi
+          
+          echo "✅ Found PR #$PR_NUMBER for branch '${{ github.ref_name }}'"
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Validate source workbook exists
+        id: validate-workbook
+        run: |
+          WORKBOOK_PATH="sourceWorkbook"
+          echo "📁 Checking for Excel workbooks in $WORKBOOK_PATH/"
+          
+          # Find Excel files in sourceWorkbook directory
+          EXCEL_FILES=$(find "$WORKBOOK_PATH" -name "*.xlsx" -not -name "~*" 2>/dev/null || true)
+          
+          if [ -z "$EXCEL_FILES" ]; then
+            echo "❌ Error: No Excel workbook (.xlsx) found in $WORKBOOK_PATH/"
+            echo "Please ensure your PR includes an Excel workbook in the sourceWorkbook/ directory"
+            exit 1
+          fi
+          
+          # Use the first Excel file found
+          WORKBOOK_FILE=$(echo "$EXCEL_FILES" | head -n 1)
+          
+          echo "✅ Found source workbook: $WORKBOOK_FILE"
+          echo "workbook_path=$WORKBOOK_FILE" >> $GITHUB_OUTPUT
+          
+      - name: Setup .NET 9.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+          
+      - name: Restore dependencies
+        run: |
+          echo "📦 Restoring .NET dependencies..."
+          dotnet restore
+          
+      - name: Build solution (Release)
+        run: |
+          echo "🔨 Building solution in Release mode..."
+          dotnet build --configuration Release
+          
+      - name: Create output directory
+        run: mkdir -p migration-output
+        
+      - name: Run comment migration
+        run: |
+          echo "🚀 Starting comment migration..."
+          echo "📂 Source workbook: ${{ steps.validate-workbook.outputs.workbook_path }}"
+          echo "📄 OpenAPI spec URL: ${{ github.event.inputs.openapi_spec_url }}"
+          echo "📝 Output directory: migration-output/"
+          
+          dotnet run --project src/openapi2excel.cli --configuration Release -- \
+            "${{ github.event.inputs.openapi_spec_url }}" \
+            "migration-output/" \
+            --existing-workbook "${{ steps.validate-workbook.outputs.workbook_path }}" \
+            --no-logo
+          
+          echo "✅ Migration completed successfully"
+          ls -la migration-output/
+          
+      - name: Upload migrated workbook
+        uses: actions/upload-artifact@v4
+        with:
+          name: migrated-workbook-pr-${{ steps.find-pr.outputs.pr_number }}
+          path: migration-output/*.xlsx
+          retention-days: 30
+          
+      - name: Comment on PR with results
+        run: |
+          echo "💬 Adding comment to PR #${{ steps.find-pr.outputs.pr_number }}"
+          
+          # Get the actual generated filename
+          GENERATED_FILE=$(ls migration-output/*.xlsx 2>/dev/null | head -n 1 | xargs basename || echo "migrated-workbook.xlsx")
+          
+          COMMENT_BODY="## 🎉 Comment Migration Completed!
+
+          Your Excel workbook comments have been successfully migrated to the new OpenAPI specification.
+
+          ### Migration Details
+          - **Source Workbook**: \`${{ steps.validate-workbook.outputs.workbook_path }}\`
+          - **OpenAPI Spec**: ${{ github.event.inputs.openapi_spec_url }}
+          - **Generated File**: \`${GENERATED_FILE}\`
+          - **Branch**: \`${{ github.ref_name }}\`
+          - **Workflow Run**: [View Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+          ### 📥 Download Your Migrated Workbook
+          The migrated workbook is available as a workflow artifact:
+          [Download migrated-workbook-pr-${{ steps.find-pr.outputs.pr_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+          ### 📋 Next Steps
+          1. Download the artifact from the workflow run
+          2. Review the migrated comments in Excel
+          3. Verify that all comments have been properly transferred
+          4. Close this PR
+
+          ---
+          *Generated by OpenAPI-2-Excel Comment Migration Workflow*"
+
+          gh pr comment ${{ steps.find-pr.outputs.pr_number }} --body "$COMMENT_BODY"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Upload migration logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-logs-pr-${{ steps.find-pr.outputs.pr_number }}
+          path: migration-output/
+          retention-days: 3

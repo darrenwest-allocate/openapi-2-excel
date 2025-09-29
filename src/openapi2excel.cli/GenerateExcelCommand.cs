@@ -20,21 +20,25 @@ public class GenerateExcelCommand : Command<GenerateExcelCommand.GenerateExcelSe
       [CommandArgument(1, "<OUTPUT_FILE>")]
       public string OutputFile { get; init; } = null!;
 
+      [Description("Path to existing Excel workbook from which to preserve comments.")]
+      [CommandOption("-e|--existing-workbook")]
+      public string? ExistingWorkbook { get; init; }
+
+      [Description("OpenAPI references are embedded into the workbook by default, as CustomXML parts, to facilitate commentary being migrated to workbooks for newer versions of the OpenApi spec.")]
+      [CommandOption("-noref|--no-openapi-references")]
+      public bool DisableOpenApiReferences { get; init; } = false;
+
       [Description("Run tool without logo.")]
       [CommandOption("-n|--no-logo")]
       public bool NoLogo { get; init; }
 
-      [Description("Maximum depth level for documenting object hiearchies (defaults to 10).")]
+      [Description("Maximum depth level for documenting object hierarchies (defaults to 10).")]
       [CommandOption("-d|--depth")]
       public int Depth { get; init; } = 10;
 
       [Description("Run tool with debug mode.")]
       [CommandOption("-g|--debug")]
       public bool Debug { get; init; }
-
-      [Description("Path to existing Excel workbook from which to preserve comments.")]
-      [CommandOption("-e|--existing-workbook")]
-      public string? ExistingWorkbook { get; init; }
 
       internal FileInfo InputFileParsed { get; set; } = null!;
       internal FileInfo OutputFileParsed { get; set; } = null!;
@@ -176,10 +180,11 @@ public class GenerateExcelCommand : Command<GenerateExcelCommand.GenerateExcelSe
 
       try
       {
-         var options = new OpenApiDocumentationOptions 
-         { 
+         var options = new OpenApiDocumentationOptions
+         {
             MaxDepth = settings.Depth,
-            FilepathToPreserveComments = settings.ExistingWorkbook ?? string.Empty
+            FilepathToPreserveComments = settings.ExistingWorkbook ?? string.Empty,
+            IncludeMappings = !settings.DisableOpenApiReferences,
          };
 
          OpenApiDocumentationGenerator

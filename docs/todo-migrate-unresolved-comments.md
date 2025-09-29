@@ -74,24 +74,9 @@ Update this file as new requirements or edge cases are discovered.
 - [x] Refactor as needed  ✅ **INTEGRATION COMPLETE!**
 
 
-## NEW. Github action that will allow the upload of the old workbook so that its comments can be migrated across
-- [ ] decide options
+## 6 NEW. Github action that will allow the upload of the old workbook so that its comments can be migrated across
+- [x] decide options
 - [ ] implement
-
-
-## 6. Preserving Comment Metadata
-- [ ] Create a failing unit test to ensure author and timestamp are preserved in migrated and lost comments
-- [ ] Implement metadata preservation logic
-- [ ] Refactor as needed
-
-## 7. Case/Special Character Insensitivity Backup
-- [ ] Create a failing unit test for backup matching (case/special char insensitivity)
-- [ ] Implement backup matching logic
-- [ ] Refactor as needed
-
-## 8. Regression & Refactor Safety
-- [ ] Ensure all tests pass after any refactor or major change
-- [ ] Add regression tests as new behaviors or edge cases are discovered
 
 ## 9. Documentation & Review
 - [ ] Update documentation to reflect implementation and usage
