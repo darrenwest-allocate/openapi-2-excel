@@ -91,39 +91,39 @@ public static class ExcelOpenXmlHelper
     private static List<ThreadedCommentWithContext> ExtractThreadedCommentsFromWorkbook(string filePath, bool includeResolved = true, bool includeUnresolved = true, bool annotateWithOpenApiAnchors = false)
     {
         var comments = new List<ThreadedCommentWithContext>();
-		using var document = SpreadsheetDocument.Open(filePath, false);
-		var workbookPart = document.WorkbookPart;
-		if (workbookPart == null) return comments;
+        using var document = SpreadsheetDocument.Open(filePath, false);
+        var workbookPart = document.WorkbookPart;
+        if (workbookPart == null) return comments;
 
-		foreach (var worksheet in workbookPart.WorksheetParts)
-		{
-			var worksheetName = GetWorksheetName(workbookPart, worksheet);
-			var threadedCommentsPart = worksheet.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
-			if (threadedCommentsPart == null || threadedCommentsPart.ThreadedComments == null) continue;
+        foreach (var worksheet in workbookPart.WorksheetParts)
+        {
+            var worksheetName = GetWorksheetName(workbookPart, worksheet);
+            var threadedCommentsPart = worksheet.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
+            if (threadedCommentsPart == null || threadedCommentsPart.ThreadedComments == null) continue;
 
-			foreach (var comment in threadedCommentsPart.ThreadedComments.Elements<ThreadedComment>())
-			{
-				var isResolved = comment.Done == "1";
-				if ((isResolved && includeResolved) || (!isResolved && includeUnresolved))
-				{
-					comments.Add(new ThreadedCommentWithContext(comment, worksheetName, filePath));
-				}
-			}
-		}
-		if (annotateWithOpenApiAnchors)
-		{
-			var mappings = ExtractCustomXmlMappingsFromWorkbook(workbookPart);
-			foreach (var comment in comments)
-			{
-				var mapping = MapToCell(mappings, comment) ?? MapToRow(mappings, comment);
-				if (mapping != null)
-				{
-					comment.OpenApiAnchor = mapping.OpenApiRef;
-				}
-			}
-		}
-		return comments;
-	}
+            foreach (var comment in threadedCommentsPart.ThreadedComments.Elements<ThreadedComment>())
+            {
+                var isResolved = comment.Done == "1";
+                if ((isResolved && includeResolved) || (!isResolved && includeUnresolved))
+                {
+                    comments.Add(new ThreadedCommentWithContext(comment, worksheetName, filePath));
+                }
+            }
+        }
+        if (annotateWithOpenApiAnchors)
+        {
+            var mappings = ExtractCustomXmlMappingsFromWorkbook(workbookPart);
+            foreach (var comment in comments)
+            {
+                var mapping = MapToCell(mappings, comment) ?? MapToRow(mappings, comment);
+                if (mapping != null)
+                {
+                    comment.OpenApiAnchor = mapping.OpenApiRef;
+                }
+            }
+        }
+        return comments;
+    }
 
     private static CellOpenApiMapping? MapToRow(List<WorksheetOpenApiMapping> mappings, ThreadedCommentWithContext comment)
     {
