@@ -53,6 +53,15 @@ public class NoWorksheetCommentMigrationStrategy : ICommentMigrationStrategy
 
             const int targetColumn = 22; // Column V
             var targetCellReference = $"V{CellCollisionResolver.FindNextAvailableRowInColumn(infoSheet, targetColumn, processedCells)}";
+            
+            // Add prefix for root comments to show original location
+            if (comment.IsRootComment)
+            {
+                var commentPrefix = $"[From {comment.WorksheetName}!{comment.CellReference}]\n";
+                // Update the threaded comment text with the prefix
+                comment.UpdateCommentText(commentPrefix + comment.CommentText);
+            }
+            
             StrategyHelper.ReplicateSourceCommentOnNewWorksheet(infoSheet, targetCellReference, comment);
             
             var cellKey = $"{infoSheetName}:{targetCellReference}";

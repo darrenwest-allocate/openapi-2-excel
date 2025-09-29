@@ -258,6 +258,20 @@ public class ExcelCommentsTest
                 var foundRogueComment = infoColumnVComments.All(c => c.CommentText.Contains(commentWithoutAnchorFlag));
                 
                 Assert.True(foundRogueComment, "All comments from the ROGUE* worksheet migrated to Info sheet");
+                
+                // Verify that Type B comments have the origin prefix for root comments
+                var rootComments = infoColumnVComments.Where(c => c.IsRootComment).ToList();
+                Assert.True(rootComments.Count > 0, "Should have at least one root comment in column V");
+                
+                foreach (var rootComment in rootComments)
+                {
+                    Assert.True(
+                        rootComment.CommentText.StartsWith("[From "), 
+                        $"Root comment should start with '[From ' prefix, but was: '{rootComment.CommentText}'"
+                    );
+                    Assert.Contains("!", rootComment.CommentText);
+                    Assert.Contains("]", rootComment.CommentText);
+                }
             }
         }
         finally
