@@ -249,10 +249,10 @@ public static class CommentMigrationHelper
 
         var workbookPart = worksheetPart.OpenXmlPackage.GetPartsOfType<WorkbookPart>().First();
 
-		// **STEP 1: Create PersonPart (required for ThreadedComments)**
-		PersonPartManager.EnsurePersonsPartExistsForComments(workbookPart, comments, existingWorkbookPath);
+        // STEP 1: Create PersonPart (required for ThreadedComments)
+        PersonPartManager.EnsurePersonsPartExistsForComments(workbookPart, comments, existingWorkbookPath);
 
-        // **STEP 2: Create WorksheetCommentsPart (legacy comments for visibility)**
+        // STEP 2: Create WorksheetCommentsPart (legacy comments for visibility)
         var legacyCommentsPart = worksheetPart.GetPartsOfType<WorksheetCommentsPart>().FirstOrDefault();
         if (legacyCommentsPart == null)
         {
@@ -260,7 +260,7 @@ public static class CommentMigrationHelper
         }
         CreateLegacyCommentsUsingOfficialPattern(legacyCommentsPart, comments, newWorkbookMappings);
 
-        // **STEP 3: Create WorksheetThreadedCommentsPart**
+        // STEP 3: Create WorksheetThreadedCommentsPart
         var threadedCommentsPart = worksheetPart.GetPartsOfType<WorksheetThreadedCommentsPart>().FirstOrDefault();
         if (threadedCommentsPart == null)
         {
@@ -268,10 +268,10 @@ public static class CommentMigrationHelper
         }
         CreateThreadedCommentsUsingOfficialPattern(threadedCommentsPart, comments, newWorkbookMappings);
 
-		// **STEP 4: Create VmlDrawingPart using factory**
-		VmlDrawingFactory.CreateVmlDrawingPartUsingOfficialPattern(worksheetPart, comments, newWorkbookMappings);
+        // STEP 4: Create VmlDrawingPart using factory
+        VmlDrawingFactory.CreateVmlDrawingPartUsingOfficialPattern(worksheetPart, comments, newWorkbookMappings);
 
-        // **STEP 5: Add LegacyDrawing reference**
+        // STEP 5: Add LegacyDrawing reference
         EnsureLegacyDrawingReference(worksheetPart);
     }
 

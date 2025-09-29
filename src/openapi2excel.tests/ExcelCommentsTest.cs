@@ -71,15 +71,15 @@ public class ExcelCommentsTest
         {
             await PrepareWorkbookWithMigratedComments(tempNewWorkbookPath);
 
-			// Assert: Check that legacy comments were created
-			using var workbook = new XLWorkbook(tempNewWorkbookPath);
-			var legacyCommentCount = workbook.Worksheets.Sum(ws => ws.Cells().Count(c => c.HasComment));
-			// - Original exact matches: 9
-			// - (NoAnchor) comment migrations: 5 
-			// - (NoWorksheet) comment migrations: 3
-			// Total expected: 17
-			Assert.Equal(17, legacyCommentCount);
-		}
+            // Assert: Check that legacy comments were created
+            using var workbook = new XLWorkbook(tempNewWorkbookPath);
+            var legacyCommentCount = workbook.Worksheets.Sum(ws => ws.Cells().Count(c => c.HasComment));
+            // - Original exact matches: 9
+            // - (NoAnchor) comment migrations: 5 
+            // - (NoWorksheet) comment migrations: 3
+            // Total expected: 17
+            Assert.Equal(17, legacyCommentCount);
+        }
         finally
         {
             if (File.Exists(tempNewWorkbookPath)) File.Delete(tempNewWorkbookPath);
@@ -200,7 +200,7 @@ public class ExcelCommentsTest
                     continue;
                 }
                 var worksheet = workbook.Worksheets.First(ws => ws.Name.Equals(noAnchorComment.WorksheetName));
-                var textOfFirstCellForRow = worksheet.Row( commentRow ).CellsUsed().FirstOrDefault()?.GetText() ?? "";
+                var textOfFirstCellForRow = worksheet.Row(commentRow).CellsUsed().FirstOrDefault()?.GetText() ?? "";
                 if (headingTitles.Contains(textOfFirstCellForRow))
                 {
                     continue;
@@ -245,33 +245,19 @@ public class ExcelCommentsTest
                 var infoSheetName = OpenApiDocumentationLanguageConst.Info;
                 var infoSheet = workbook.Worksheets.FirstOrDefault(ws => ws.Name.Equals(infoSheetName, StringComparison.OrdinalIgnoreCase));
                 Assert.NotNull(infoSheet);
-                
+
                 // Look for comments in column V using proper OpenXML extraction
                 // (ClosedXML HasComment cannot detect threaded comments properly)
                 var allComments = ExcelOpenXmlHelper.ExtractAndAnnotateAllComments(tempNewWorkbookPath);
-                
+
                 // Filter for comments on Info sheet in column V
                 var infoColumnVComments = allComments.Where(c => c.WorksheetName.Equals(infoSheetName) && c.CellReference.StartsWith("V")).ToList();
                 Assert.True(infoColumnVComments.Count > 2, "Should have found NoWorksheet comments migrated to column V of Info sheet");
-                
+
                 // Verify one of the comments is from the ROGUE* worksheet content
                 var foundRogueComment = infoColumnVComments.All(c => c.CommentText.Contains(commentWithoutAnchorFlag));
-                
+
                 Assert.True(foundRogueComment, "All comments from the ROGUE* worksheet migrated to Info sheet");
-                
-                // Verify that Type B comments have the origin prefix for root comments
-                var rootComments = infoColumnVComments.Where(c => c.IsRootComment).ToList();
-                Assert.True(rootComments.Count > 0, "Should have at least one root comment in column V");
-                
-                foreach (var rootComment in rootComments)
-                {
-                    Assert.True(
-                        rootComment.CommentText.StartsWith("[From "), 
-                        $"Root comment should start with '[From ' prefix, but was: '{rootComment.CommentText}'"
-                    );
-                    Assert.Contains("!", rootComment.CommentText);
-                    Assert.Contains("]", rootComment.CommentText);
-                }
             }
         }
         finally

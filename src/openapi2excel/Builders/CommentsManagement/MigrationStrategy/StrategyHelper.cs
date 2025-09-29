@@ -19,7 +19,10 @@ public static class StrategyHelper
     {
         var cell = newWorksheet.Cell(cellReference);
         var comment = cell.GetComment();
-        comment ??= cell.CreateComment();
+        if (comment == null)
+        {
+            comment = cell.CreateComment();
+        }
         comment.AddText(sourceComment.CommentText);
         comment.Author = sourceComment.Author;
     }

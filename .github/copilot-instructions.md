@@ -88,13 +88,49 @@ openapi2excel.sln                    # Main solution file
 │   ├── OpenApiDocumentationGenerator.cs  # Main entry point
 │   ├── OpenApiDocumentationOptions.cs    # Configuration options
 │   ├── Builders/                         # Excel worksheet builders
-│   └── Common/                           # Utility extensions
+│   │   ├── InfoWorksheetsBuilder.cs     # Info worksheet generation
+│   │   ├── OperationWorksheetBuilder.cs # Operation worksheet generation
+│   │   ├── WorksheetBuilder.cs          # Base worksheet builder
+│   │   ├── CommentsManagement/          # Excel comments migration system
+│   │   │   ├── AnchorGenerator.cs       # Comment anchor generation
+│   │   │   ├── CommentMigrationHelper.cs # Main migration logic
+│   │   │   ├── CommentTargetResolver.cs # Target cell resolution
+│   │   │   ├── MigrationStrategy/       # Migration strategies
+│   │   │   ├── Model/                   # Comment data models
+│   │   │   └── OpenXml/                 # OpenXML integration
+│   │   └── WorksheetPartsBuilders/      # Worksheet component builders
+│   │       ├── Common/                  # Shared builder utilities
+│   │       ├── HomePageLinkBuilder.cs   # Home page navigation
+│   │       ├── OperationInfoBuilder.cs  # Operation information
+│   │       ├── PropertiesTreeBuilder.cs # Schema properties
+│   │       ├── RequestBodyBuilder.cs    # Request body documentation
+│   │       ├── RequestParametersBuilder.cs # Request parameters
+│   │       ├── ResponseBodyBuilder.cs   # Response body documentation
+│   │       └── WorksheetPartBuilder.cs  # Base part builder
+│   ├── Common/                          # Utility extensions
+│   │   ├── EnumerableExtensions.cs     # Collection utilities
+│   │   ├── ExcelOpenXmlHelper.cs       # Excel/OpenXML helpers
+│   │   ├── OpenApiInfoExtractor.cs     # OpenAPI metadata extraction
+│   │   ├── OpenApiSchemaExtension.cs   # Schema processing extensions
+│   │   ├── RowPointer.cs               # Excel row navigation
+│   │   ├── StringExtensions.cs         # String utilities
+│   │   └── XLExtensions.cs             # ClosedXML extensions
+│   └── Core/                           # Core domain models (empty)
 ├── src/openapi2excel.cli/          # CLI tool (openapi2excel.cli.csproj)
 │   ├── Program.cs                   # CLI entry point
-│   └── GenerateExcelCommand.cs      # Command implementation
+│   ├── GenerateExcelCommand.cs      # Command implementation
+│   └── CustomHelpProvider.cs       # Custom help formatting
 └── src/openapi2excel.tests/        # Unit tests (openapi2excel.tests.csproj)
-    ├── OpenApiDocumentationGeneratorTest.cs
-    └── Sample/Sample1.yaml          # Test OpenAPI specification
+    ├── OpenApiDocumentationGeneratorTest.cs # Core functionality tests
+    ├── ExcelCommentsTest.cs         # Comments migration tests
+    ├── Investigation/               # Experimental test directory
+    ├── Sample/                      # Test data files
+    │   ├── Sample1.yaml             # Basic Swagger Petstore sample
+    │   ├── sample-api-gw.json       # Complex API Gateway sample
+    │   ├── sample-api-gw.xlsx       # Generated Excel baseline
+    │   ├── sample-api-gw-with-mappings.xlsx # Excel with existing comments
+    │   └── sample-api-gw-workbook-first-mappings.xml # Comment mapping data
+    └── xunit.runner.json           # Test runner configuration
 ```
 
 ### Key Files & Dependencies
@@ -105,6 +141,7 @@ openapi2excel.sln                    # Main solution file
 
 ### Package Dependencies
 - **ClosedXML** (0.105.0): Excel file generation
+- **OpenXML** ?????????????????
 - **Microsoft.OpenApi** (1.6.25): OpenAPI specification parsing  
 - **Spectre.Console** (0.51.1): CLI framework with rich formatting
 - **xUnit** (2.9.3): Testing framework
@@ -125,10 +162,15 @@ Current TODOs in codebase (search for "TODO"):
 
 ### Testing
 - **Framework**: xUnit with Visual Studio test adapter
-- **Coverage**: Basic smoke test coverage (1 test currently)
 - **Test Data**: (basic functionality) Uses Swagger Petstore sample specification; (comments management) sample-api-gw.json sample-api-gw-with-mappings.xlsx
 - **Expected Behavior**: All tests must pass for CI validation
 - **Examine Workbook** You can copy an xlsx to a zip and unpack it to examine the content to check the links and patterns of the xml files
+- **Coverage**: Provided by Behavioral feature requirements when creating new features
+- **Feature Development Approach**: For each major behavior:
+	1. Create a failing unit test.
+	2. Implement the code to make the test pass.
+	3. Refactor as needed, ensuring all tests pass.
+- **Parallelism**: deactivated for test running because of a static variable holding all the OpenAPi mapping that must be cleared down with each new test, stopping the testing being isolated.
 
 ## Troubleshooting & Validation
 
@@ -146,9 +188,18 @@ Expected output: "Excel file saved to [path]" with no errors.
 
 ### File Locations for Quick Reference
 - **Projects**: All in `src/` directory
-- **Documentation**: `docs/` directory contains migration plans and technical documentation along with TODO lists
+- **Documentation**: `docs/` directory contains technical documentation along with TODO lists
 - **Test Output**: Generated Excel files go to `test-output/` directory
-- **Published Scripts**: `PublishScripts/` contains example Excel outputs
+- **sourceWorkbook/**: where workflows can find workbooks to use a source for comments to be migrated to new workbooks
+- **test-output/**: where tests should create files for review and assert outcomes
+
+### Examine the content of the XLSX archive
+Some hard to explain outcomes where the workbook fails to open without error, or does not show the expected output can be investigated by taking a copy of the .xlsx, renaming it to .zip, and unzipping to a folder for its source XML documents.
+
+These can be compared against the archived files of a  working workbook like `Sample/sample-api-gw-with-mappings.xls`.
+
+- **Example Command**: `Copy-Item "test-output\problematic-workbook.xlsx" "test-output\problematic-workbook.zip" ; Expand-Archive -Path "test-output\problematic-workbook.zip" -DestinationPath "test-output\problematic-workbook-unpacked" -Force`
+
 
 ## Development Planning Process
 
@@ -166,10 +217,6 @@ The `docs/` directory contains **planning documentation** for new features. **AL
    - Test-driven development steps
    - Progress checkboxes for each feature component
    - Links to related documentation
-3. **Testing Policy** (`unit-testing-policy-*.md`): Test strategy
-   - Behavioral test requirements
-   - Test structure and organization
-   - Expected test artifacts
 
 #### Conservative Development Process
 
@@ -184,17 +231,12 @@ The `docs/` directory contains **planning documentation** for new features. **AL
 3. **No unauthorized embellishments**: Stick to planned features only
 4. **Update plans for changes**: If requirements change, update the planning docs first
 
-#### Example: Current Feature Branch
-The current feature branch follows this pattern with:
-- `docs/migrate-unresolved-comments-plan.md` - Complete technical specification
-- `docs/todo-migrate-unresolved-comments.md` - Step-by-step TODO checklist
-- `docs/unit-testing-policy-migrate-comments.md` - Testing strategy
 
 #### Working with TODO Lists
 - **Check items off sequentially** - don't skip ahead
 - **Each checkbox represents a working unit test** - no implementation without tests
 - **Track progress visibly** - keep the checklist updated
-- **Never mark complete without all tests passing**
+- **Never mark complete without all tests passing** and confirmation that the workbook opens without error and displays content
 
 This process ensures controlled, predictable development and prevents scope creep.
 
@@ -205,10 +247,10 @@ This process ensures controlled, predictable development and prevents scope cree
 2. You encounter errors not covered here
 3. You need to understand specific code implementation details
 
-**Always validate changes** by running the full test suite (`dotnet test --configuration Release`) before completing any modification.
+**Always validate changes** by running the full test suite (`dotnet test --configuration Release --logger console --verbosity normal`) before completing any modification.
 
 **For new features**: Add corresponding tests in `src/openapi2excel.tests/` and ensure they integrate with the existing xUnit test structure.
 
-Experimentation and investigation of problems with new tests should have that test added to a folder Investigation/ within the tests project to avoid interference.
+Experimentation and investigation of problems with new tests should have that test added to a folder `Investigation/` within the tests project to avoid interference.
 
 With feature completion, on summary of success, always invite the user to examine the workbook manually before concluding the task. Not all problems are seen in the unit tests.

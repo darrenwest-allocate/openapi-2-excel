@@ -73,7 +73,7 @@ public static class OpenApiDocumentationGenerator
          if (!string.IsNullOrEmpty(options.FilepathToPreserveComments))
          {
             var newWorkbookMappings = ExcelOpenXmlHelper.ExtractCustomXmlMappingsFromWorkbook(tempFile);
-            var nonMigratableComments = CommentMigrationHelper.MigrateComments(
+            CommentMigrationHelper.MigrateComments(
                options.FilepathToPreserveComments,
                tempFile,
                newWorkbookMappings);

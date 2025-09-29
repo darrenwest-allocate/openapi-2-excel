@@ -149,16 +149,8 @@ public class OpenApiDocumentationGeneratorTest
          Assert.NotEqual("1", migratedComment.Comment.Done); // Should be unresolved
 
          var matchingOriginal = originalUnresolvedComments.FirstOrDefault(orig =>
-         {
-            // For Type B "NoWorksheet" comments that are migrated to the Info sheet,
-            // the comment text will have a prefix added, so we need to check if the 
-            // migrated comment text contains the original text
-            bool textMatches = orig.CommentText == migratedComment.CommentText ||
-                              (migratedComment.CommentText.StartsWith("[From ") && 
-                               migratedComment.CommentText.Contains(orig.CommentText));
-                               
-            return textMatches && orig.CreatedDate == migratedComment.CreatedDate;
-         });
+            orig.CommentText == migratedComment.CommentText &&
+            orig.CreatedDate == migratedComment.CreatedDate);
          Assert.NotNull(matchingOriginal); // Should find a match
 
          Assert.Equal(matchingOriginal.CreatedDate, migratedComment.CreatedDate);

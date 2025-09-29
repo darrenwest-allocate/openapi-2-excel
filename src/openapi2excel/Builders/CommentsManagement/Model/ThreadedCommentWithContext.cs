@@ -74,20 +74,6 @@ public class ThreadedCommentWithContext
             return textElement?.InnerText ?? string.Empty;
         }
     }
-    
-    /// <summary>
-    /// Updates the comment text in the underlying threaded comment element.
-    /// This is used for comment migration scenarios where the text needs to be modified.
-    /// </summary>
-    public void UpdateCommentText(string newText)
-    {
-        var textElement = Comment?.Elements().FirstOrDefault(e => e.LocalName == "text");
-        if (textElement is DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments.ThreadedCommentText commentTextElement)
-        {
-            var newTextElement = new DocumentFormat.OpenXml.Office2019.Excel.ThreadedComments.ThreadedCommentText(newText);
-            textElement.Parent?.ReplaceChild(newTextElement, textElement);
-        }
-    }
     public string CommentId => Comment?.Id?.Value ?? string.Empty;
     public DateTime? CreatedDate
     {
