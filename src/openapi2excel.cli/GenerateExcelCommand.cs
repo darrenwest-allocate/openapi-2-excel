@@ -25,7 +25,7 @@ public class GenerateExcelCommand : Command<GenerateExcelCommand.GenerateExcelSe
       public string? ExistingWorkbook { get; init; }
 
       [Description("OpenAPI references are embedded into the workbook by default, as CustomXML parts, to facilitate commentary being migrated to workbooks for newer versions of the OpenApi spec.")]
-      [CommandOption("-noref|--no-openapi-references")]
+      [CommandOption("-x|--no-openapi-references")]
       public bool DisableOpenApiReferences { get; init; } = false;
 
       [Description("Run tool without logo.")]
