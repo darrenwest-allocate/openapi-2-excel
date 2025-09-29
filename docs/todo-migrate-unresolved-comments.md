@@ -29,7 +29,7 @@ Update this file as new requirements or edge cases are discovered.
 - [x] Create a failing unit test for extracting unresolved threaded comments from an old workbook
 - [x] Implement extraction logic 
 - [x] Look for existing mapping files, collect them if they exist. annotate the extracted comments with the original open api anchor
-- [ ] Refactor as needed
+- [x] Refactor as needed
 
 ## 4. Mapping Comments to New Workbook
 - [x] Create a failing unit test for migrating comments to the correct cell in the new workbook (exact match)
@@ -79,8 +79,8 @@ Update this file as new requirements or edge cases are discovered.
 - [x] implement
 
 ## 9. Documentation & Review
-- [ ] Update documentation to reflect implementation and usage
-- [ ] Review all code, tests, and docs for completeness and clarity
+- [x] Update documentation to reflect implementation and usage
+- [x] Review all code, tests, and docs for completeness and clarity
 
 ---
 
