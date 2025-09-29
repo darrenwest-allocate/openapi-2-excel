@@ -76,7 +76,7 @@ Update this file as new requirements or edge cases are discovered.
 
 ## 6 NEW. Github action that will allow the upload of the old workbook so that its comments can be migrated across
 - [x] decide options
-- [ ] implement
+- [x] implement
 
 ## 9. Documentation & Review
 - [ ] Update documentation to reflect implementation and usage
