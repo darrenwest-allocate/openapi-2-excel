@@ -21,8 +21,8 @@
         "tags": [
           "Roster"
         ],
-        "summary": "Get Roster Data",
-        "description": "Retrieve roster data for employees within Optima system. Returns comprehensive roster information including employee details, organizational structure, shift information, and timing data. At least one of PersonId or UnitId must be provided. Date range is optional - if not provided, defaults to 4 weeks from current date.\n\n**Usage Examples:**\n- `GET /{tenant}/duties/roster-data?personId=12345`\n- `GET /{tenant}/duties/roster-data?unitId=67890&from=2024-01-01&to=2024-01-31`\n- `GET /{tenant}/duties/roster-data?personId=12345&from=2024-01-01&to=2024-01-31`",
+        "summary": "Return the duties that have been rostered and assigned to a person",
+        "description": "Retrieve roster data for employees within Optima system. Returns comprehensive roster information including employee details, organizational structure, shift information, and timing data. At least one of personID or unitID must be provided. You can query either:\r\n\r\n- By individual employee (personID) - gets one person's shifts\r\n- By organizational unit (unitID) - gets shifts for everyone in that department/unit\r\n\r\n**Usage Examples**:\r\n\r\n**Get roster for a specific person** (14-day default range):\r\n```\r\nGET /{tenant}/duties/roster-data?personID=1625\r\n```\r\n**Get roster for a person with custom date range**:\r\n```\r\nGET /{tenant}/duties/roster-data?personID=1625&from=2024-01-01&to=2024-01-14\r\n```\r\n**Get roster for an organizational unit** (2-day default range):\r\n```\r\nGET /{tenant}/duties/roster-data?unitID=1059\r\n```\r\n**Get roster for an organizational unit with custom date range**:\r\n```\r\nGET /{tenant}/duties/roster-data?unitID=1059&from=2024-01-01&to=2024-01-02\r\n```",
         "parameters": [
           {
             "name": "tenant",
@@ -31,31 +31,31 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": "example-tenant"
+              "example": "SAFEHEALTHIVE"
             }
           },
           {
-            "name": "personId",
+            "name": "personID",
             "in": "query",
-            "description": "Person Id to filter roster data (optional - at least one of personId or unitId must be provided)",
+            "description": "Person ID to filter roster data.",
             "schema": {
               "type": "integer",
-              "example": 12345
+              "example": 1625
             }
           },
           {
-            "name": "unitId",
+            "name": "unitID",
             "in": "query",
-            "description": "Unit Id to filter roster data (optional - at least one of personId or unitId must be provided)",
+            "description": "Unit ID to filter roster data.",
             "schema": {
               "type": "integer",
-              "example": 67890
+              "example": 1059
             }
           },
           {
             "name": "from",
             "in": "query",
-            "description": "Start date for roster data in YYYY-MM-DD format (optional - defaults to 4 weeks from current date)",
+            "description": "Optional start date for roster data. Defaults to today if not provided.",
             "schema": {
               "type": "string",
               "example": "2024-01-01"
@@ -64,10 +64,10 @@
           {
             "name": "to",
             "in": "query",
-            "description": "End date for roster data in YYYY-MM-DD format (optional - defaults to 4 weeks from current date)",
+            "description": "Optional end date for roster data. If not provided, a default end date will be used.",
             "schema": {
               "type": "string",
-              "example": "2024-01-31"
+              "example": "2024-01-02"
             }
           }
         ],
@@ -83,7 +83,7 @@
             }
           },
           "400": {
-            "description": "Bad Request - Invalid input parameters or missing required combination",
+            "description": "Bad Request - Invalid input parameters or missing required combination. Possible error scenarios:\n- Neither personID nor unitID provided\n- Both personID and unitID provided simultaneously\n- Invalid date range (to date is before from date)\n- Date range exceeds maximum allowed days (2 days for unit queries, 14 days for person queries)",
             "content": {
               "application/json": {
                 "schema": {
@@ -91,8 +91,45 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "description": "Error message",
-                      "example": "At least one of personId or unitId must be provided"
+                      "description": "Error message describing the validation failure",
+                      "example": "Only one of personId or unitId can be provided, not both"
+                    }
+                  }
+                },
+                "examples": {
+                  "MissingBothParameters": {
+                    "summary": "Neither personId nor unitId provided",
+                    "description": "At least one of personID or unitID must be specified",
+                    "value": {
+                      "message": "At least one of personID or unitID must be provided"
+                    }
+                  },
+                  "BothParametersProvided": {
+                    "summary": "Both personID and unitID provided",
+                    "description": "Only one parameter can be specified, not both",
+                    "value": {
+                      "message": "Only one of personID or unitID can be provided, not both"
+                    }
+                  },
+                  "ToDateBeforeFromDate": {
+                    "summary": "Invalid date range - to date before from date",
+                    "description": "The 'to' date must be greater than or equal to the 'from' date",
+                    "value": {
+                      "message": "'to' date (2024-01-01) must be greater than or equal to 'from' date (2024-01-15)"
+                    }
+                  },
+                  "DateRangeExceedsMaximum": {
+                    "summary": "Date range exceeds maximum allowed days",
+                    "description": "For Unit queries, the date range cannot exceed 2 days",
+                    "value": {
+                      "message": "Date range for Unit queries cannot exceed 2 days. Requested range is 5 days."
+                    }
+                  },
+                  "PersonDateRangeExceedsMaximum": {
+                    "summary": "Person query date range exceeds maximum allowed days",
+                    "description": "For Person queries, the date range cannot exceed 14 days",
+                    "value": {
+                      "message": "Date range for Person queries cannot exceed 14 days. Requested range is 20 days."
                     }
                   }
                 }
@@ -108,7 +145,7 @@
         "x-amazon-apigateway-request-validator": "Interop-${env}-Validate query parameters",
         "x-amazon-apigateway-integration": {
           "httpMethod": "GET",
-          "uri": "https://${eac_api_base_url}/v1/api/Roster/Data",
+          "uri": "https://${eac_api_base_url}/v1/duties/roster-data",
           "responses": {
             "default": {
               "statusCode": "200"
@@ -143,48 +180,53 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": ""
+              "example": "SAFEHEALTHLIVE"
             }
           },
           {
-            "name": "gradeId",
+            "name": "ID",
             "in": "query",
-            "description": "Filter by Grade ID.",
+            "description": "Filter for a specific Grade by using its unique key.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "1029"
           },
           {
             "name": "shortName",
             "in": "query",
-            "description": "Filter by Grade short name.",
+            "description": "Filter by Grade short name. This behaves like a prefix for as starts with retrieve.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "Band 5"
           },
           {
-            "name": "gradeTypeId",
+            "name": "gradeTypeID",
             "in": "query",
-            "description": "Filter by Grade Type ID.",
+            "description": "Filter for those records for a Grade Type by using its unique key.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "1023"
           },
           {
-            "name": "gradeTypeCategoryId",
+            "name": "gradeTypeCategoryID",
             "in": "query",
-            "description": "Filter by Grade Type Category ID.",
+            "description": "Filter for those records for a Grade Type Category by using its unique key.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "1002"
           },
           {
-            "name": "occGroupId",
+            "name": "staffGroupID",
             "in": "query",
-            "description": "Filter by Occupational Group ID.",
+            "description": "Filter for those records for a Staff Group by using its unique key.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "1003"
           },
           {
             "name": "validFrom",
@@ -193,7 +235,8 @@
             "schema": {
               "type": "string",
               "format": "date-time"
-            }
+            },
+            "example": "1900-01-01"
           }
         ],
         "responses": {
@@ -242,16 +285,17 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": ""
+              "example": "SAFEHEALTHLIVE"
             }
           },
           {
-            "name": "id",
+            "name": "ID",
             "in": "query",
             "description": "Filter by Cost Centre ID.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "1035"
           },
           {
             "name": "name",
@@ -259,7 +303,8 @@
             "description": "Filter by Cost Centre name.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "A5002C"
           },
           {
             "name": "validFrom",
@@ -268,7 +313,8 @@
             "schema": {
               "type": "string",
               "format": "date-time"
-            }
+            },
+            "example": "2024-01-01"
           }
         ],
         "responses": {
@@ -317,16 +363,17 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": ""
+              "example": "SAFEHEALTHLIVE"
             }
           },
           {
-            "name": "id",
+            "name": "ID",
             "in": "query",
             "description": "Filter by Grade Type ID.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "1023"
           },
           {
             "name": "name",
@@ -334,15 +381,17 @@
             "description": "Filter by Grade Type name.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "A&C"
           },
           {
             "name": "gradeTypeCategoryId",
             "in": "query",
-            "description": "Filter by Grade Type Category ID.",
+            "description": "Filter for those records for a Grade Type Category by using its unique key.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "10023"
           },
           {
             "name": "validFrom",
@@ -351,7 +400,8 @@
             "schema": {
               "type": "string",
               "format": "date-time"
-            }
+            },
+            "example": "1900-01-01"
           }
         ],
         "responses": {
@@ -400,16 +450,17 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": ""
+              "example": "SAFEHEALTHLIVE"
             }
           },
           {
-            "name": "id",
+            "name": "ID",
             "in": "query",
             "description": "Filter by Grade Type Category ID.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "10023"
           },
           {
             "name": "name",
@@ -417,7 +468,8 @@
             "description": "Filter by Grade Type Category name.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "Admin & Clerical"
           },
           {
             "name": "validFrom",
@@ -426,7 +478,8 @@
             "schema": {
               "type": "string",
               "format": "date-time"
-            }
+            },
+            "example": "1900-01-01"
           }
         ],
         "responses": {
@@ -460,13 +513,13 @@
         }
       }
     },
-    "/{tenant}/reference-data/occGroups": {
+    "/{tenant}/reference-data/staffGroups": {
       "get": {
         "tags": [
           "ReferenceData"
         ],
-        "summary": "Get Occupational Groups",
-        "description": "Return a list of Occupational Groups reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
+        "summary": "Get Staff Groups",
+        "description": "Return a list of Staff Groups reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
         "parameters": [
           {
             "name": "tenant",
@@ -475,24 +528,26 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": ""
+              "example": "SAFEHEALTHLIVE"
             }
           },
           {
-            "name": "id",
+            "name": "ID",
             "in": "query",
-            "description": "Filter by Occupational Group ID.",
+            "description": "Filter by Staff Group ID.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "1003"
           },
           {
             "name": "name",
             "in": "query",
-            "description": "Filter by Occupational Group name.",
+            "description": "Filter by Staff Group name.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "Admin & Clerical"
           },
           {
             "name": "validFrom",
@@ -501,7 +556,8 @@
             "schema": {
               "type": "string",
               "format": "date-time"
-            }
+            },
+            "example": "1900-01-01"
           }
         ],
         "responses": {
@@ -523,7 +579,7 @@
         ],
         "x-amazon-apigateway-integration": {
           "httpMethod": "GET",
-          "uri": "https://${eac_api_base_url}/v1/reference-data/occGroups",
+          "uri": "https://${eac_api_base_url}/v1/reference-data/staffGroups",
           "responses": {
             "default": {
               "statusCode": "200"
@@ -550,16 +606,17 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": ""
+              "example": "SAFEHEALTHLIVE"
             }
           },
           {
-            "name": "id",
+            "name": "ID",
             "in": "query",
             "description": "Filter by Organisational Unit ID.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "6"
           },
           {
             "name": "shortName",
@@ -567,7 +624,8 @@
             "description": "Filter by Organisational Unit short name.",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "CAN Admin & Clerical"
           },
           {
             "name": "validFrom",
@@ -576,7 +634,8 @@
             "schema": {
               "type": "string",
               "format": "date-time"
-            }
+            },
+            "example": "1900-01-01"
           }
         ],
         "responses": {
@@ -613,6 +672,171 @@
   },
   "components": {
     "schemas": {
+      "RosterDataResponse": {
+        "type": "object",
+        "properties": {
+          "rosterData": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "PersonID": {
+                  "type": "integer",
+                  "description": "Unique identifier for the Person",
+                  "example": 16001
+                },
+                "Surname": {
+                  "type": "string",
+                  "description": "Last name of the employee",
+                  "example": "O'Neal"
+                },
+                "Forenames": {
+                  "type": "string",
+                  "description": "First name(s) of the employee",
+                  "example": "Alice"
+                },
+                "StaffNumber": {
+                  "type": "string",
+                  "description": "Staff identification number",
+                  "example": "AO63889661856127"
+                },
+                "TimeclockIdentifier": {
+                  "type": "string",
+                  "description": "Timeclock chip ID for attendance tracking",
+                  "example": "AO63889661856127"
+                },
+                "DateJoined": {
+                  "type": "string",
+                  "description": "Date when the Person was first employed at the organisation",
+                  "format": "date-time",
+                  "example": "2025-07-27T00:00:00"
+                },
+                "DateLeaving": {
+                  "type": "string",
+                  "description": "Date when the Person is no longer employed at the organisation",
+                  "format": "date-time",
+                  "example": "9999-12-31T00:00:00"
+                },
+                "DutyAssignments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "DutyAssignmentID": {
+                        "type": "integer",
+                        "description": "Unique identifier for the Duty Assignment",
+                        "example": 27584
+                      },
+                      "PostingID": {
+                        "type": "integer",
+                        "description": "Unique identifier for the Posting",
+                        "example": 16821
+                      },
+                      "ExternalReference": {
+                        "type": "string",
+                        "description": "External Reference for the Posting",
+                        "example": "889947"
+                      },
+                      "PostingValidFrom": {
+                        "type": "string",
+                        "description": "Start date from which the Posting is valid",
+                        "format": "date-time",
+                        "example": "1900-01-01T00:00:00"
+                      },
+                      "PostingValidTo": {
+                        "type": "string",
+                        "description": "End date until which the Posting is valid",
+                        "format": "date-time",
+                        "example": "9999-12-31T00:00:00"
+                      },
+                      "AssignmentNumber": {
+                        "type": "string",
+                        "description": "Assignment reference number",
+                        "example": "NHSP~TFJK2695~24"
+                      },
+                      "StaffGroupID": {
+                        "type": "integer",
+                        "description": "Unique identifier for the Staff Group",
+                        "example": 7
+                      },
+                      "StaffGroupName": {
+                        "type": "string",
+                        "description": "Name of the Staff Group",
+                        "example": "Nursing"
+                      },
+                      "OwningUnitID": {
+                        "type": "integer",
+                        "description": "Unique key for the Unit that is recorded as owning the Roster",
+                        "example": 80
+                      },
+                      "OwningUnitShortName": {
+                        "type": "string",
+                        "description": "Short name of the Owning Unit",
+                        "example": "Croxley"
+                      },
+                      "CostCentreID": {
+                        "type": "integer",
+                        "description": "Unique identifier for the Cost Centre",
+                        "example": 1035
+                      },
+                      "CostCentreName": {
+                        "type": "string",
+                        "description": "Name of the Cost Centre",
+                        "example": "A5002C"
+                      },
+                      "GradeID": {
+                        "type": "integer",
+                        "description": "Unique identifier for the Grade",
+                        "example": 24
+                      },
+                      "GradeShortName": {
+                        "type": "string",
+                        "description": "Short name of the Grade",
+                        "example": "Band 5 RN"
+                      },
+                      "ResourcingUnitID": {
+                        "type": "integer",
+                        "description": "Unique key for the Unit that is recorded as the Resourcing Unit",
+                        "example": 9
+                      },
+                      "ResourcingUnitShortName": {
+                        "type": "string",
+                        "description": "Short name of the Resourcing Unit",
+                        "example": "Bank"
+                      },
+                      "ActualDutyStart": {
+                        "type": "string",
+                        "description": "Start date of the shift",
+                        "format": "date-time",
+                        "example": "2025-09-08T00:00:00"
+                      },
+                      "ActualDutyEnd": {
+                        "type": "string",
+                        "description": "End date of the shift",
+                        "format": "date-time",
+                        "example": "2025-09-09T00:00:00"
+                      },
+                      "RestStart": {
+                        "type": "string",
+                        "description": "Start of the rest period",
+                        "format": "date-time",
+                        "example": "2025-09-08T00:00:00"
+                      },
+                      "RestDuration": {
+                        "type": "integer",
+                        "description": "Break duration in minutes",
+                        "example": 45
+                      }
+                    }
+                  },
+                  "description": "List of duty assignments for the person"
+                }
+              }
+            },
+            "description": "List of persons with their roster information"
+          }
+        }
+      },
       "CostCentreResponseModel": {
         "title": "CostCentres",
         "type": "object",
@@ -622,35 +846,35 @@
             "items": {
               "type": "object",
               "properties": {
-                "id": {
+                "ID": {
                   "type": "integer",
-                  "description": "Unique identifier for the cost centre",
+                  "description": "Unique identifier for the Cost Centre",
                   "example": 1
                 },
                 "name": {
                   "type": "string",
-                  "description": "Name of the cost centre",
-                  "example": "Basic"
+                  "description": "Name of the Cost Centre",
+                  "example": "MA"
                 },
                 "description": {
                   "type": "string",
-                  "description": "Description of the cost centre",
-                  "example": ""
+                  "description": "Description of the Cost Centre",
+                  "example": "Meal Allowance"
                 },
                 "validFrom": {
                   "type": "string",
-                  "description": "Start date for the cost centre's validity",
+                  "description": "Start date from which the Cost Centre is valid",
                   "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
-                  "description": "End date for the cost centre's validity",
+                  "description": "End date until which the Cost Centre is valid.",
                   "example": "9999-12-31T00:00:00"
                 },
                 "code": {
                   "type": "string",
-                  "description": "Code of the cost centre",
-                  "example": "CC-1200934"
+                  "description": "Code of the Cost Centre",
+                  "example": "11593"
                 }
               }
             },
@@ -667,74 +891,64 @@
             "items": {
               "type": "object",
               "properties": {
-                "id": {
+                "ID": {
                   "type": "integer",
-                  "description": "Unique identifier for the grade",
-                  "example": 1020
+                  "description": "Unique identifier for the Grade",
+                  "example": 10091
                 },
                 "shortName": {
                   "type": "string",
-                  "description": "Abbreviated name for the grade",
-                  "example": "Band B&G"
+                  "description": "Short name for the Grade",
+                  "example": "Band 2 A&C"
                 },
                 "longName": {
                   "type": "string",
-                  "description": "Full name for the grade",
-                  "example": "Band B&G"
+                  "description": "Full name for the Grade",
+                  "example": "Band 2 Admin & Clerical"
                 },
                 "validFrom": {
                   "type": "string",
-                  "description": "Start date from which the grade is valid",
-                  "example": "2024-10-14T07:35:06"
+                  "description": "Start date from which the Grade is valid",
+                  "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
-                  "description": "End date until which the grade is valid",
-                  "example": "2025-10-14T09:35:06"
+                  "description": "End date until which the Grade is valid",
+                  "example": "9999-12-31T00:00:00"
                 },
                 "gradeTypeID": {
                   "type": "integer",
-                  "description": "ID for the associated grade type",
-                  "example": 2
+                  "description": "Unique key for the Grade Type that defines this record",
+                  "example": 10045
                 },
                 "gradeTypeName": {
                   "type": "string",
-                  "description": "Name of the associated grade type",
-                  "example": "B&G"
-                },
-                "gradeTypeDescription": {
-                  "type": "string",
-                  "description": "Description of the grade type",
-                  "example": "Support"
+                  "description": "Name of the associated Grade Type",
+                  "example": "A&C"
                 },
                 "gradeTypeCategoryID": {
                   "type": "integer",
-                  "description": "ID for the category associated with the grade type",
-                  "example": 3
+                  "description": "Unique key for the Grade Type Category that defines this record",
+                  "example": 10023
                 },
                 "gradeTypeCategoryName": {
                   "type": "string",
-                  "description": "Name of the grade type category",
-                  "example": "Support"
+                  "description": "Name of the Grade Type Category",
+                  "example": "Admin & Clerical"
                 },
-                "occGroupID": {
+                "staffGroupID": {
                   "type": "integer",
-                  "description": "ID for the occupational group associated with the grade",
+                  "description": "Unique Key for the Staff Group that defines this record",
                   "example": 1
                 },
-                "occGroupName": {
+                "staffGroupName": {
                   "type": "string",
-                  "description": "Name of the occupational group",
-                  "example": "B & G"
-                },
-                "occGroupDescription": {
-                  "type": "string",
-                  "description": "Description of the occupational group",
-                  "example": "B & G"
+                  "description": "Name of the Staff Group",
+                  "example": "Admin & Clerical"
                 }
               }
             },
-            "description": "List of grades"
+            "description": "List of Grades"
           }
         }
       },
@@ -747,40 +961,40 @@
             "items": {
               "type": "object",
               "properties": {
-                "id": {
+                "ID": {
                   "type": "integer",
-                  "description": "Unique identifier for the grade type",
-                  "example": 1
+                  "description": "Unique identifier for the Grade Type",
+                  "example": 10045
                 },
                 "name": {
                   "type": "string",
-                  "description": "Name of the grade type",
-                  "example": "B&G"
+                  "description": "Name of the Grade Type",
+                  "example": "A&C"
                 },
                 "description": {
                   "type": "string",
-                  "description": "Description of the grade type",
-                  "example": "Support B&G"
+                  "description": "Description of the Grade Type",
+                  "example": "Admin & Clerical"
                 },
                 "validFrom": {
                   "type": "string",
-                  "description": "Start date from which the grade type is valid",
-                  "example": "2024-10-14T07:35:06"
+                  "description": "Start date from which the Grade Type is valid",
+                  "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
-                  "description": "End date until which the grade type is valid",
-                  "example": "2025-10-14T07:35:06"
+                  "description": "End date until which the Grade Type is valid",
+                  "example": "9999-12-31T00:00:00"
                 },
                 "gradeTypeCategoryID": {
                   "type": "integer",
-                  "description": "ID for the category associated with the grade type",
-                  "example": 2
+                  "description": "Unique key for the Grade Type Category that defines this record",
+                  "example": 10023
                 },
                 "gradeTypeCategoryName": {
                   "type": "string",
-                  "description": "Name of the grade type category",
-                  "example": "Support"
+                  "description": "Name of the Grade Type Category",
+                  "example": "Admin & Clerical"
                 }
               }
             },
@@ -797,25 +1011,25 @@
             "items": {
               "type": "object",
               "properties": {
-                "id": {
+                "ID": {
                   "type": "integer",
-                  "description": "Unique identifier for the grade type category",
-                  "example": 1
+                  "description": "Unique identifier for the Grade Type Category",
+                  "example": 10023
                 },
                 "name": {
                   "type": "string",
-                  "description": "Name of the grade type category",
-                  "example": "B&G"
+                  "description": "Name of the Grade Type Category",
+                  "example": "Admin & Clerical"
                 },
                 "validFrom": {
                   "type": "string",
-                  "description": "Start date from which the grade type category is valid",
-                  "example": "2024-10-14T07:35:06"
+                  "description": "Start date from which the Grade Type Category is valid",
+                  "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
-                  "description": "End date until which the grade type category is valid",
-                  "example": "2025-10-14T09:35:06"
+                  "description": "End date until which the Grade Type Category is valid",
+                  "example": "9999-12-31T00:00:00"
                 }
               }
             },
@@ -832,34 +1046,34 @@
             "items": {
               "type": "object",
               "properties": {
-                "id": {
+                "ID": {
                   "type": "integer",
-                  "description": "Unique identifier for the staff group",
+                  "description": "Unique identifier for the Staff Group",
                   "example": 1
                 },
                 "name": {
                   "type": "string",
-                  "description": "Name of the staff group",
-                  "example": "B&G"
+                  "description": "Name of the Staff Group",
+                  "example": "Admin & Clerical"
                 },
                 "description": {
                   "type": "string",
-                  "description": "Description of the staff group",
-                  "example": "Support B&G"
+                  "description": "Description of the Staff Group",
+                  "example": "Admin & Clerical"
                 },
                 "validFrom": {
                   "type": "string",
-                  "description": "Start date from which the staff group is valid",
-                  "example": "2024-10-14T07:35:06"
+                  "description": "Start date from which the Staff Group is valid",
+                  "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
-                  "description": "End date until which the staff group is valid",
-                  "example": "2025-10-14T09:35:06"
+                  "description": "End date until which the Staff Group is valid",
+                  "example": "9999-12-31T00:00:00"
                 }
               }
             },
-            "description": "List of staff groups"
+            "description": "List of Staff Groups"
           }
         }
       },
@@ -872,218 +1086,54 @@
             "items": {
               "type": "object",
               "properties": {
-                "id": {
+                "ID": {
                   "type": "integer",
-                  "description": "Unique identifier for the organisational unit",
+                  "description": "Unique identifier for the Organisational Unit",
                   "example": 6
                 },
                 "shortName": {
                   "type": "string",
-                  "description": "Abbreviated name of the organisational unit",
-                  "example": "B&G"
+                  "description": "Short name of the Organisational Unit",
+                  "example": "CAN Admin & Clerical"
                 },
                 "longName": {
                   "type": "string",
-                  "description": "Full name of the organisational unit",
-                  "example": "Support B&G"
+                  "description": "Full name of the Organisational Unit",
+                  "example": "CAN Admin & Clerical"
                 },
                 "validFrom": {
                   "type": "string",
-                  "description": "Start date for the organisational unit's validity",
-                  "example": "2024-10-14T07:35:06"
+                  "description": "Start date from which the Organisational Unit is valid",
+                  "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
-                  "description": "End date for the organisational unit's validity",
-                  "example": "2025-10-14T09:35:06"
+                  "description": "End date until which the Organisational Unit is valid",
+                  "example": "9999-12-31T00:00:00"
                 },
                 "code": {
                   "type": "string",
-                  "description": "Code of the organisational unit",
-                  "example": "CodeOrgUnit"
+                  "description": "Code of the Organisational Unit",
+                  "example": "CAN Admin & Clerical"
+                },
+                "parentOrgUnitID": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "description": "Unique identifier for the parent Organisational Unit",
+                      "example": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Unique identifier for the parent Organisational Unit"
                 }
               }
             },
-            "description": "List of organisational units"
+            "description": "List of Organisational Units"
           }
         }
-      },
-      "RosterDataResponse": {
-        "type": "object",
-        "properties": {
-          "rosterData": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "surname": {
-                  "type": "string",
-                  "description": "Last name of the employee",
-                  "example": "Schmidt"
-                },
-                "forenames": {
-                  "type": "string",
-                  "description": "First name(s) of the employee",
-                  "example": "Peter"
-                },
-                "staffNumber": {
-                  "type": "string",
-                  "description": "Staff identification number",
-                  "example": "EMP123456"
-                },
-                "owningUnit": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "Unique identifier for the owning unit",
-                      "example": "12"
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "Name of the owning unit",
-                      "example": "Ward 1 - Cardiology"
-                    }
-                  },
-                  "description": "Owning unit of the person"
-                },
-                "rosteredUnit": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "Unique identifier for the rostered unit",
-                      "example": "13"
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "Name of the rostered unit",
-                      "example": "Intensive Care Unit"
-                    }
-                  },
-                  "description": "The unit where person is rostered"
-                },
-                "grade": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "Unique identifier for the grade",
-                      "example": "41"
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "Name of the grade",
-                      "example": "RN Level 5"
-                    }
-                  },
-                  "description": "Employee qualification/grade"
-                },
-                "timeclockIdentifier": {
-                  "type": "string",
-                  "description": "Timeclock chip ID for attendance tracking",
-                  "example": "TC789012"
-                },
-                "orgStructureHospitalLevel": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "Unique identifier for the organization level",
-                      "example": "4"
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "Name of the organization level",
-                      "example": "General Hospital"
-                    }
-                  },
-                  "description": "Organization level"
-                },
-                "costCenter": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "Unique identifier for the cost center",
-                      "example": "5"
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "Name of the cost center",
-                      "example": "Emergency Department - Cost Center"
-                    }
-                  },
-                  "description": "Cost center"
-                },
-                "hireDate": {
-                  "type": "string",
-                  "description": "Date and time when employee joined in ISO format",
-                  "example": "2020-01-15T09:00:00"
-                },
-                "leavingDate": {
-                  "type": "string",
-                  "description": "Date and time when employee left in ISO format",
-                  "example": "2024-12-31T17:00:00"
-                },
-                "shiftStart": {
-                  "type": "string",
-                  "description": "Start date and time of the shift in ISO format",
-                  "example": "2024-01-15T07:00:00"
-                },
-                "shiftEnd": {
-                  "type": "string",
-                  "description": "End date and time of the shift in ISO format",
-                  "example": "2024-01-15T19:00:00"
-                },
-                "staffGroup": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "Unique identifier for the staff group",
-                      "example": "3"
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "Name of the staff group",
-                      "example": "Intensive Care Unit"
-                    }
-                  },
-                  "description": "Staff group name"
-                },
-                "personWorkContract": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "Unique identifier for the work contract type",
-                      "example": "5"
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "Name of the work contract type",
-                      "example": "Full-time"
-                    }
-                  },
-                  "description": "Type of work contract"
-                },
-                "restStart": {
-                  "type": "string",
-                  "description": "Start time of the rest period in HH:mm format",
-                  "example": "14:10"
-                },
-                "restDuration": {
-                  "type": "integer",
-                  "description": "Break duration in minutes",
-                  "example": 30
-                }
-              }
-            },
-            "description": "List of roster data entries for employees"
-          }
-        },
-        "description": "Response model for roster data containing employee roster information"
       }
     },
     "securitySchemes": {
