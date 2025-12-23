@@ -1,15 +1,15 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "api-gw-nswh-${env}",
-    "version": "v1"
+    "title": "api-rld-mp-workforce-${env}",
+    "version": "1.0.0"
   },
   "servers": [
     {
       "url": "https://api-poc.allocate-dev.co.uk/{basePath}",
       "variables": {
         "basePath": {
-          "default": "v1",
+          "default": "1.0.0",
           "description": "Version number"
         }
       }
@@ -58,6 +58,7 @@
             "description": "Optional start date for roster data. Defaults to today if not provided.",
             "schema": {
               "type": "string",
+              "format": "date-time",
               "example": "2024-01-01"
             }
           },
@@ -67,6 +68,7 @@
             "description": "Optional end date for roster data. If not provided, a default end date will be used.",
             "schema": {
               "type": "string",
+              "format": "date-time",
               "example": "2024-01-02"
             }
           }
@@ -142,7 +144,7 @@
             "custom-auth": [ ]
           }
         ],
-        "x-amazon-apigateway-request-validator": "Interop-${env}-Validate query parameters",
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
         "x-amazon-apigateway-integration": {
           "httpMethod": "GET",
           "uri": "https://${eac_api_base_url}/v1/duties/roster-data",
@@ -188,45 +190,45 @@
             "in": "query",
             "description": "Filter for a specific Grade by using its unique key.",
             "schema": {
-              "type": "string"
-            },
-            "example": "1029"
+              "type": "string",
+              "example": "1029"
+            }
           },
           {
             "name": "shortName",
             "in": "query",
             "description": "Filter by Grade short name. This behaves like a prefix for as starts with retrieve.",
             "schema": {
-              "type": "string"
-            },
-            "example": "Band 5"
+              "type": "string",
+              "example": "Band 5"
+            }
           },
           {
             "name": "gradeTypeID",
             "in": "query",
             "description": "Filter for those records for a Grade Type by using its unique key.",
             "schema": {
-              "type": "string"
-            },
-            "example": "1023"
+              "type": "string",
+              "example": "1023"
+            }
           },
           {
             "name": "gradeTypeCategoryID",
             "in": "query",
             "description": "Filter for those records for a Grade Type Category by using its unique key.",
             "schema": {
-              "type": "string"
-            },
-            "example": "1002"
+              "type": "string",
+              "example": "1002"
+            }
           },
           {
             "name": "staffGroupID",
             "in": "query",
             "description": "Filter for those records for a Staff Group by using its unique key.",
             "schema": {
-              "type": "string"
-            },
-            "example": "1003"
+              "type": "string",
+              "example": "1003"
+            }
           },
           {
             "name": "validFrom",
@@ -234,9 +236,9 @@
             "description": "Only return records valid on or after this date.",
             "schema": {
               "type": "string",
-              "format": "date-time"
-            },
-            "example": "1900-01-01"
+              "format": "date-time",
+              "example": "1900-01-01"
+            }
           }
         ],
         "responses": {
@@ -293,18 +295,18 @@
             "in": "query",
             "description": "Filter by Cost Centre ID.",
             "schema": {
-              "type": "string"
-            },
-            "example": "1035"
+              "type": "string",
+              "example": "1035"
+            }
           },
           {
             "name": "name",
             "in": "query",
-            "description": "Filter by Cost Centre name.",
+            "description": "Filter by Cost Centre name.This behaves like a prefix for as starts with retrieve.",
             "schema": {
-              "type": "string"
-            },
-            "example": "A5002C"
+              "type": "string",
+              "example": "A5002C"
+            }
           },
           {
             "name": "validFrom",
@@ -312,9 +314,9 @@
             "description": "Only return records valid on or after this date.",
             "schema": {
               "type": "string",
-              "format": "date-time"
-            },
-            "example": "2024-01-01"
+              "format": "date-time",
+              "example": "2024-01-01"
+            }
           }
         ],
         "responses": {
@@ -371,27 +373,27 @@
             "in": "query",
             "description": "Filter by Grade Type ID.",
             "schema": {
-              "type": "string"
-            },
-            "example": "1023"
+              "type": "string",
+              "example": "1023"
+            }
           },
           {
             "name": "name",
             "in": "query",
-            "description": "Filter by Grade Type name.",
+            "description": "Filter by Grade Type name. This behaves like a prefix for as starts with retrieve.",
             "schema": {
-              "type": "string"
-            },
-            "example": "A&C"
+              "type": "string",
+              "example": "A&C"
+            }
           },
           {
-            "name": "gradeTypeCategoryId",
+            "name": "gradeTypeCategoryID",
             "in": "query",
             "description": "Filter for those records for a Grade Type Category by using its unique key.",
             "schema": {
-              "type": "string"
-            },
-            "example": "10023"
+              "type": "string",
+              "example": "10023"
+            }
           },
           {
             "name": "validFrom",
@@ -399,9 +401,9 @@
             "description": "Only return records valid on or after this date.",
             "schema": {
               "type": "string",
-              "format": "date-time"
-            },
-            "example": "1900-01-01"
+              "format": "date-time",
+              "example": "1900-01-01"
+            }
           }
         ],
         "responses": {
@@ -458,18 +460,18 @@
             "in": "query",
             "description": "Filter by Grade Type Category ID.",
             "schema": {
-              "type": "string"
-            },
-            "example": "10023"
+              "type": "string",
+              "example": "10023"
+            }
           },
           {
             "name": "name",
             "in": "query",
-            "description": "Filter by Grade Type Category name.",
+            "description": "Filter by Grade Type Category name. This behaves like a prefix for as starts with retrieve.",
             "schema": {
-              "type": "string"
-            },
-            "example": "Admin & Clerical"
+              "type": "string",
+              "example": "Admin & Clerical"
+            }
           },
           {
             "name": "validFrom",
@@ -477,9 +479,9 @@
             "description": "Only return records valid on or after this date.",
             "schema": {
               "type": "string",
-              "format": "date-time"
-            },
-            "example": "1900-01-01"
+              "format": "date-time",
+              "example": "1900-01-01"
+            }
           }
         ],
         "responses": {
@@ -536,18 +538,18 @@
             "in": "query",
             "description": "Filter by Staff Group ID.",
             "schema": {
-              "type": "string"
-            },
-            "example": "1003"
+              "type": "string",
+              "example": "1003"
+            }
           },
           {
             "name": "name",
             "in": "query",
-            "description": "Filter by Staff Group name.",
+            "description": "Filter by Staff Group name. This behaves like a prefix for as starts with retrieve.",
             "schema": {
-              "type": "string"
-            },
-            "example": "Admin & Clerical"
+              "type": "string",
+              "example": "Admin & Clerical"
+            }
           },
           {
             "name": "validFrom",
@@ -555,9 +557,9 @@
             "description": "Only return records valid on or after this date.",
             "schema": {
               "type": "string",
-              "format": "date-time"
-            },
-            "example": "1900-01-01"
+              "format": "date-time",
+              "example": "1900-01-01"
+            }
           }
         ],
         "responses": {
@@ -614,18 +616,18 @@
             "in": "query",
             "description": "Filter by Organisational Unit ID.",
             "schema": {
-              "type": "string"
-            },
-            "example": "6"
+              "type": "string",
+              "example": "6"
+            }
           },
           {
             "name": "shortName",
             "in": "query",
-            "description": "Filter by Organisational Unit short name.",
+            "description": "Filter by Organisational Unit short name. This behaves like a prefix for as starts with retrieve.",
             "schema": {
-              "type": "string"
-            },
-            "example": "CAN Admin & Clerical"
+              "type": "string",
+              "example": "CAN Admin & Clerical"
+            }
           },
           {
             "name": "validFrom",
@@ -633,9 +635,9 @@
             "description": "Only return records valid on or after this date.",
             "schema": {
               "type": "string",
-              "format": "date-time"
-            },
-            "example": "1900-01-01"
+              "format": "date-time",
+              "example": "1900-01-01"
+            }
           }
         ],
         "responses": {
@@ -838,7 +840,7 @@
         }
       },
       "CostCentreResponseModel": {
-        "title": "CostCentres",
+        "title": "Cost Centres",
         "type": "object",
         "properties": {
           "value": {
@@ -864,11 +866,13 @@
                 "validFrom": {
                   "type": "string",
                   "description": "Start date from which the Cost Centre is valid",
+                  "format": "date-time",
                   "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
                   "description": "End date until which the Cost Centre is valid.",
+                  "format": "date-time",
                   "example": "9999-12-31T00:00:00"
                 },
                 "code": {
@@ -878,7 +882,7 @@
                 }
               }
             },
-            "description": "List of cost centres"
+            "description": "List of Cost Centres"
           }
         }
       },
@@ -909,11 +913,13 @@
                 "validFrom": {
                   "type": "string",
                   "description": "Start date from which the Grade is valid",
+                  "format": "date-time",
                   "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
                   "description": "End date until which the Grade is valid",
+                  "format": "date-time",
                   "example": "9999-12-31T00:00:00"
                 },
                 "gradeTypeID": {
@@ -953,7 +959,7 @@
         }
       },
       "GradeTypeResponseModel": {
-        "title": "GradeTypes",
+        "title": "Grade Types",
         "type": "object",
         "properties": {
           "value": {
@@ -979,11 +985,13 @@
                 "validFrom": {
                   "type": "string",
                   "description": "Start date from which the Grade Type is valid",
+                  "format": "date-time",
                   "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
                   "description": "End date until which the Grade Type is valid",
+                  "format": "date-time",
                   "example": "9999-12-31T00:00:00"
                 },
                 "gradeTypeCategoryID": {
@@ -998,12 +1006,12 @@
                 }
               }
             },
-            "description": "List of grade types"
+            "description": "List of Grade Types"
           }
         }
       },
       "GradeTypeCategoryResponseModel": {
-        "title": "GradeTypeCategories",
+        "title": "Grade TypeCategories",
         "type": "object",
         "properties": {
           "value": {
@@ -1024,21 +1032,23 @@
                 "validFrom": {
                   "type": "string",
                   "description": "Start date from which the Grade Type Category is valid",
+                  "format": "date-time",
                   "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
                   "description": "End date until which the Grade Type Category is valid",
+                  "format": "date-time",
                   "example": "9999-12-31T00:00:00"
                 }
               }
             },
-            "description": "List of grade type categories"
+            "description": "List of Grade Type Categories"
           }
         }
       },
       "StaffGroupResponseModel": {
-        "title": "StaffGroups",
+        "title": "Staff Groups",
         "type": "object",
         "properties": {
           "value": {
@@ -1064,11 +1074,13 @@
                 "validFrom": {
                   "type": "string",
                   "description": "Start date from which the Staff Group is valid",
+                  "format": "date-time",
                   "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
                   "description": "End date until which the Staff Group is valid",
+                  "format": "date-time",
                   "example": "9999-12-31T00:00:00"
                 }
               }
@@ -1104,11 +1116,13 @@
                 "validFrom": {
                   "type": "string",
                   "description": "Start date from which the Organisational Unit is valid",
+                  "format": "date-time",
                   "example": "1900-01-01T00:00:00"
                 },
                 "validTo": {
                   "type": "string",
                   "description": "End date until which the Organisational Unit is valid",
+                  "format": "date-time",
                   "example": "9999-12-31T00:00:00"
                 },
                 "code": {
@@ -1152,11 +1166,11 @@
     }
   },
   "x-amazon-apigateway-request-validators": {
-    "Interop-${env}-Validate body": {
+    "Marketplace-${env}-Validate body": {
       "validateRequestParameters": false,
       "validateRequestBody": true
     },
-    "Interop-${env}-Validate query parameters": {
+    "Marketplace-${env}-Validate query parameters": {
       "validateRequestParameters": true,
       "validateRequestBody": false
     }
