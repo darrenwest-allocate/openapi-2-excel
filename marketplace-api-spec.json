@@ -1,0 +1,1235 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "api-rld-mp-workforce-${env}",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api-poc.allocate-dev.co.uk/{basePath}",
+      "variables": {
+        "basePath": {
+          "default": "v1",
+          "description": "Version number"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/{tenant}/general-roster/roster-data": {
+      "get": {
+        "tags": [
+          "Roster"
+        ],
+        "summary": "Return the duties that have been rostered and assigned to a person",
+        "description": "Retrieve roster data for employees within the Optima system. Returns comprehensive roster information, including employee details, organizational structure, shift information, and timing data. At least one of personID or unitID must be provided. You can query either:\r\n\r\n- By individual employee (personID) - gets one person's shifts\r\n- By organizational unit (unitID) - gets shifts for everyone in that department/unit\r\n\r\n**Usage Examples**:\r\n\r\n**Get roster for a specific person** (14-day default range):\r\n```\r\nGET /{tenant}/api/general-roster/roster-data?personID=1625\r\n```\r\n**Get roster for a person with custom date range**:\r\n```\r\nGET /{tenant}/api/general-roster/roster-data?personID=1625&from=2024-01-01&to=2024-01-14\r\n```\r\n**Get roster for an organizational unit** (2-day default range):\r\n```\r\nGET /{tenant}/api/general-roster/roster-data?unitID=1059\r\n```\r\n**Get roster for an organizational unit with custom date range**:\r\n```\r\nGET /{tenant}/api/general-roster/roster-data?unitID=1059&from=2024-01-01&to=2024-01-02\r\n```",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "description": "Tenant code",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "SAFEHEALTHLIVE"
+            }
+          },
+          {
+            "name": "personID",
+            "in": "query",
+            "description": "Person ID to filter roster data.",
+            "schema": {
+              "type": "integer",
+              "example": 1625
+            }
+          },
+          {
+            "name": "unitID",
+            "in": "query",
+            "description": "Unit ID to filter roster data.",
+            "schema": {
+              "type": "integer",
+              "example": 1059
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Optional start date for roster data. Defaults to today if not provided.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-01-01"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "Optional end date for roster data. If not provided, a default end date will be used.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-01-02"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RosterDataResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid input parameters or missing required combination. Possible error scenarios:\n- Neither personID nor unitID provided\n- Both personID and unitID provided simultaneously\n- Invalid date range (to date is before from date)\n- Date range exceeds maximum allowed days (2 days for unit queries, 14 days for person queries)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Error message describing the validation failure",
+                      "example": "Only one of personID or unitID can be provided, not both"
+                    }
+                  }
+                },
+                "examples": {
+                  "MissingBothParameters": {
+                    "summary": "Neither personID nor unitID provided",
+                    "description": "At least one of personID or unitID must be specified",
+                    "value": {
+                      "message": "At least one of personID or unitID must be provided"
+                    }
+                  },
+                  "BothParametersProvided": {
+                    "summary": "Both personID and unitID provided",
+                    "description": "Only one parameter can be specified, not both",
+                    "value": {
+                      "message": "Only one of personID or unitID can be provided, not both"
+                    }
+                  },
+                  "ToDateBeforeFromDate": {
+                    "summary": "Invalid date range - to date before from date",
+                    "description": "The 'to' date must be greater than or equal to the 'from' date",
+                    "value": {
+                      "message": "'to' date (2024-01-01) must be greater than or equal to 'from' date (2024-01-15)."
+                    }
+                  },
+                  "DateRangeExceedsMaximum": {
+                    "summary": "Date range exceeds maximum allowed days",
+                    "description": "For Unit queries, the date range cannot exceed 2 days",
+                    "value": {
+                      "message": "Date range for Unit queries cannot exceed 2 days. Requested range is 5 days."
+                    }
+                  },
+                  "PersonDateRangeExceedsMaximum": {
+                    "summary": "Person query date range exceeds maximum allowed days",
+                    "description": "For Person queries, the date range cannot exceed 14 days",
+                    "value": {
+                      "message": "Date range for Person queries cannot exceed 14 days. Requested range is 20 days."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "custom-auth": [ ]
+          }
+        ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
+        "x-amazon-apigateway-integration": {
+          "httpMethod": "GET",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/GeneralRoster/RosterData",
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "passthroughBehavior": "when_no_match",
+          "timeoutInMillis": 29000,
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.personID": "method.request.querystring.personID",
+            "integration.request.querystring.unitID": "method.request.querystring.unitID",
+            "integration.request.querystring.from": "method.request.querystring.from",
+            "integration.request.querystring.to": "method.request.querystring.to"
+          }
+        }
+      }
+    },
+    "/{tenant}/reference-data/grades": {
+      "get": {
+        "tags": [
+          "ReferenceData"
+        ],
+        "summary": "Grades",
+        "description": "Return a list of Grades reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "description": "Tenant code which narrows the search for a certain reference data type within the specified tenant.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "SAFEHEALTHLIVE"
+            }
+          },
+          {
+            "name": "ID",
+            "in": "query",
+            "description": "Filter for a specific Grade by using its unique key.",
+            "schema": {
+              "type": "string",
+              "example": "1029"
+            }
+          },
+          {
+            "name": "shortName",
+            "in": "query",
+            "description": "Filter by Grade short name. This performs a prefix match (starts with) search.",
+            "schema": {
+              "type": "string",
+              "example": "Band 5"
+            }
+          },
+          {
+            "name": "gradeTypeID",
+            "in": "query",
+            "description": "Filter for those records for a Grade Type by using its unique key.",
+            "schema": {
+              "type": "string",
+              "example": "1023"
+            }
+          },
+          {
+            "name": "gradeTypeCategoryID",
+            "in": "query",
+            "description": "Filter for those records for a Grade Type Category by using its unique key.",
+            "schema": {
+              "type": "string",
+              "example": "1002"
+            }
+          },
+          {
+            "name": "staffGroupID",
+            "in": "query",
+            "description": "Filter for those records for a Staff Group by using its unique key.",
+            "schema": {
+              "type": "string",
+              "example": "1003"
+            }
+          },
+          {
+            "name": "validFrom",
+            "in": "query",
+            "description": "Only return records valid on or after this date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "1900-01-01"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeResponseModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "custom-auth": [ ]
+          }
+        ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
+        "x-amazon-apigateway-integration": {
+          "httpMethod": "GET",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/Grades",
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "passthroughBehavior": "when_no_match",
+          "timeoutInMillis": 29000,
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.shortName": "method.request.querystring.shortName",
+            "integration.request.querystring.gradeTypeID": "method.request.querystring.gradeTypeID",
+            "integration.request.querystring.gradeTypeCategoryID": "method.request.querystring.gradeTypeCategoryID",
+            "integration.request.querystring.staffGroupID": "method.request.querystring.staffGroupID",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
+        }
+      }
+    },
+    "/{tenant}/reference-data/cost-centres": {
+      "get": {
+        "tags": [
+          "ReferenceData"
+        ],
+        "summary": "Cost Centres",
+        "description": "Return a list of Cost Centres reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "description": "Tenant code which narrows the search for a certain reference data type within the specified tenant.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "SAFEHEALTHLIVE"
+            }
+          },
+          {
+            "name": "ID",
+            "in": "query",
+            "description": "Filter by Cost Centre ID.",
+            "schema": {
+              "type": "string",
+              "example": "1035"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Filter by Cost Centre name. This performs a prefix match (starts with) search.",
+            "schema": {
+              "type": "string",
+              "example": "A5002C"
+            }
+          },
+          {
+            "name": "validFrom",
+            "in": "query",
+            "description": "Only return records valid on or after this date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2024-01-01"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CostCentreResponseModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "custom-auth": [ ]
+          }
+        ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
+        "x-amazon-apigateway-integration": {
+          "httpMethod": "GET",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/CostCentres",
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "passthroughBehavior": "when_no_match",
+          "timeoutInMillis": 29000,
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.name": "method.request.querystring.name",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
+        }
+      }
+    },
+    "/{tenant}/reference-data/grade-types": {
+      "get": {
+        "tags": [
+          "ReferenceData"
+        ],
+        "summary": "Grade Types",
+        "description": "Return a list of Grade Types reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "description": "Tenant code which narrows the search for a certain reference data type within the specified tenant.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "SAFEHEALTHLIVE"
+            }
+          },
+          {
+            "name": "ID",
+            "in": "query",
+            "description": "Filter by Grade Type ID.",
+            "schema": {
+              "type": "string",
+              "example": "1023"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Filter by Grade Type name. This performs a prefix match (starts with) search.",
+            "schema": {
+              "type": "string",
+              "example": "A&C"
+            }
+          },
+          {
+            "name": "gradeTypeCategoryID",
+            "in": "query",
+            "description": "Filter for those records for a Grade Type Category by using its unique key.",
+            "schema": {
+              "type": "string",
+              "example": "10023"
+            }
+          },
+          {
+            "name": "validFrom",
+            "in": "query",
+            "description": "Only return records valid on or after this date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "1900-01-01"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeTypeResponseModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "custom-auth": [ ]
+          }
+        ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
+        "x-amazon-apigateway-integration": {
+          "httpMethod": "GET",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/GradeTypes",
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "passthroughBehavior": "when_no_match",
+          "timeoutInMillis": 29000,
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.name": "method.request.querystring.name",
+            "integration.request.querystring.gradeTypeCategoryID": "method.request.querystring.gradeTypeCategoryID",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
+        }
+      }
+    },
+    "/{tenant}/reference-data/grade-type-categories": {
+      "get": {
+        "tags": [
+          "ReferenceData"
+        ],
+        "summary": "Grade Type Categories",
+        "description": "Return a list of Grade Type Categories reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "description": "Tenant code which narrows the search for a certain reference data type within the specified tenant.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "SAFEHEALTHLIVE"
+            }
+          },
+          {
+            "name": "ID",
+            "in": "query",
+            "description": "Filter by Grade Type Category ID.",
+            "schema": {
+              "type": "string",
+              "example": "10023"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Filter by Grade Type Category name. This performs a prefix match (starts with) search.",
+            "schema": {
+              "type": "string",
+              "example": "Admin & Clerical"
+            }
+          },
+          {
+            "name": "validFrom",
+            "in": "query",
+            "description": "Only return records valid on or after this date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "1900-01-01"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeTypeCategoryResponseModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "custom-auth": [ ]
+          }
+        ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
+        "x-amazon-apigateway-integration": {
+          "httpMethod": "GET",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/GradeTypeCategories",
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "passthroughBehavior": "when_no_match",
+          "timeoutInMillis": 29000,
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.name": "method.request.querystring.name",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
+        }
+      }
+    },
+    "/{tenant}/reference-data/staff-groups": {
+      "get": {
+        "tags": [
+          "ReferenceData"
+        ],
+        "summary": "Staff Groups",
+        "description": "Return a list of Staff Groups reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "description": "Tenant code which narrows the search for a certain reference data type within the specified tenant.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "SAFEHEALTHLIVE"
+            }
+          },
+          {
+            "name": "ID",
+            "in": "query",
+            "description": "Filter by Staff Group ID.",
+            "schema": {
+              "type": "string",
+              "example": "1003"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "Filter by Staff Group name. This performs a prefix match (starts with) search.",
+            "schema": {
+              "type": "string",
+              "example": "Admin & Clerical"
+            }
+          },
+          {
+            "name": "validFrom",
+            "in": "query",
+            "description": "Only return records valid on or after this date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "1900-01-01"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffGroupResponseModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "custom-auth": [ ]
+          }
+        ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
+        "x-amazon-apigateway-integration": {
+          "httpMethod": "GET",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/StaffGroups",
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "passthroughBehavior": "when_no_match",
+          "timeoutInMillis": 29000,
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.name": "method.request.querystring.name",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
+        }
+      }
+    },
+    "/{tenant}/reference-data/org-units": {
+      "get": {
+        "tags": [
+          "ReferenceData"
+        ],
+        "summary": "Organisational Units",
+        "description": "Return a list of Organisational Units reference data. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "description": "Tenant code which narrows the search for a certain reference data type within the specified tenant.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "SAFEHEALTHLIVE"
+            }
+          },
+          {
+            "name": "ID",
+            "in": "query",
+            "description": "Filter by Organisational Unit ID.",
+            "schema": {
+              "type": "string",
+              "example": "6"
+            }
+          },
+          {
+            "name": "shortName",
+            "in": "query",
+            "description": "Filter by Organisational Unit short name. This performs a prefix match (starts with) search.",
+            "schema": {
+              "type": "string",
+              "example": "CAN Admin & Clerical"
+            }
+          },
+          {
+            "name": "validFrom",
+            "in": "query",
+            "description": "Only return records valid on or after this date.",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "1900-01-01"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrgUnitResponseModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "custom-auth": [ ]
+          }
+        ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
+        "x-amazon-apigateway-integration": {
+          "httpMethod": "GET",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/OrgUnits",
+          "responses": {
+            "default": {
+              "statusCode": "200"
+            }
+          },
+          "passthroughBehavior": "when_no_match",
+          "timeoutInMillis": 29000,
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.shortName": "method.request.querystring.shortName",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RosterDataResponse": {
+        "type": "object",
+        "properties": {
+          "rosterData": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "PersonID": {
+                  "type": "integer",
+                  "description": "Unique identifier for the Person",
+                  "example": 16001
+                },
+                "Surname": {
+                  "type": "string",
+                  "description": "Last name of the employee",
+                  "example": "O'Neal"
+                },
+                "Forenames": {
+                  "type": "string",
+                  "description": "First name(s) of the employee",
+                  "example": "Alice"
+                },
+                "StaffNumber": {
+                  "type": "string",
+                  "description": "Staff identification number",
+                  "example": "AO63889661856127"
+                },
+                "TimeclockIdentifier": {
+                  "type": "string",
+                  "description": "Timeclock chip ID for attendance tracking",
+                  "example": "AO63889661856127"
+                },
+                "DateJoined": {
+                  "type": "string",
+                  "description": "Date when the Person was first employed at the organisation",
+                  "format": "date-time",
+                  "example": "2025-07-27T00:00:00"
+                },
+                "DateLeaving": {
+                  "type": "string",
+                  "description": "Date when the Person is no longer employed at the organisation",
+                  "format": "date-time",
+                  "example": "9999-12-31T00:00:00"
+                },
+                "DutyAssignments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "DutyAssignmentID": {
+                        "type": "integer",
+                        "description": "Unique identifier for the Duty Assignment",
+                        "example": 27584
+                      },
+                      "PostingID": {
+                        "type": "integer",
+                        "description": "Unique identifier for the Posting",
+                        "example": 16821
+                      },
+                      "ExternalReference": {
+                        "type": "string",
+                        "description": "External Reference for the Posting",
+                        "example": "889947"
+                      },
+                      "PostingValidFrom": {
+                        "type": "string",
+                        "description": "Start date from which the Posting is valid",
+                        "format": "date-time",
+                        "example": "1900-01-01T00:00:00"
+                      },
+                      "PostingValidTo": {
+                        "type": "string",
+                        "description": "End date until which the Posting is valid",
+                        "format": "date-time",
+                        "example": "9999-12-31T00:00:00"
+                      },
+                      "AssignmentNumber": {
+                        "type": "string",
+                        "description": "Assignment reference number",
+                        "example": "NHSP~TFJK2695~24"
+                      },
+                      "StaffGroupID": {
+                        "type": "integer",
+                        "description": "Unique identifier for the Staff Group",
+                        "example": 7
+                      },
+                      "StaffGroupName": {
+                        "type": "string",
+                        "description": "Name of the Staff Group",
+                        "example": "Nursing"
+                      },
+                      "OwningUnitID": {
+                        "type": "integer",
+                        "description": "Unique key for the Unit that is recorded as owning the Roster",
+                        "example": 80
+                      },
+                      "OwningUnitShortName": {
+                        "type": "string",
+                        "description": "Short name of the Owning Unit",
+                        "example": "Croxley"
+                      },
+                      "CostCentreID": {
+                        "type": "integer",
+                        "description": "Unique identifier for the Cost Centre",
+                        "example": 1035
+                      },
+                      "CostCentreName": {
+                        "type": "string",
+                        "description": "Name of the Cost Centre",
+                        "example": "A5002C"
+                      },
+                      "GradeID": {
+                        "type": "integer",
+                        "description": "Unique identifier for the Grade",
+                        "example": 24
+                      },
+                      "GradeShortName": {
+                        "type": "string",
+                        "description": "Short name of the Grade",
+                        "example": "Band 5 RN"
+                      },
+                      "ResourcingUnitID": {
+                        "type": "integer",
+                        "description": "Unique key for the Unit that is recorded as the Resourcing Unit",
+                        "example": 9
+                      },
+                      "ResourcingUnitShortName": {
+                        "type": "string",
+                        "description": "Short name of the Resourcing Unit",
+                        "example": "Bank"
+                      },
+                      "ActualDutyStart": {
+                        "type": "string",
+                        "description": "Start date of the shift",
+                        "format": "date-time",
+                        "example": "2025-09-08T00:00:00"
+                      },
+                      "ActualDutyEnd": {
+                        "type": "string",
+                        "description": "End date of the shift",
+                        "format": "date-time",
+                        "example": "2025-09-09T00:00:00"
+                      },
+                      "RestStart": {
+                        "type": "string",
+                        "description": "Start of the rest period",
+                        "format": "date-time",
+                        "example": "2025-09-08T00:00:00"
+                      },
+                      "RestDuration": {
+                        "type": "integer",
+                        "description": "Break duration in minutes",
+                        "example": 45
+                      }
+                    }
+                  },
+                  "description": "List of duty assignments for the person"
+                }
+              }
+            },
+            "description": "List of persons with their roster information"
+          }
+        }
+      },
+      "CostCentreResponseModel": {
+        "title": "Cost Centres",
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ID": {
+                  "type": "integer",
+                  "description": "Unique identifier for the Cost Centre",
+                  "example": 1
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Name of the Cost Centre",
+                  "example": "MA"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description of the Cost Centre",
+                  "example": "Meal Allowance"
+                },
+                "validFrom": {
+                  "type": "string",
+                  "description": "Start date from which the Cost Centre is valid",
+                  "format": "date-time",
+                  "example": "1900-01-01T00:00:00"
+                },
+                "validTo": {
+                  "type": "string",
+                  "description": "End date until which the Cost Centre is valid.",
+                  "format": "date-time",
+                  "example": "9999-12-31T00:00:00"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "Code of the Cost Centre",
+                  "example": "11593"
+                }
+              }
+            },
+            "description": "List of Cost Centres"
+          }
+        }
+      },
+      "GradeResponseModel": {
+        "title": "Grades",
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ID": {
+                  "type": "integer",
+                  "description": "Unique identifier for the Grade",
+                  "example": 10091
+                },
+                "shortName": {
+                  "type": "string",
+                  "description": "Short name for the Grade",
+                  "example": "Band 2 A&C"
+                },
+                "longName": {
+                  "type": "string",
+                  "description": "Full name for the Grade",
+                  "example": "Band 2 Admin & Clerical"
+                },
+                "validFrom": {
+                  "type": "string",
+                  "description": "Start date from which the Grade is valid",
+                  "format": "date-time",
+                  "example": "1900-01-01T00:00:00"
+                },
+                "validTo": {
+                  "type": "string",
+                  "description": "End date until which the Grade is valid",
+                  "format": "date-time",
+                  "example": "9999-12-31T00:00:00"
+                },
+                "gradeTypeID": {
+                  "type": "integer",
+                  "description": "Unique key for the Grade Type that defines this record",
+                  "example": 10045
+                },
+                "gradeTypeName": {
+                  "type": "string",
+                  "description": "Name of the associated Grade Type",
+                  "example": "A&C"
+                },
+                "gradeTypeCategoryID": {
+                  "type": "integer",
+                  "description": "Unique key for the Grade Type Category that defines this record",
+                  "example": 10023
+                },
+                "gradeTypeCategoryName": {
+                  "type": "string",
+                  "description": "Name of the Grade Type Category",
+                  "example": "Admin & Clerical"
+                },
+                "staffGroupID": {
+                  "type": "integer",
+                  "description": "Unique Key for the Staff Group that defines this record",
+                  "example": 1
+                },
+                "staffGroupName": {
+                  "type": "string",
+                  "description": "Name of the Staff Group",
+                  "example": "Admin & Clerical"
+                }
+              }
+            },
+            "description": "List of Grades"
+          }
+        }
+      },
+      "GradeTypeResponseModel": {
+        "title": "Grade Types",
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ID": {
+                  "type": "integer",
+                  "description": "Unique identifier for the Grade Type",
+                  "example": 10045
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Name of the Grade Type",
+                  "example": "A&C"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description of the Grade Type",
+                  "example": "Admin & Clerical"
+                },
+                "validFrom": {
+                  "type": "string",
+                  "description": "Start date from which the Grade Type is valid",
+                  "format": "date-time",
+                  "example": "1900-01-01T00:00:00"
+                },
+                "validTo": {
+                  "type": "string",
+                  "description": "End date until which the Grade Type is valid",
+                  "format": "date-time",
+                  "example": "9999-12-31T00:00:00"
+                },
+                "gradeTypeCategoryID": {
+                  "type": "integer",
+                  "description": "Unique key for the Grade Type Category that defines this record",
+                  "example": 10023
+                },
+                "gradeTypeCategoryName": {
+                  "type": "string",
+                  "description": "Name of the Grade Type Category",
+                  "example": "Admin & Clerical"
+                }
+              }
+            },
+            "description": "List of Grade Types"
+          }
+        }
+      },
+      "GradeTypeCategoryResponseModel": {
+        "title": "Grade Type Categories",
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ID": {
+                  "type": "integer",
+                  "description": "Unique identifier for the Grade Type Category",
+                  "example": 10023
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Name of the Grade Type Category",
+                  "example": "Admin & Clerical"
+                },
+                "validFrom": {
+                  "type": "string",
+                  "description": "Start date from which the Grade Type Category is valid",
+                  "format": "date-time",
+                  "example": "1900-01-01T00:00:00"
+                },
+                "validTo": {
+                  "type": "string",
+                  "description": "End date until which the Grade Type Category is valid",
+                  "format": "date-time",
+                  "example": "9999-12-31T00:00:00"
+                }
+              }
+            },
+            "description": "List of Grade Type Categories"
+          }
+        }
+      },
+      "StaffGroupResponseModel": {
+        "title": "Staff Groups",
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ID": {
+                  "type": "integer",
+                  "description": "Unique identifier for the Staff Group",
+                  "example": 1
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Name of the Staff Group",
+                  "example": "Admin & Clerical"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description of the Staff Group",
+                  "example": "Admin & Clerical"
+                },
+                "validFrom": {
+                  "type": "string",
+                  "description": "Start date from which the Staff Group is valid",
+                  "format": "date-time",
+                  "example": "1900-01-01T00:00:00"
+                },
+                "validTo": {
+                  "type": "string",
+                  "description": "End date until which the Staff Group is valid",
+                  "format": "date-time",
+                  "example": "9999-12-31T00:00:00"
+                }
+              }
+            },
+            "description": "List of Staff Groups"
+          }
+        }
+      },
+      "OrgUnitResponseModel": {
+        "title": "OrgUnits",
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ID": {
+                  "type": "integer",
+                  "description": "Unique identifier for the Organisational Unit",
+                  "example": 6
+                },
+                "shortName": {
+                  "type": "string",
+                  "description": "Short name of the Organisational Unit",
+                  "example": "CAN Admin & Clerical"
+                },
+                "longName": {
+                  "type": "string",
+                  "description": "Full name of the Organisational Unit",
+                  "example": "CAN Admin & Clerical"
+                },
+                "validFrom": {
+                  "type": "string",
+                  "description": "Start date from which the Organisational Unit is valid",
+                  "format": "date-time",
+                  "example": "1900-01-01T00:00:00"
+                },
+                "validTo": {
+                  "type": "string",
+                  "description": "End date until which the Organisational Unit is valid",
+                  "format": "date-time",
+                  "example": "9999-12-31T00:00:00"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "Code of the Organisational Unit",
+                  "example": "CAN Admin & Clerical"
+                },
+                "parentOrgUnitID": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "description": "Unique identifier for the parent Organisational Unit",
+                      "example": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Unique identifier for the parent Organisational Unit"
+                }
+              }
+            },
+            "description": "List of Organisational Units"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "custom-auth": {
+        "type": "apiKey",
+        "name": "Authorization",
+        "in": "header",
+        "x-amazon-apigateway-authtype": "custom",
+        "x-amazon-apigateway-authorizer": {
+          "authorizerUri": "${marketplace_authorizer_uri}",
+          "authorizerResultTtlInSeconds": 0,
+          "type": "token",
+          "identitySource": "method.request.header.Authorization"
+        }
+      }
+    }
+  },
+  "x-amazon-apigateway-request-validators": {
+    "Marketplace-${env}-Validate body": {
+      "validateRequestParameters": false,
+      "validateRequestBody": true
+    },
+    "Marketplace-${env}-Validate query parameters": {
+      "validateRequestParameters": true,
+      "validateRequestBody": false
+    }
+  },
+  "x-amazon-apigateway-gateway-responses": {
+    "BAD_REQUEST_BODY": {
+      "statusCode": 400
+    }
+  }
+}
