@@ -9,20 +9,20 @@
       "url": "https://api-poc.allocate-dev.co.uk/{basePath}",
       "variables": {
         "basePath": {
-          "default": "1.0.0",
+          "default": "v1",
           "description": "Version number"
         }
       }
     }
   ],
   "paths": {
-    "/{tenant}/duties/roster-data": {
+    "/{tenant}/general-roster/roster-data": {
       "get": {
         "tags": [
           "Roster"
         ],
         "summary": "Return the duties that have been rostered and assigned to a person",
-        "description": "Retrieve roster data for employees within Optima system. Returns comprehensive roster information including employee details, organizational structure, shift information, and timing data. At least one of personID or unitID must be provided. You can query either:\r\n\r\n- By individual employee (personID) - gets one person's shifts\r\n- By organizational unit (unitID) - gets shifts for everyone in that department/unit\r\n\r\n**Usage Examples**:\r\n\r\n**Get roster for a specific person** (14-day default range):\r\n```\r\nGET /{tenant}/duties/roster-data?personID=1625\r\n```\r\n**Get roster for a person with custom date range**:\r\n```\r\nGET /{tenant}/duties/roster-data?personID=1625&from=2024-01-01&to=2024-01-14\r\n```\r\n**Get roster for an organizational unit** (2-day default range):\r\n```\r\nGET /{tenant}/duties/roster-data?unitID=1059\r\n```\r\n**Get roster for an organizational unit with custom date range**:\r\n```\r\nGET /{tenant}/duties/roster-data?unitID=1059&from=2024-01-01&to=2024-01-02\r\n```",
+        "description": "Retrieve roster data for employees within the Optima system. Returns comprehensive roster information, including employee details, organizational structure, shift information, and timing data. At least one of personID or unitID must be provided. You can query either:\r\n\r\n- By individual employee (personID) - gets one person's shifts\r\n- By organizational unit (unitID) - gets shifts for everyone in that department/unit\r\n\r\n**Usage Examples**:\r\n\r\n**Get roster for a specific person** (14-day default range):\r\n```\r\nGET /{tenant}/api/general-roster/roster-data?personID=1625\r\n```\r\n**Get roster for a person with custom date range**:\r\n```\r\nGET /{tenant}/api/general-roster/roster-data?personID=1625&from=2024-01-01&to=2024-01-14\r\n```\r\n**Get roster for an organizational unit** (2-day default range):\r\n```\r\nGET /{tenant}/api/general-roster/roster-data?unitID=1059\r\n```\r\n**Get roster for an organizational unit with custom date range**:\r\n```\r\nGET /{tenant}/api/general-roster/roster-data?unitID=1059&from=2024-01-01&to=2024-01-02\r\n```",
         "parameters": [
           {
             "name": "tenant",
@@ -31,7 +31,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": "SAFEHEALTHIVE"
+              "example": "SAFEHEALTHLIVE"
             }
           },
           {
@@ -94,13 +94,13 @@
                     "message": {
                       "type": "string",
                       "description": "Error message describing the validation failure",
-                      "example": "Only one of personId or unitId can be provided, not both"
+                      "example": "Only one of personID or unitID can be provided, not both"
                     }
                   }
                 },
                 "examples": {
                   "MissingBothParameters": {
-                    "summary": "Neither personId nor unitId provided",
+                    "summary": "Neither personID nor unitID provided",
                     "description": "At least one of personID or unitID must be specified",
                     "value": {
                       "message": "At least one of personID or unitID must be provided"
@@ -117,7 +117,7 @@
                     "summary": "Invalid date range - to date before from date",
                     "description": "The 'to' date must be greater than or equal to the 'from' date",
                     "value": {
-                      "message": "'to' date (2024-01-01) must be greater than or equal to 'from' date (2024-01-15)"
+                      "message": "'to' date (2024-01-01) must be greater than or equal to 'from' date (2024-01-15)."
                     }
                   },
                   "DateRangeExceedsMaximum": {
@@ -147,7 +147,7 @@
         "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
         "x-amazon-apigateway-integration": {
           "httpMethod": "GET",
-          "uri": "https://${eac_api_base_url}/v1/duties/roster-data",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/GeneralRoster/RosterData",
           "responses": {
             "default": {
               "statusCode": "200"
@@ -155,12 +155,12 @@
           },
           "passthroughBehavior": "when_no_match",
           "timeoutInMillis": 29000,
-          "type": "http_proxy",
+          "type": "http",
           "requestParameters": {
             "integration.request.header.Cookie": "context.authorizer.session_cookie",
             "integration.request.path.tenant": "method.request.path.tenant",
-            "integration.request.querystring.personId": "method.request.querystring.personId",
-            "integration.request.querystring.unitId": "method.request.querystring.unitId",
+            "integration.request.querystring.personID": "method.request.querystring.personID",
+            "integration.request.querystring.unitID": "method.request.querystring.unitID",
             "integration.request.querystring.from": "method.request.querystring.from",
             "integration.request.querystring.to": "method.request.querystring.to"
           }
@@ -172,7 +172,7 @@
         "tags": [
           "ReferenceData"
         ],
-        "summary": "Get Grades",
+        "summary": "Grades",
         "description": "Return a list of Grades reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
         "parameters": [
           {
@@ -197,7 +197,7 @@
           {
             "name": "shortName",
             "in": "query",
-            "description": "Filter by Grade short name. This behaves like a prefix for as starts with retrieve.",
+            "description": "Filter by Grade short name. This performs a prefix match (starts with) search.",
             "schema": {
               "type": "string",
               "example": "Band 5"
@@ -243,7 +243,7 @@
         ],
         "responses": {
           "200": {
-            "description": "200 response",
+            "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
@@ -258,9 +258,10 @@
             "custom-auth": [ ]
           }
         ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
         "x-amazon-apigateway-integration": {
           "httpMethod": "GET",
-          "uri": "https://${eac_api_base_url}/v1/reference-data/grades",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/Grades",
           "responses": {
             "default": {
               "statusCode": "200"
@@ -268,16 +269,26 @@
           },
           "passthroughBehavior": "when_no_match",
           "timeoutInMillis": 29000,
-          "type": "http_proxy"
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.shortName": "method.request.querystring.shortName",
+            "integration.request.querystring.gradeTypeID": "method.request.querystring.gradeTypeID",
+            "integration.request.querystring.gradeTypeCategoryID": "method.request.querystring.gradeTypeCategoryID",
+            "integration.request.querystring.staffGroupID": "method.request.querystring.staffGroupID",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
         }
       }
     },
-    "/{tenant}/reference-data/costCentres": {
+    "/{tenant}/reference-data/cost-centres": {
       "get": {
         "tags": [
           "ReferenceData"
         ],
-        "summary": "Get Cost Centres",
+        "summary": "Cost Centres",
         "description": "Return a list of Cost Centres reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
         "parameters": [
           {
@@ -302,7 +313,7 @@
           {
             "name": "name",
             "in": "query",
-            "description": "Filter by Cost Centre name.This behaves like a prefix for as starts with retrieve.",
+            "description": "Filter by Cost Centre name. This performs a prefix match (starts with) search.",
             "schema": {
               "type": "string",
               "example": "A5002C"
@@ -321,7 +332,7 @@
         ],
         "responses": {
           "200": {
-            "description": "200 response",
+            "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
@@ -336,9 +347,10 @@
             "custom-auth": [ ]
           }
         ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
         "x-amazon-apigateway-integration": {
           "httpMethod": "GET",
-          "uri": "https://${eac_api_base_url}/v1/reference-data/costCentres",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/CostCentres",
           "responses": {
             "default": {
               "statusCode": "200"
@@ -346,17 +358,24 @@
           },
           "passthroughBehavior": "when_no_match",
           "timeoutInMillis": 29000,
-          "type": "http_proxy"
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.name": "method.request.querystring.name",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
         }
       }
     },
-    "/{tenant}/reference-data/gradeTypes": {
+    "/{tenant}/reference-data/grade-types": {
       "get": {
         "tags": [
           "ReferenceData"
         ],
-        "summary": "Get Grade Types",
-        "description": "Return a list of Grade Types reference data that you may query.Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
+        "summary": "Grade Types",
+        "description": "Return a list of Grade Types reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
         "parameters": [
           {
             "name": "tenant",
@@ -380,7 +399,7 @@
           {
             "name": "name",
             "in": "query",
-            "description": "Filter by Grade Type name. This behaves like a prefix for as starts with retrieve.",
+            "description": "Filter by Grade Type name. This performs a prefix match (starts with) search.",
             "schema": {
               "type": "string",
               "example": "A&C"
@@ -408,7 +427,7 @@
         ],
         "responses": {
           "200": {
-            "description": "200 response",
+            "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
@@ -423,9 +442,10 @@
             "custom-auth": [ ]
           }
         ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
         "x-amazon-apigateway-integration": {
           "httpMethod": "GET",
-          "uri": "https://${eac_api_base_url}/v1/reference-data/gradeTypes",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/GradeTypes",
           "responses": {
             "default": {
               "statusCode": "200"
@@ -433,16 +453,24 @@
           },
           "passthroughBehavior": "when_no_match",
           "timeoutInMillis": 29000,
-          "type": "http_proxy"
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.name": "method.request.querystring.name",
+            "integration.request.querystring.gradeTypeCategoryID": "method.request.querystring.gradeTypeCategoryID",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
         }
       }
     },
-    "/{tenant}/reference-data/gradeTypeCategories": {
+    "/{tenant}/reference-data/grade-type-categories": {
       "get": {
         "tags": [
           "ReferenceData"
         ],
-        "summary": "Get Grade Type Categories",
+        "summary": "Grade Type Categories",
         "description": "Return a list of Grade Type Categories reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
         "parameters": [
           {
@@ -467,7 +495,7 @@
           {
             "name": "name",
             "in": "query",
-            "description": "Filter by Grade Type Category name. This behaves like a prefix for as starts with retrieve.",
+            "description": "Filter by Grade Type Category name. This performs a prefix match (starts with) search.",
             "schema": {
               "type": "string",
               "example": "Admin & Clerical"
@@ -486,7 +514,7 @@
         ],
         "responses": {
           "200": {
-            "description": "200 response",
+            "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
@@ -501,9 +529,10 @@
             "custom-auth": [ ]
           }
         ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
         "x-amazon-apigateway-integration": {
           "httpMethod": "GET",
-          "uri": "https://${eac_api_base_url}/v1/reference-data/gradeTypeCategories",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/GradeTypeCategories",
           "responses": {
             "default": {
               "statusCode": "200"
@@ -511,16 +540,23 @@
           },
           "passthroughBehavior": "when_no_match",
           "timeoutInMillis": 29000,
-          "type": "http_proxy"
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.name": "method.request.querystring.name",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
         }
       }
     },
-    "/{tenant}/reference-data/staffGroups": {
+    "/{tenant}/reference-data/staff-groups": {
       "get": {
         "tags": [
           "ReferenceData"
         ],
-        "summary": "Get Staff Groups",
+        "summary": "Staff Groups",
         "description": "Return a list of Staff Groups reference data that you may query. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
         "parameters": [
           {
@@ -545,7 +581,7 @@
           {
             "name": "name",
             "in": "query",
-            "description": "Filter by Staff Group name. This behaves like a prefix for as starts with retrieve.",
+            "description": "Filter by Staff Group name. This performs a prefix match (starts with) search.",
             "schema": {
               "type": "string",
               "example": "Admin & Clerical"
@@ -564,7 +600,7 @@
         ],
         "responses": {
           "200": {
-            "description": "200 response",
+            "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
@@ -579,9 +615,10 @@
             "custom-auth": [ ]
           }
         ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
         "x-amazon-apigateway-integration": {
           "httpMethod": "GET",
-          "uri": "https://${eac_api_base_url}/v1/reference-data/staffGroups",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/StaffGroups",
           "responses": {
             "default": {
               "statusCode": "200"
@@ -589,16 +626,23 @@
           },
           "passthroughBehavior": "when_no_match",
           "timeoutInMillis": 29000,
-          "type": "http_proxy"
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.name": "method.request.querystring.name",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
         }
       }
     },
-    "/{tenant}/reference-data/orgUnits": {
+    "/{tenant}/reference-data/org-units": {
       "get": {
         "tags": [
           "ReferenceData"
         ],
-        "summary": "Get Organisational Units",
+        "summary": "Organisational Units",
         "description": "Return a list of Organisational Units reference data. Only records with a validity period (`validFrom` / `validTo`) that includes the current date or is in the future are returned, unless a specific `validFrom` date is provided in the query.",
         "parameters": [
           {
@@ -623,7 +667,7 @@
           {
             "name": "shortName",
             "in": "query",
-            "description": "Filter by Organisational Unit short name. This behaves like a prefix for as starts with retrieve.",
+            "description": "Filter by Organisational Unit short name. This performs a prefix match (starts with) search.",
             "schema": {
               "type": "string",
               "example": "CAN Admin & Clerical"
@@ -642,7 +686,7 @@
         ],
         "responses": {
           "200": {
-            "description": "200 response",
+            "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
@@ -657,9 +701,10 @@
             "custom-auth": [ ]
           }
         ],
+        "x-amazon-apigateway-request-validator": "Marketplace-${env}-Validate query parameters",
         "x-amazon-apigateway-integration": {
           "httpMethod": "GET",
-          "uri": "https://${eac_api_base_url}/v1/reference-data/orgUnits",
+          "uri": "https://${eac_api_base_url}/{tenant}/api/ReferenceData/OrgUnits",
           "responses": {
             "default": {
               "statusCode": "200"
@@ -667,7 +712,14 @@
           },
           "passthroughBehavior": "when_no_match",
           "timeoutInMillis": 29000,
-          "type": "http_proxy"
+          "type": "http",
+          "requestParameters": {
+            "integration.request.header.Cookie": "context.authorizer.session_cookie",
+            "integration.request.path.tenant": "method.request.path.tenant",
+            "integration.request.querystring.ID": "method.request.querystring.ID",
+            "integration.request.querystring.shortName": "method.request.querystring.shortName",
+            "integration.request.querystring.validFrom": "method.request.querystring.validFrom"
+          }
         }
       }
     }
@@ -1011,7 +1063,7 @@
         }
       },
       "GradeTypeCategoryResponseModel": {
-        "title": "Grade TypeCategories",
+        "title": "Grade Type Categories",
         "type": "object",
         "properties": {
           "value": {
@@ -1152,12 +1204,12 @@
     },
     "securitySchemes": {
       "custom-auth": {
-        "type": "http",
-        "description": "Custom Auth header with bearer token",
-        "scheme": "bearer",
+        "type": "apiKey",
+        "name": "Authorization",
+        "in": "header",
         "x-amazon-apigateway-authtype": "custom",
         "x-amazon-apigateway-authorizer": {
-          "authorizerUri": "arn:aws:apigateway:eu-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-west-2:529795807852:function:interop-custom-validate-auth0-only-one/invocations",
+          "authorizerUri": "${marketplace_authorizer_uri}",
           "authorizerResultTtlInSeconds": 0,
           "type": "token",
           "identitySource": "method.request.header.Authorization"
@@ -1177,10 +1229,7 @@
   },
   "x-amazon-apigateway-gateway-responses": {
     "BAD_REQUEST_BODY": {
-      "statusCode": 400,
-      "responseTemplates": {
-        "application/json": "{\n  \"message\":$context.error.messageString,\n  \"Hint\": \"Refer to documentation to check required parameters or parameters allowed type and length\"\n}"
-      }
+      "statusCode": 400
     }
   }
 }
